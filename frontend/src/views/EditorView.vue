@@ -5,27 +5,27 @@
 <script lang="ts" setup>
 import RichTextEditor from '@/components/RichTextEditor.vue'
 import { ref } from 'vue'
-import { BlockModel } from '@/models/block'
+import { Block, createBlock } from '@/models/block'
 
-const value = ref<BlockModel>(new BlockModel({
+const value = ref<Block>(createBlock({
   id: 'test',
   type: 'doc',
   children: [
-    new BlockModel({
+    createBlock({
       id: 'text',
       type: 'text',
       content: {
         text: '这是测试内容1'
       }
     }),
-    new BlockModel({
+    createBlock({
       id: 'text2',
       type: 'text',
       content: {
         text: '这是测试内容2'
       }
     }),
-    new BlockModel({
+    createBlock({
       id: 'text3',
       type: 'text',
       content: {

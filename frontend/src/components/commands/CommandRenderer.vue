@@ -3,13 +3,13 @@
 </template>
 
 <script lang="ts" setup>
-import { BlockModel } from '@/models/block';
+import { Block } from '@/models/block';
 import TextCommand from './TextCommand.vue';
 import { computed, type Component } from 'vue';
 
 const props = defineProps({
   block: {
-    type: BlockModel,
+    type: Block,
     rquired: true
   }
 })

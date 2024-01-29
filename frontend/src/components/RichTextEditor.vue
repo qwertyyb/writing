@@ -28,9 +28,8 @@
 import { nextTick, ref, reactive, watch } from 'vue';
 import CommandTool from './CommandTool.vue';
 import CommandRenderer from './commands/CommandRenderer.vue';
-import { BlockAction, BlockModel } from '@/models/block';
 import { getCaretPosition, setCaretToEnd } from '@/models/caret';
-import type { Command } from '@/models/command';
+import { createBlock, Block } from '@/models/block';
 
 const editorEl = ref<HTMLDivElement>()
 
@@ -42,11 +41,11 @@ const commandToolKeyword = ref('')
 watch(commandToolVisible, () => commandToolKeyword.value = '')
 
 const model = defineModel({
-  default: new BlockModel({
+  default: createBlock({
     id: 'test',
     type: 'doc',
     children: [
-      new BlockModel({
+      createBlock({
         id: 'text',
         type: 'text',
         content: {
@@ -77,7 +76,7 @@ enum KeyCodes {
   ArrowLeft = 'ArrowLeft',
   ArrowRight = 'ArrowRight',
 }
-const keydownHandler = (event: KeyboardEvent, current: BlockModel, index: number, blocks: BlockModel[]) => {
+const keydownHandler = (event: KeyboardEvent, current: Block, index: number, blocks: Block[]) => {
   if (event.isComposing) return
   if (event.code === KeyCodes.Enter) {
     enterKeyHandler(event, current, index, blocks)
@@ -97,13 +96,25 @@ const keydownHandler = (event: KeyboardEvent, current: BlockModel, index: number
     commandTool.value?.selectNext()
   } else if (commandToolVisible.value && event.code === KeyCodes.Space) {
     const command = commandTool.value?.confirm()
+    if (!command) return
+    const newBlock = model.value.insert({
+      type: command.value,
+      id: Math.random().toString(16).substring(2),
+      content: {
+        text: ''
+      }
+    }, index)
+    model.value.remove(current.id)
+    focusBlock(newBlock.id)
+    commandToolVisible.value = false
+    console.log(current.id, newBlock.id, index)
   }
 }
 
-const enterKeyHandler = (event: KeyboardEvent, current: BlockModel, index: number, blocks: BlockModel[]) => {
+const enterKeyHandler = (event: KeyboardEvent, current: Block, index: number, blocks: Block[]) => {
   event.preventDefault();
   // add new block
-  const block = new BlockAction(model.value).push({
+  const block = model.value.push({
     type: 'text',
     id: Math.random().toString(16).substring(2),
     content: {
@@ -113,14 +124,14 @@ const enterKeyHandler = (event: KeyboardEvent, current: BlockModel, index: numbe
   focusBlock(block.id)
 }
 
-const backspaceKeyHandler = (event: KeyboardEvent, current: BlockModel, index: number, blocks: BlockModel[]) => {
+const backspaceKeyHandler = (event: KeyboardEvent, current: Block, index: number, blocks: Block[]) => {
   const target = event.target as HTMLDivElement
   if (!target.contentEditable) return false
   const text = target.textContent
   if (text?.length === 0 && index > 0) {
     // 前面没有字符可删除时，删除此block, 把光标移动到上一个block
     event.preventDefault()
-    new BlockAction(model.value).remove(current.id)
+    model.value.remove(current.id)
     focusBlock(blocks[index - 1].id)
   } else if (commandToolVisible.value) {
     if (commandToolKeyword.value) {
@@ -141,11 +152,11 @@ const backspaceKeyHandler = (event: KeyboardEvent, current: BlockModel, index: n
   }
 }
 
-const escapeKeyHandler = (event: KeyboardEvent, current: BlockModel, index: number, blocks: BlockModel[]) => {
+const escapeKeyHandler = (event: KeyboardEvent, current: Block, index: number, blocks: Block[]) => {
   commandToolVisible.value = false
 }
 
-const triggerKeyHandler = (event: KeyboardEvent, current: BlockModel, index: number, blocks: BlockModel[]) => {
+const triggerKeyHandler = (event: KeyboardEvent, current: Block, index: number, blocks: Block[]) => {
   // 待输入字符上屏之后再获取位置信息
   setTimeout(() => {
     const { x, y, height } = getCaretPosition() || { x: 0, y: 0, height: 24 }

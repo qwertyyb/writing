@@ -1,4 +1,4 @@
-import { ref, type Ref } from "vue";
+import { reactive } from "vue";
 
 const VERSION = 1;
 
@@ -6,7 +6,7 @@ interface BlockOptions {
   type: string;
   id: string;
   version?: number;
-  children?: BlockModel[];
+  children?: Block[];
   content?: any;
 }
 
@@ -17,46 +17,54 @@ enum BlockEventName {
   Update = 'update',
 }
 
-export class BlockModel {
+// class BlockModel {
+//   type: string;
+//   id: string;
+//   version: number = VERSION;
+//   children: BlockModel[] = [];
+//   content?: any;
+
+//   constructor(options: BlockOptions) {
+//     this.type = options.type;
+//     this.id = options.id
+//     this.version = options.version ?? VERSION;
+//     this.children = options.children ?? [];
+//     this.content = options.content ?? null;
+//   }
+// }
+
+export class Block extends EventTarget {
   type: string;
   id: string;
   version: number = VERSION;
-  children: BlockModel[] = [];
+  children: Block[] = [];
   content?: any;
 
   constructor(options: BlockOptions) {
+    super()
     this.type = options.type;
     this.id = options.id
     this.version = options.version ?? VERSION;
-    this.children = options.children ?? [];
+    this.children = reactive(options.children ?? []);
     this.content = options.content ?? null;
   }
-}
 
-export class BlockAction extends EventTarget {
-  block: Ref<BlockModel>
-
-  constructor(block: BlockModel) {
-    super()
-    this.block = ref(block)
-  }
-
-  private add = (options: BlockOptions, index?: number, position: 'before' | 'after' = 'after') => {
+  add = (options: BlockOptions, index?: number, position: 'before' | 'after' = 'after') => {
     if (typeof index === 'undefined' || index === null) {
-      index = this.block.value.children.length - 1
+      index = this.children.length - 1
     }
     if (index < 0) {
       throw new Error('index 不能为负数')
     }
-    if (index > this.block.value.children.length - 1) {
-      throw new Error('index 超出范围, length: ' + this.block.value.children.length)
+    if (index > this.children.length - 1) {
+      throw new Error('index 超出范围, length: ' + this.children.length)
     }
-    const block = new BlockModel(options)
+    const block = createBlock(options)
     if (position === 'after') {
-      this.block.value.children.splice(index + 1, 0, block)
+      this.children.splice(index + 1, 0, block)
       this.dispatchEvent(new CustomEvent(BlockEventName.Push, { detail: block }))
     } else if (position === 'before') {
-      this.block.value.children.splice(index, 0, block)
+      this.children.splice(index, 0, block)
       this.dispatchEvent(new CustomEvent(BlockEventName.Insert, { detail: block }))
     }
     return block
@@ -71,25 +79,28 @@ export class BlockAction extends EventTarget {
   }
 
   remove = (id: string) => {
-    const index = this.block.value.children.findIndex(block => block.id === id);
+    const index = this.children.findIndex(block => block.id === id);
     if (index === -1) {
       throw new Error(`未找到待删除节点: ${id}`)
     }
-    const blocks = this.block.value.children.splice(index, 1)
+    const blocks = this.children.splice(index, 1)
     this.dispatchEvent(new CustomEvent(BlockEventName.Remove, { detail: blocks }))
     return blocks
   }
 
   update = (options: BlockOptions) => {
-    this.block.value.id = options.id ?? this.block.value.id
-    this.block.value.type = options.type ?? this.block.value.type
-    this.block.value.children = options.children ?? this.block.value.children
-    this.block.value.content = options.content ?? this.block.value.content
-    this.block.value.version = options.version ?? this.block.value.version
+    this.id = options.id ?? this.id
+    this.type = options.type ?? this.type
+    this.children = options.children ?? this.children
+    this.content = options.content ?? this.content
+    this.version = options.version ?? this.version
     this.dispatchEvent(new CustomEvent(BlockEventName.Update, { detail: this }))
   }
 
   query = (filter: Parameters<typeof Array.prototype.filter>[0] = () => true) => {
-    return this.block.value.children.filter(filter)
+    return this.children.filter(filter)
   }
 }
+
+export const createBlock = (options: BlockOptions): Block => reactive(new Block(options))
+

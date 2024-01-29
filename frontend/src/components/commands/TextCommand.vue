@@ -3,11 +3,11 @@
 </template>
 
 <script lang="ts" setup>
-import { BlockModel } from '@/models/block';
+import { Block } from '@/models/block';
 
 const props = defineProps({
   block: {
-    type: BlockModel,
+    type: Block,
     required: true,
   }
 })
