@@ -1,24 +1,26 @@
 <template>
   <ul ref="el">
-    <li v-for="(child, index) in block.children" :key="child.id">
-      <text-renderer
+    <li v-for="(child, index) in block.children"
+      :key="child.id"
+      :data-block-id="child.id">
+      <command-renderer
         :block="child"
         :index="index"
         :parent="parent"
         ref="blockRefs"
         @add="addBlock($event, child, index)"
         @update="updateBlock($event, child, index)"
-        @remove="removeBlock(block, index)"
-      ></text-renderer>
+        @remove="removeBlock(child, index)"
+      ></command-renderer>
     </li>
   </ul>
 </template>
 
 <script lang="ts" setup>
-import TextRenderer from '../TextRenderer.vue';
 import type { Block } from '@/models/block';
 import useBlockOperate from '@/components/block-operate';
 import { computed } from 'vue';
+import CommandRenderer from '../CommandRenderer.vue';
 
 const props = defineProps<{
   block: Block,

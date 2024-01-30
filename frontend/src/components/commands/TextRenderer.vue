@@ -121,6 +121,7 @@ const el = ref<HTMLDivElement>()
 
 defineExpose({
   save() {
+    console.log(el.value, el.value?.innerHTML)
     return {
       html: el.value?.innerHTML ?? ''
     }

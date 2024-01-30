@@ -33,10 +33,7 @@ const renderRef = ref<InstanceType<typeof CommandRenderer>>()
 
 defineExpose({
   save() {
-    return {
-      ...model.value,
-      data: renderRef.value?.save()
-    }
+    return renderRef.value?.save()
   }
 })
 
