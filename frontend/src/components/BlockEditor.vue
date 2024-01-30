@@ -1,8 +1,8 @@
 <template>
   <div class="block-editor" :data-block-id="model.id" ref="el">
-    <div class="block-tool">
+    <!-- <div class="block-tool">
       <span class="material-symbols-outlined block-tool-icon"> drag_indicator </span>
-    </div>
+    </div> -->
     <div class="block-content">
       <command-renderer
         v-bind="$attrs"
@@ -33,7 +33,10 @@ const renderRef = ref<InstanceType<typeof CommandRenderer>>()
 
 defineExpose({
   save() {
-    return renderRef.value?.save()
+    return {
+      ...model.value,
+      data: renderRef.value?.save()
+    }
   }
 })
 

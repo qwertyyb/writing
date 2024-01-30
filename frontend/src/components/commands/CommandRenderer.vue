@@ -25,10 +25,7 @@ const component = computed(() => {
 
 defineExpose({
   save() {
-    return {
-      ...props.block,
-      data: renderer.value?.save()
-    }
+    return renderer.value?.save()
   }
 })
 

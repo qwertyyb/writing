@@ -3,15 +3,15 @@
     <li v-for="(child, index) in block.children"
       :key="child.id"
       :data-block-id="child.id">
-      <command-renderer
-        :block="child"
+      <block-editor
+        :model-value="child"
         :index="index"
         :parent="parent"
         ref="blockRefs"
         @add="addBlock($event, child, index)"
         @update="updateBlock($event, child, index)"
         @remove="removeBlock(child, index)"
-      ></command-renderer>
+      ></block-editor>
     </li>
   </ul>
 </template>
@@ -20,7 +20,7 @@
 import type { Block } from '@/models/block';
 import useBlockOperate from '@/components/block-operate';
 import { computed } from 'vue';
-import CommandRenderer from '../CommandRenderer.vue';
+import BlockEditor from '@/components/BlockEditor.vue';
 
 const props = defineProps<{
   block: Block,
