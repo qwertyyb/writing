@@ -3,7 +3,7 @@
     <ul class="command-tool-list">
       <li class="command-tool-item"
         :class="{ selected: index === selectedIndex }"
-        v-for="(command, index) in visibleCommands" :key="command.value">{{ command.label }}</li>
+        v-for="(command, index) in visibleCommands" :key="command.identifier">{{ command.label }}</li>
       <li class="command-tool-item" v-if="visibleCommands.length <= 0">未找到结果</li>
     </ul>
   </div>
@@ -11,6 +11,7 @@
 
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue';
+import commands from './commands';
 
 const props = defineProps({
   keyword: {
@@ -21,15 +22,11 @@ const props = defineProps({
 
 const selectedIndex = ref(0)
 
-const commands = [
-  { label: '文本', value: 'text' },
-]
-
 watch(() => props.keyword, () => selectedIndex.value = 0)
 
 const visibleCommands = computed(() => {
   if (!props.keyword) return commands
-  return commands.filter(command => command.value.includes(props.keyword))
+  return commands.filter(command => command.identifier.includes(props.keyword))
 })
 
 defineExpose({

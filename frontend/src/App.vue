@@ -6,6 +6,8 @@ import { RouterView } from 'vue-router'
   <RouterView />
 </template>
 
-<style scoped>
-
+<style>
+body {
+  font-family: Consolas, Monaco, monospace;
+}
 </style>

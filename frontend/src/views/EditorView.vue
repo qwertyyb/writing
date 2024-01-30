@@ -1,5 +1,6 @@
 <template>
-  <rich-text-editor v-model="value"></rich-text-editor>
+  <rich-text-editor v-model="value" ref="editorRef"></rich-text-editor>
+  <button @click="submit">提交</button>
 </template>
 
 <script lang="ts" setup>
@@ -14,26 +15,33 @@ const value = ref<Block>(createBlock({
     createBlock({
       id: 'text',
       type: 'text',
-      content: {
-        text: '这是测试内容1'
+      data: {
+        html: '这是测试内容1'
       }
     }),
     createBlock({
       id: 'text2',
       type: 'text',
-      content: {
-        text: '这是测试内容2'
+      data: {
+        html: '这是测试内容2'
       }
     }),
     createBlock({
       id: 'text3',
       type: 'text',
-      content: {
-        text: '这是测试内容3'
+      data: {
+        html: '这是测试内容3'
       }
     })
   ]
 }))
+
+const editorRef = ref<InstanceType<typeof RichTextEditor>>()
+
+const submit = () => {
+  console.log(editorRef.value?.save())
+}
+
 </script>
 
 <style>

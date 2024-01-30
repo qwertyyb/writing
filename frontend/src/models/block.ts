@@ -2,12 +2,12 @@ import { reactive } from "vue";
 
 const VERSION = 1;
 
-interface BlockOptions {
+export interface BlockOptions {
   type: string;
   id: string;
   version?: number;
   children?: Block[];
-  content?: any;
+  data?: any;
 }
 
 enum BlockEventName {
@@ -17,28 +17,12 @@ enum BlockEventName {
   Update = 'update',
 }
 
-// class BlockModel {
-//   type: string;
-//   id: string;
-//   version: number = VERSION;
-//   children: BlockModel[] = [];
-//   content?: any;
-
-//   constructor(options: BlockOptions) {
-//     this.type = options.type;
-//     this.id = options.id
-//     this.version = options.version ?? VERSION;
-//     this.children = options.children ?? [];
-//     this.content = options.content ?? null;
-//   }
-// }
-
 export class Block extends EventTarget {
   type: string;
   id: string;
   version: number = VERSION;
   children: Block[] = [];
-  content?: any;
+  data?: any;
 
   constructor(options: BlockOptions) {
     super()
@@ -46,7 +30,7 @@ export class Block extends EventTarget {
     this.id = options.id
     this.version = options.version ?? VERSION;
     this.children = reactive(options.children ?? []);
-    this.content = options.content ?? null;
+    this.data = options.data ?? null;
   }
 
   add = (options: BlockOptions, index?: number, position: 'before' | 'after' = 'after') => {
@@ -56,7 +40,7 @@ export class Block extends EventTarget {
     if (index < 0) {
       throw new Error('index 不能为负数')
     }
-    if (index > this.children.length - 1) {
+    if (index > this.children.length) {
       throw new Error('index 超出范围, length: ' + this.children.length)
     }
     const block = createBlock(options)
@@ -88,11 +72,11 @@ export class Block extends EventTarget {
     return blocks
   }
 
-  update = (options: BlockOptions) => {
+  update = (options: Partial<BlockOptions>) => {
     this.id = options.id ?? this.id
     this.type = options.type ?? this.type
     this.children = options.children ?? this.children
-    this.content = options.content ?? this.content
+    this.data = options.data ?? this.data
     this.version = options.version ?? this.version
     this.dispatchEvent(new CustomEvent(BlockEventName.Update, { detail: this }))
   }

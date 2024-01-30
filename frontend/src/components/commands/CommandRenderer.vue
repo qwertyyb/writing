@@ -1,24 +1,32 @@
 <template>
-  <component :is="component" :block="block"></component>
+  <component :is="component"
+    :block="block"
+    v-bind="$attrs"
+    v-if="block" ref="renderer"></component>
 </template>
 
 <script lang="ts" setup>
 import { Block } from '@/models/block';
-import TextCommand from './TextCommand.vue';
-import { computed, type Component } from 'vue';
+import { computed, ref } from 'vue';
+import commands from '.';
 
 const props = defineProps({
   block: {
     type: Block,
     rquired: true
-  }
+  },
 })
 
+const renderer = ref()
+
 const component = computed(() => {
-  const components: Record<string, Component> = {
-    text: TextCommand,
+  return commands.find(command => command.identifier === props.block?.type)?.component
+})
+
+defineExpose({
+  save() {
+    return renderer.value?.save()
   }
-  return props.block?.type ? components[props.block.type] : components.text
 })
 
 </script>
