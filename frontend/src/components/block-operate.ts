@@ -1,6 +1,6 @@
 import { addAfter, remove, type BlockModel, type BlockOptions } from "@/models/block"
 import { setCaretToEnd } from "@/models/caret"
-import { nextTick, ref, type Ref, type defineEmits } from "vue"
+import { nextTick, ref, type Ref } from "vue"
 import CommandRenderer from "./commands/CommandRenderer.vue"
 
 type Emits = ((evt: "add", args_0: {
@@ -33,7 +33,9 @@ const useBlockOperate = (parent: Ref<BlockModel>, emits: Emits) => {
   }
 
   const emitUpdate = () => {
-    emits('change', save())
+    nextTick(() => {
+      emits('change', save())
+    })
   }
 
   const addBlock = (options: Partial<BlockOptions> | undefined | null, block: BlockModel, index: number) => {
@@ -75,6 +77,7 @@ const useBlockOperate = (parent: Ref<BlockModel>, emits: Emits) => {
   }
 
   const save = () => {
+    console.log(blockRefs.value.map(blockRef => blockRef.save()))
     return {
       ...parent.value,
       children: blockRefs.value.map(blockRef => blockRef.save())
