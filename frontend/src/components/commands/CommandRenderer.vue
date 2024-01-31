@@ -24,6 +24,9 @@ const component = computed(() => {
 })
 
 defineExpose({
+  blockType: () => {
+    return renderer.value?.blockType?.() ?? 'data'
+  },
   save() {
     return renderer.value?.save()
   }

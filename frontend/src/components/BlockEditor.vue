@@ -33,9 +33,13 @@ const renderRef = ref<InstanceType<typeof CommandRenderer>>()
 
 defineExpose({
   save() {
-    return {
-      ...model.value,
-      data: renderRef.value?.save()
+    if (renderRef.value?.blockType() === 'data') {
+      return {
+        ...model.value,
+        data: renderRef.value?.save()
+      }
+    } else {
+      return renderRef.value?.save()
     }
   }
 })

@@ -132,7 +132,7 @@ defineExpose({
 .text-renderer {
   [contenteditable] {
     outline: none;
-    &:empty::before {
+    &:focus:empty::before {
       content: attr(placeholder);
       color: rgba(0, 0, 0, .3);
     }

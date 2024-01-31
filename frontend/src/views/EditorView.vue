@@ -39,7 +39,7 @@ const value = ref<Block>(createBlock({
 const editorRef = ref<InstanceType<typeof RichTextEditor>>()
 
 const submit = () => {
-  console.log(editorRef.value?.save())
+  console.log(JSON.parse(JSON.stringify(editorRef.value?.save())))
 }
 
 </script>

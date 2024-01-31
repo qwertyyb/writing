@@ -1,7 +1,8 @@
 <template>
-  <ul ref="el">
+  <ul ref="el" class="list-block" data-block-node="no-leaf">
     <li v-for="(child, index) in block.children"
       :key="child.id"
+      class="list-block-item"
       :data-block-id="child.id">
       <block-editor
         :model-value="child"
@@ -38,6 +39,13 @@ addBlock({
 }, props.block, 0)
 
 defineExpose({
+  blockType: () => 'raw', // raw | data
   save
 })
 </script>
+
+<style lang="less" scoped>
+.list-block-item:has([data-block-node="no-leaf"]) {
+  list-style: none
+}
+</style>
