@@ -16,7 +16,7 @@
 </template>
 
 <script lang="ts" setup>
-import { createBlock } from '@/models/block';
+import { createBlock, type BlockModel } from '@/models/block';
 import BlockEditor from './BlockEditor.vue';
 import useBlockOperate from './block-operate';
 
@@ -24,7 +24,14 @@ const model = defineModel<ReturnType<typeof createBlock>>({
   required: true
 })
 
-const { el, blockRefs, addBlock, updateBlock, removeBlock, save } = useBlockOperate(model)
+const emits = defineEmits<{
+  add: [{ block: BlockModel, index: number, parent?: BlockModel }],
+  update: [{ oldBlock: BlockModel, block: BlockModel, index: number, parent?: BlockModel }],
+  remove: [{ block: BlockModel, index: number, parent?: BlockModel }],
+  change: [BlockModel]
+}>()
+
+const { el, blockRefs, addBlock, updateBlock, removeBlock, save } = useBlockOperate(model, emits)
 
 defineExpose({
   save

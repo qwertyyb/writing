@@ -6,16 +6,13 @@
 </template>
 
 <script lang="ts" setup>
-import { Block } from '@/models/block';
+import { type BlockModel, BlockSaveType } from '@/models/block';
 import { computed, ref } from 'vue';
 import commands from '.';
 
-const props = defineProps({
-  block: {
-    type: Block,
-    rquired: true
-  },
-})
+const props = defineProps<{
+  block: BlockModel
+}>()
 
 const renderer = ref()
 
@@ -24,8 +21,8 @@ const component = computed(() => {
 })
 
 defineExpose({
-  blockType: () => {
-    return renderer.value?.blockType?.() ?? 'data'
+  blockSaveType: () => {
+    return renderer.value?.blockSaveType?.() ?? BlockSaveType.Data
   },
   save() {
     return renderer.value?.save()

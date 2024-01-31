@@ -1,90 +1,95 @@
-import { reactive } from "vue";
-
-const VERSION = 1;
-
 export interface BlockOptions {
   type: string;
   id: string;
   version?: number;
-  children?: Block[];
+  children?: BlockModel[];
   data?: any;
 }
 
-enum BlockEventName {
+export enum BlockSaveType {
+  Raw = 'Raw',
+  Data = 'Data',
+}
+
+export interface BlockModel {
+  type: string;
+  id: string;
+  children?: BlockModel[];
+  data?: any;
+}
+
+export enum BlockEventName {
   Insert = 'insert',
   Push = 'push',
   Remove = 'remove',
   Update = 'update',
 }
 
-export class Block extends EventTarget {
-  type: string;
-  id: string;
-  version: number = VERSION;
-  children: Block[] = [];
-  data?: any;
-
-  constructor(options: BlockOptions) {
-    super()
-    this.type = options.type;
-    this.id = options.id
-    this.version = options.version ?? VERSION;
-    this.children = reactive(options.children ?? []);
-    this.data = options.data ?? null;
+const add = (block: BlockModel, options: Partial<BlockOptions>, index?: number, position: 'before' | 'after' = 'after') => {
+  if (!block.children) {
+    block.children = []
   }
-
-  add = (options: BlockOptions, index?: number, position: 'before' | 'after' = 'after') => {
-    if (typeof index === 'undefined' || index === null) {
-      index = this.children.length - 1
-    }
-    if (index < 0) {
-      throw new Error('index 不能为负数')
-    }
-    if (index > this.children.length) {
-      throw new Error('index 超出范围, length: ' + this.children.length)
-    }
-    const block = createBlock(options)
-    if (position === 'after') {
-      this.children.splice(index + 1, 0, block)
-      this.dispatchEvent(new CustomEvent(BlockEventName.Push, { detail: block }))
-    } else if (position === 'before') {
-      this.children.splice(index, 0, block)
-      this.dispatchEvent(new CustomEvent(BlockEventName.Insert, { detail: block }))
-    }
-    return block
+  if (typeof index === 'undefined' || index === null) {
+    index = block.children.length - 1
   }
-
-  insert = (options: BlockOptions, index?: number) => {
-    return this.add(options, index, 'before')
+  if (index < 0) {
+    throw new Error('index 不能为负数')
   }
-
-  push = (options: BlockOptions, index?: number) => {
-    return this.add(options, index, 'after')
+  if (index > block.children.length) {
+    throw new Error('index 超出范围, length: ' + block.children.length)
   }
-
-  remove = (id: string) => {
-    const index = this.children.findIndex(block => block.id === id);
-    if (index === -1) {
-      throw new Error(`未找到待删除节点: ${id}`)
-    }
-    const blocks = this.children.splice(index, 1)
-    this.dispatchEvent(new CustomEvent(BlockEventName.Remove, { detail: blocks }))
-    return blocks
+  const newBlock = createBlock(options)
+  if (position === 'after') {
+    block.children.splice(index + 1, 0, newBlock)
+  } else if (position === 'before') {
+    block.children.splice(index, 0, newBlock)
   }
-
-  update = (options: Partial<BlockOptions>) => {
-    this.id = options.id ?? this.id
-    this.type = options.type ?? this.type
-    this.children = options.children ?? this.children
-    this.data = options.data ?? this.data
-    this.version = options.version ?? this.version
-    this.dispatchEvent(new CustomEvent(BlockEventName.Update, { detail: this }))
-  }
-
-  query = (filter: Parameters<typeof Array.prototype.filter>[0] = () => true) => {
-    return this.children.filter(filter)
-  }
+  return newBlock
 }
 
-export const createBlock = (options: BlockOptions): Block => reactive(new Block(options))
+export const createBlockId = (): string => Math.random().toString(16).substring(2)
+
+export const addAfter = (block: BlockModel, options: Partial<BlockOptions>, index?: number) => {
+  return add(block, options, index, 'after')
+}
+
+export const addBefore = (block: BlockModel, options: Partial<BlockOptions>, index?: number) => {
+  return add(block, options, index, 'before')
+}
+
+export const update = (block: BlockModel, options: Partial<BlockOptions>) => {
+  block.id = options.id ?? block.id
+  block.type = options.type ?? block.type
+  block.children = options.children ?? block.children
+  block.data = options.data ?? block.data
+  return block
+}
+
+export const remove = (parent: BlockModel, id: string) => {
+  if (!parent.children) {
+    throw new Error(`删除失败，该节点没有子节点`)
+  }
+  const index = parent.children.findIndex(block => block.id === id);
+  if (index === -1) {
+    throw new Error(`未找到待删除节点: ${id}`)
+  }
+  const blocks = parent.children.splice(index, 1)
+  return blocks
+}
+
+export const createBlock = (options: Partial<BlockOptions>): BlockModel => {
+  if (!options.id) {
+    options.id = createBlockId()
+  }
+  if (!options.type) {
+    options.type = 'text'
+  }
+  const block = {
+    ...options,
+    type: options.type ?? 'text',
+    id: options.id ?? createBlockId(),
+  }
+  return block
+}
+
 

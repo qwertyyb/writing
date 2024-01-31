@@ -18,20 +18,27 @@
 </template>
 
 <script lang="ts" setup>
-import type { Block } from '@/models/block';
+import { type BlockModel, BlockSaveType } from '@/models/block';
 import useBlockOperate from '@/components/block-operate';
 import { computed } from 'vue';
 import BlockEditor from '@/components/BlockEditor.vue';
 
 const props = defineProps<{
-  block: Block,
+  block: BlockModel,
   index: number,
-  parent: Block,
+  parent?: BlockModel,
+}>()
+
+const emits = defineEmits<{
+  add: [{ block: BlockModel, index: number, parent?: BlockModel }],
+  update: [{ oldBlock: BlockModel, block: BlockModel, index: number, parent?: BlockModel }],
+  remove: [{ block: BlockModel, index: number, parent?: BlockModel }],
+  change: [BlockModel]
 }>()
 
 const block = computed(() => props.block)
 
-const { el, blockRefs, addBlock, updateBlock, removeBlock, save } = useBlockOperate(block)
+const { el, blockRefs, addBlock, updateBlock, removeBlock, save } = useBlockOperate(block, emits)
 
 addBlock({
   type: 'text',
@@ -39,7 +46,7 @@ addBlock({
 }, props.block, 0)
 
 defineExpose({
-  blockType: () => 'raw', // raw | data
+  blockSaveType: () => BlockSaveType.Raw,
   save
 })
 </script>

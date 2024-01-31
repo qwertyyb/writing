@@ -15,17 +15,17 @@
 </template>
 
 <script lang="ts" setup>
-import { Block } from '@/models/block';
+import { type BlockModel, BlockSaveType } from '@/models/block';
 import { ref } from 'vue';
 import CommandRenderer from './commands/CommandRenderer.vue';
 
-const model = defineModel<Block>({
+const model = defineModel<BlockModel>({
   required: true
 })
 
 const props = defineProps<{
   index: number,
-  parent: Block
+  parent?: BlockModel
 }>()
 
 const el = ref<HTMLDivElement>()
@@ -33,7 +33,7 @@ const renderRef = ref<InstanceType<typeof CommandRenderer>>()
 
 defineExpose({
   save() {
-    if (renderRef.value?.blockType() === 'data') {
+    if (renderRef.value?.blockSaveType() === BlockSaveType.Data) {
       return {
         ...model.value,
         data: renderRef.value?.save()

@@ -1,34 +1,26 @@
 <template>
-  <rich-text-editor v-model="value" ref="editorRef"></rich-text-editor>
-  <button @click="submit">提交</button>
+  <rich-text-editor v-model="value" ref="editorRef" @change="changeHandler"></rich-text-editor>
 </template>
 
 <script lang="ts" setup>
 import RichTextEditor from '@/components/RichTextEditor.vue'
 import { ref } from 'vue'
-import { Block, createBlock } from '@/models/block'
+import { type BlockModel, createBlock } from '@/models/block'
 
-const value = ref<Block>(createBlock({
-  id: 'test',
+const value = ref<BlockModel>(createBlock({
   type: 'doc',
   children: [
     createBlock({
-      id: 'text',
-      type: 'text',
       data: {
         html: '这是测试内容1'
       }
     }),
     createBlock({
-      id: 'text2',
-      type: 'text',
       data: {
         html: '这是测试内容2'
       }
     }),
     createBlock({
-      id: 'text3',
-      type: 'text',
       data: {
         html: '这是测试内容3'
       }
@@ -38,8 +30,8 @@ const value = ref<Block>(createBlock({
 
 const editorRef = ref<InstanceType<typeof RichTextEditor>>()
 
-const submit = () => {
-  console.log(JSON.parse(JSON.stringify(editorRef.value?.save())))
+const changeHandler = (value: BlockModel) => {
+  console.log(value)
 }
 
 </script>

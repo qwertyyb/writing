@@ -22,7 +22,7 @@
 import { ref, reactive, watch } from 'vue';
 import CommandTool from './CommandTool.vue';
 import { getCaretPosition, setCaretToEnd } from '@/models/caret';
-import { Block, type BlockOptions } from '@/models/block';
+import type { BlockModel, BlockOptions } from '@/models/block';
 
 const editorEl = ref<HTMLDivElement>()
 
@@ -33,11 +33,11 @@ const commandToolKeyword = ref('')
 
 watch(commandToolVisible, () => commandToolKeyword.value = '')
 
-const props = defineProps({
-  block: Block,
-  index: Number,
-  parent: Block
-})
+const props = defineProps<{
+  block: BlockModel,
+  index: number,
+  parent?: BlockModel
+}>()
 
 const emits = defineEmits<{
   add: [options?: Partial<BlockOptions>],

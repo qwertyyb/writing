@@ -38,7 +38,6 @@ defineExpose({
   },
   confirm() {
     const command = visibleCommands.value[selectedIndex.value]
-    console.log('confirm', command)
     if (!command) return null
     return command
   }
