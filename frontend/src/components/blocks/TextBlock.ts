@@ -1,4 +1,4 @@
-import TextRenderer from "./TextRenderer.vue";
+import TextRenderer from "./TextBLock.vue";
 
 export default {
   identifier: 'text',

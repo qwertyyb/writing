@@ -1,14 +1,14 @@
 <template>
   <ul ref="el" class="list-block" data-block-node="no-leaf">
     <li v-for="(child, index) in block.children"
-      :key="child.id"
-      class="list-block-item"
-      :data-block-id="child.id">
+      :key="child.id + child.type"
+      class="list-block-item">
       <block-editor
         :model-value="child"
         :index="index"
         :parent="parent"
-        ref="blockRefs"
+        :ref="el => setBlockRef(child.id, el as any)"
+        @update:modelValue="updateBlock($event, child, index)"
         @add="addBlock($event, child, index)"
         @update="updateBlock($event, child, index)"
         @remove="removeBlock(child, index)"
@@ -20,30 +20,31 @@
 <script lang="ts" setup>
 import { type BlockModel, BlockSaveType } from '@/models/block';
 import useBlockOperate from '@/components/block-operate';
-import { computed } from 'vue';
 import BlockEditor from '@/components/BlockEditor.vue';
 
+const block = defineModel<BlockModel>({ required: true })
+
 const props = defineProps<{
-  block: BlockModel,
   index: number,
   parent?: BlockModel,
 }>()
 
 const emits = defineEmits<{
-  add: [{ block: BlockModel, index: number, parent?: BlockModel }],
-  update: [{ oldBlock: BlockModel, block: BlockModel, index: number, parent?: BlockModel }],
-  remove: [{ block: BlockModel, index: number, parent?: BlockModel }],
-  change: [BlockModel]
+  added: [{ block: BlockModel, index: number, parent?: BlockModel }],
+  updated: [{ oldBlock: BlockModel, block: BlockModel, index: number, parent?: BlockModel }],
+  removed: [{ block: BlockModel, index: number, parent?: BlockModel }],
+  change: [BlockModel],
+  'update:modelValue': [BlockModel]
 }>()
 
-const block = computed(() => props.block)
+const { el, setBlockRef, addBlock, updateBlock, removeBlock, save } = useBlockOperate(block, emits)
 
-const { el, blockRefs, addBlock, updateBlock, removeBlock, save } = useBlockOperate(block, emits)
-
-addBlock({
-  type: 'text',
-  id: Math.random().toString(16).substring(2)
-}, props.block, 0)
+if (!block.value.children?.length) {
+  addBlock({
+    type: 'text',
+    id: Math.random().toString(16).substring(2)
+  }, block.value, 0)
+}
 
 defineExpose({
   blockSaveType: () => BlockSaveType.Raw,

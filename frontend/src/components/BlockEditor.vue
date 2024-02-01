@@ -1,12 +1,12 @@
 <template>
-  <div class="block-editor" :data-block-id="model.id" ref="el">
+  <div class="block-editor" :data-block-id="block.id" ref="el">
     <!-- <div class="block-tool">
       <span class="material-symbols-outlined block-tool-icon"> drag_indicator </span>
     </div> -->
     <div class="block-content">
       <command-renderer
         v-bind="$attrs"
-        :block="model"
+        v-model="block"
         :index="index"
         :parent="parent"
         ref="renderRef"></command-renderer>
@@ -19,9 +19,7 @@ import { type BlockModel, BlockSaveType } from '@/models/block';
 import { ref } from 'vue';
 import CommandRenderer from './commands/CommandRenderer.vue';
 
-const model = defineModel<BlockModel>({
-  required: true
-})
+const block = defineModel<BlockModel>({ required: true })
 
 const props = defineProps<{
   index: number,
@@ -35,7 +33,7 @@ defineExpose({
   save() {
     if (renderRef.value?.blockSaveType() === BlockSaveType.Data) {
       return {
-        ...model.value,
+        ...block.value,
         data: renderRef.value?.save()
       }
     } else {

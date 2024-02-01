@@ -1,15 +1,19 @@
 <template>
   <div class="rich-text-editor" ref="el">
     <div class="block-list">
-      <block-editor v-for="(block, index) in model.children"
-        :key="block.id"
-        :model-value="block"
+      <block-editor v-for="(child, index) in model.children"
+        :key="child.id + child.type"
+        :model-value="child"
         :index="index"
         :parent="model"
-        @add="addBlock($event, block, index)"
-        @update="updateBlock($event, block, index)"
-        @remove="removeBlock(block, index)"
-        ref="blockRefs"
+        @update:modelValue="updateBlock($event, child, index)"
+        @change="changeHandler"
+        @add="addBlock($event, child, index)"
+        @update="updateBlock($event, child, index)"
+        @remove="removeBlock(child, index)"
+        @focusBefore="focusBefore"
+        @focusAfter="focusAfter"
+        :ref="el => setBlockRef(child.id, el as any)"
       ></block-editor>
     </div>
   </div>
@@ -25,13 +29,18 @@ const model = defineModel<ReturnType<typeof createBlock>>({
 })
 
 const emits = defineEmits<{
-  add: [{ block: BlockModel, index: number, parent?: BlockModel }],
-  update: [{ oldBlock: BlockModel, block: BlockModel, index: number, parent?: BlockModel }],
-  remove: [{ block: BlockModel, index: number, parent?: BlockModel }],
-  change: [BlockModel]
+  added: [{ block: BlockModel, index: number, parent?: BlockModel }],
+  updated: [{ oldBlock: BlockModel, block: BlockModel, index: number, parent?: BlockModel }],
+  removed: [{ block: BlockModel, index: number, parent?: BlockModel }],
+  change: [BlockModel],
+  'update:modelValue': [BlockModel]
 }>()
 
-const { el, blockRefs, addBlock, updateBlock, removeBlock, save } = useBlockOperate(model, emits)
+const { el, setBlockRef, addBlock, updateBlock, removeBlock, save } = useBlockOperate(model, emits)
+
+const changeHandler = () => {
+  emits('change', save())
+}
 
 defineExpose({
   save

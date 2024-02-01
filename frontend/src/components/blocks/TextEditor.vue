@@ -1,62 +1,46 @@
 <template>
-  <div class="text-renderer">
-    <div class="text-editor"
+  <div class="text-editor">
+    <div class="text-editor-content"
       contenteditable
-      @click="commandToolVisible = false"
+      data-focusable
       @keydown="keydownHandler($event)"
-      v-html="block?.data?.html ?? ''"
+      @input="inputHandler"
+      v-html="value"
       placeholder="Type something..."
       ref="el"></div>
-
-    <command-tool v-if="commandToolVisible"
-      ref="commandTool"
-      @confirm="onCommand"
-      @exit="onExitTool"
-      :keyword="commandToolKeyword"
-      :style="{top: commandToolPoisition.top + 'px', left: commandToolPoisition.left + 'px'}"
-    ></command-tool>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, watch } from 'vue';
-import CommandTool from './CommandTool.vue';
-import { getCaretPosition, setCaretToEnd } from '@/models/caret';
-import type { BlockModel, BlockOptions } from '@/models/block';
+import { ref, watchEffect } from 'vue';
+import { getCaretPosition, isInHeading, isInTailing } from '@/models/caret';
 
-const editorEl = ref<HTMLDivElement>()
-
-const commandTool = ref<InstanceType<typeof CommandTool>>()
-const commandToolVisible = ref(false)
-const commandToolPoisition = reactive({ top: 0, left: 0 })
-const commandToolKeyword = ref('')
-
-watch(commandToolVisible, () => commandToolKeyword.value = '')
-
-const props = defineProps<{
-  block: BlockModel,
-  index: number,
-  parent?: BlockModel
-}>()
+const model = defineModel<string>({ required: true })
 
 const emits = defineEmits<{
-  add: [options?: Partial<BlockOptions>],
-  update: [options: Partial<BlockOptions>]
-  remove: [],
+  keyEnter: [event: KeyboardEvent],
+  keyEsc: [event: KeyboardEvent],
+
+  emptyKeyBackspace: [event: KeyboardEvent],
+
+  openTool: [{ x: number, y: number }],
+
+  focusBefore: [],
+  focusAfter: [],
 }>()
 
-const onCommand = (command: any) => {
-  commandToolVisible.value = false
-  emits('update', { type: command.identifier })
-}
+const value = ref(model.value ?? '')
 
-const onExitTool = (options?: { autofocus: boolean }) => {
-  commandToolVisible.value = false
-  if (options?.autofocus) {
-    el.value?.focus()
-    setCaretToEnd(el.value!)
+const editorEl = ref<HTMLDivElement>()
+const el = ref<HTMLDivElement>()
+
+const getValue = () => el.value?.innerHTML ?? ''
+
+watchEffect(() => {
+  if (getValue() !== (model.value ?? '')) {
+    value.value = model.value ?? ''
   }
-}
+})
 
 const TRIGGER_KEY = '/'
 enum KeyCodes {
@@ -82,27 +66,36 @@ const keydownHandler = (event: KeyboardEvent) => {
   } else if (event.key === TRIGGER_KEY) {
     // 打开命令选择
     triggerKeyHandler(event)
+  } else if (event.code === KeyCodes.ArrowUp) {
+    if (isInHeading(el.value!)) {
+      emits('focusBefore')
+    }
+  } else if (event.code === KeyCodes.ArrowDown) {
+    if (isInTailing(el.value!)) {
+      console.log('focusAfter')
+      emits('focusAfter')
+    }
   }
 }
 
 const enterKeyHandler = (event: KeyboardEvent) => {
-  event.preventDefault();
-  emits('add')
+  emits('keyEnter', event);
 }
 
 const backspaceKeyHandler = (event: KeyboardEvent) => {
   const target = event.target as HTMLDivElement
   if (!target.contentEditable) return false
   const text = target.textContent
-  if (text?.length === 0 && props.index! > 0) {
+  if (text?.length === 0) {
     // 前面没有字符可删除时，删除此block, 把光标移动到上一个block
     event.preventDefault()
-    emits('remove')
+    emits('emptyKeyBackspace', event)
   }
 }
 
 const escapeKeyHandler = (event: KeyboardEvent) => {
-  commandToolVisible.value = false
+  event.preventDefault()
+  emits('keyEsc', event)
 }
 
 const triggerKeyHandler = (event: KeyboardEvent) => {
@@ -111,25 +104,21 @@ const triggerKeyHandler = (event: KeyboardEvent) => {
     const { x, y, height } = getCaretPosition() || { x: 0, y: 0, height: 24 }
     const { x: px, y: py } = editorEl.value?.getBoundingClientRect() || { x: 0, y: 0 };
 
-    commandToolPoisition.top = y - py + height
-    commandToolPoisition.left = x - px
-    commandToolVisible.value = true
+    emits('openTool', { x: x - px, y: y - py + height })
   })
 }
 
-const el = ref<HTMLDivElement>()
+const inputHandler = () => {
+  model.value = getValue()
+}
 
 defineExpose({
-  save() {
-    return {
-      html: el.value?.innerHTML ?? ''
-    }
-  }
+  getValue
 })
 </script>
 
 <style lang="less" scoped>
-.text-renderer {
+.text-editor {
   [contenteditable] {
     outline: none;
     &:focus:empty::before {

@@ -1,88 +1,96 @@
 <template>
   <div class="image-block">
-    <div class="upload-tip" @click="upload" v-if="!src">
+    <div class="upload-tip" @click="upload" v-if="!src" tabindex="0" data-focusable @keydown.enter="upload">
       <span class="material-symbols-outlined upload-icon">
       image
       </span>
-      点击上传图片
+      <span class="no-focus">
+        点击上传图片
+      </span>
+      <span class="focused">
+        回车或点击上传图片
+      </span>
     </div>
     <div class="image-container"
       :class="align"
       ref="containerEl"
       v-else>
       <figure class="image-wrapper" :style="{ width: size + '%'}">
-        <img :src="src" alt="" class="image" ref="imageEl">
-        <figcaption class="image-title">这里是标题这里是标题这里是标题</figcaption>
-        <div class="image-settings-wrapper">
-          <div class="image-settings">
-            <el-dropdown popper-class="image-setting-menu-popper" @command="commandHandler">
-              <span class="material-symbols-outlined settings-icon">more_horiz</span>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item command="Align.Left">
-                    <span class="material-symbols-outlined menu-item-icon">
-                    format_image_left
-                    </span>
-                    左对齐
-                  </el-dropdown-item>
-                  <el-dropdown-item command="Align.Center">
-                    <span class="material-symbols-outlined menu-item-icon">
-                    format_align_center
-                    </span>
-                    居中对齐
-                  </el-dropdown-item>
-                  <el-dropdown-item command="Align.Right">
-                    <span class="material-symbols-outlined menu-item-icon">
-                    format_image_right
-                    </span>
-                    右对齐
-                  </el-dropdown-item>
-                  <el-dropdown-item divided command="Size.Large">
-                    <span class="material-symbols-outlined menu-item-icon">
-                    photo_size_select_large
-                    </span>
-                    放大
-                  </el-dropdown-item>
-                  <el-dropdown-item command="Size.Small">
-                    <span class="material-symbols-outlined menu-item-icon">
-                    photo_size_select_small
-                    </span>
-                    缩小
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
+        <img :src="src" alt="" class="image" ref="imageEl" @click="settingsVisible = true">
+        <figcaption class="image-title" contenteditable data-focusable ref="titleRef">这里是标题这里是标题这里是标题</figcaption>
+
+        <transition name="el-fade-in">
+          <div class="image-settings-container" v-show="settingsVisible" v-click-outside="() => settingsVisible = false">
+            <div class="image-resizer">
+              <div class="resizer-left"
+                @pointerdown="pointerdownHandler('left', $event)"
+                @pointermove="pointermoveHandler('left', $event)"
+                @pointerup="pointerupHandler($event)"></div>
+              <div class="resizer-right"
+                @pointerdown="pointerdownHandler('right', $event)"
+                @pointermove="pointermoveHandler('right', $event)"
+                @pointerup="pointerupHandler($event)"></div>
+            </div>
+
+            <div class="image-settings-wrapper">
+              <div class="image-settings">
+                <el-dropdown popper-class="image-setting-menu-popper" @command="commandHandler">
+                  <span class="material-symbols-outlined settings-icon">more_horiz</span>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="Align.Left">
+                        <span class="material-symbols-outlined menu-item-icon">
+                        format_image_left
+                        </span>
+                        左对齐
+                      </el-dropdown-item>
+                      <el-dropdown-item command="Align.Center">
+                        <span class="material-symbols-outlined menu-item-icon">
+                        format_align_center
+                        </span>
+                        居中对齐
+                      </el-dropdown-item>
+                      <el-dropdown-item command="Align.Right">
+                        <span class="material-symbols-outlined menu-item-icon">
+                        format_image_right
+                        </span>
+                        右对齐
+                      </el-dropdown-item>
+                      <el-dropdown-item divided command="Size.Large">
+                        <span class="material-symbols-outlined menu-item-icon">
+                        photo_size_select_large
+                        </span>
+                        放大
+                      </el-dropdown-item>
+                      <el-dropdown-item command="Size.Small">
+                        <span class="material-symbols-outlined menu-item-icon">
+                        photo_size_select_small
+                        </span>
+                        缩小
+                      </el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="image-resizer">
-          <div class="resizer-top"></div>
-          <div class="resizer-bottom"></div>
-          <div class="resizer-left"
-            @pointerdown="pointerdownHandler('left', $event)"
-            @pointermove="pointermoveHandler('left', $event)"
-            @pointerup="pointerupHandler($event)"></div>
-          <div class="resizer-right"
-            @pointerdown="pointerdownHandler('right', $event)"
-            @pointermove="pointermoveHandler('right', $event)"
-            @pointerup="pointerupHandler($event)"></div>
-        </div>
+        </transition>
       </figure>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { ref, watchEffect } from 'vue';
 import type { BlockModel } from '@/models/block';
-import TextRenderer from '../TextRenderer.vue';
+import TextBlock from '../TextBlock.vue';
 
-const props = defineProps<{
-  block: BlockModel,
-}>()
+const block = defineModel<BlockModel>({ required: true })
 
-const textRenderRef = ref<InstanceType<typeof TextRenderer>>()
+const textRenderRef = ref<InstanceType<typeof TextBlock>>()
 const imageEl = ref<HTMLImageElement>()
 const containerEl = ref<HTMLDivElement>()
+const settingsVisible = ref(false)
 
 enum ImageAlign {
   Left = 'Left',
@@ -90,9 +98,15 @@ enum ImageAlign {
   Right = 'Right'
 }
 
-const src = ref('')
-const align = ref<ImageAlign>(ImageAlign.Center)
-const size = ref<number>(50)
+const src = ref(block.value.data?.src ?? '')
+const align = ref<ImageAlign>(block.value.data?.align ?? ImageAlign.Center)
+const size = ref<number>(block.value.data?.size ?? 50)
+
+watchEffect(() => {
+  src.value = block.value.data?.src ?? ''
+  align.value = block.value.data?.align ?? ImageAlign.Center
+  size.value = block.value.data?.size ?? 50
+})
 
 const upload = () => {
   const input = document.createElement('input')
@@ -164,8 +178,18 @@ defineExpose({
   display: flex;
   align-items: center;
   color: rgba(200, 200, 200, 1);
+  outline: none;
+  .focused {
+    display: none;
+  }
   .upload-icon {
     font-size: 36px;
+  }
+  &:focus .focused {
+    display: block;
+  }
+  &:focus .no-focus {
+    display: none;
   }
 }
 
@@ -192,27 +216,22 @@ defineExpose({
   .image-title {
     text-align: center;
   }
-  .image-resizer {
+  .full-size() {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
+  }
+  .image-resizer {
+    .full-size();
     @indicator-width: 6px;
     @indicator-space: 4px;
     @indicator-color: rgba(0, 0, 0, .2);
-    .resizer-top, .resizer-bottom,
     .resizer-left, .resizer-right {
       border-radius: 9999px;
       background: @indicator-color;
-    }
-    .resizer-top, .resizer-bottom {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 50%;
-      height: @indicator-width;
-      cursor: row-resize;
+      pointer-events: auto;
     }
     .resizer-left, .resizer-right {
       position: absolute;
@@ -222,18 +241,16 @@ defineExpose({
       width: @indicator-width;
       cursor: col-resize;
     }
-    .resizer-top {
-      top: -@indicator-width - @indicator-space;
-    }
-    .resizer-bottom {
-      bottom: -@indicator-width - @indicator-space;
-    }
     .resizer-left {
       left: -@indicator-width - @indicator-space;
     }
     .resizer-right {
       right: -@indicator-width - @indicator-space;
     }
+  }
+  .image-settings-container {
+    .full-size();
+    pointer-events: none;
   }
   .image-settings-wrapper {
     position: absolute;
@@ -246,6 +263,7 @@ defineExpose({
       position: absolute;
       top: 6px;
       right: 6px;
+      pointer-events: auto;
     }
     .settings-icon {
       background: rgba(0, 0, 0, .2);
@@ -254,8 +272,10 @@ defineExpose({
       transition: background .2s;
       cursor: pointer;
       color: #fff;
+      outline: none;
+      overflow: hidden;
       &:hover {
-        background: rgba(0, 0, 0, .3);
+        background: rgba(0, 0, 0, .4);
       }
     }
   }
