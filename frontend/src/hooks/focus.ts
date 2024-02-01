@@ -1,5 +1,5 @@
-import { setCaretToEnd } from '@/models/caret'
-import { onBeforeUnmount, onMounted, nextTick } from 'vue'
+import { isInHeading, isInTailing } from '@/models/caret'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 let focusedEl: HTMLElement | null = null
 
@@ -8,12 +8,8 @@ export const focusBefore = () => {
   const index = (focusedEl && doms.indexOf(focusedEl)) ?? -1
   if (doms[0] && (!focusedEl || index === -1)) {
     doms[0].focus()
-    // setTimeout(() => setCaretToEnd(doms[0]))
   } else if (index > 0) {
     doms[index - 1].focus()
-    // setTimeout(() => {
-    //   setCaretToEnd(doms[index - 1])
-    // })
   }
 }
 
@@ -29,6 +25,7 @@ export const focusAfter = () => {
 
 export const useFocusEvent = () => {
   const focusHandler = (event: FocusEvent) => {
+    console.log('focus changed', event.target)
     focusedEl = (event.target as HTMLElement)
   }
 
@@ -38,4 +35,22 @@ export const useFocusEvent = () => {
   onBeforeUnmount(() => {
     window.removeEventListener('focusin', focusHandler)
   })
+}
+
+export const useFocusControl = () => {
+  const el = ref<HTMLDivElement>()
+
+  const keydownHandler = (event: KeyboardEvent) => {
+    if (event.code === 'ArrowUp') {
+      if (isInHeading(el.value!)) {
+        focusBefore()
+      }
+    } else if (event.code === 'ArrowDown') {
+      if (isInTailing(el.value!)) {
+        focusAfter()
+      }
+    }
+  }
+
+  return { el, keydownHandler }
 }

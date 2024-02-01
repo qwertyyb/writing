@@ -1,6 +1,13 @@
 <template>
   <div class="image-block">
-    <div class="upload-tip" @click="upload" v-if="!src" tabindex="0" data-focusable @keydown.enter="upload">
+    <focusable-control
+      class="upload-tip"
+      @click="upload"
+      v-if="!data.src"
+      tabindex="0"
+      data-focusable
+      @keydown.enter="upload"
+      @keydown.delete="$emit('remove')">
       <span class="material-symbols-outlined upload-icon">
       image
       </span>
@@ -10,14 +17,28 @@
       <span class="focused">
         回车或点击上传图片
       </span>
-    </div>
+    </focusable-control>
     <div class="image-container"
-      :class="align"
+      :class="data.align"
       ref="containerEl"
       v-else>
-      <figure class="image-wrapper" :style="{ width: size + '%'}">
-        <img :src="src" alt="" class="image" ref="imageEl" @click="settingsVisible = true">
-        <figcaption class="image-title" contenteditable data-focusable ref="titleRef">这里是标题这里是标题这里是标题</figcaption>
+      <figure class="image-wrapper" :style="{ width: data.size + '%' }">
+        <focusable-control tag="img"
+          :src="data.src"
+          alt=""
+          class="image"
+          ref="imageEl"
+          :style="{ aspectRatio: data.ratio }"
+          @click="settingsVisible = true"
+          @keydown.enter="upload"
+          @keydown.delete="$emit('remove')" />
+        <figcaption class="image-title">
+          <text-block
+            :model-value="data.title"
+            :index="0"
+            @update:modelValue="update({ 'title': $event })"
+          ></text-block>
+        </figcaption>
 
         <transition name="el-fade-in">
           <div class="image-settings-container" v-show="settingsVisible" v-click-outside="() => settingsVisible = false">
@@ -34,6 +55,19 @@
 
             <div class="image-settings-wrapper">
               <div class="image-settings">
+                <span class="replace-tip">
+                  回车上传图片
+                </span>
+                <span class="material-symbols-outlined settings-icon delete-icon"
+                  title="删除"
+                  @click="$emit('remove')">
+                delete
+                </span>
+                <span class="material-symbols-outlined settings-icon upload-icon"
+                  title="更换图片"
+                  @click="upload">
+                image
+                </span>
                 <el-dropdown popper-class="image-setting-menu-popper" @command="commandHandler">
                   <span class="material-symbols-outlined settings-icon">more_horiz</span>
                   <template #dropdown>
@@ -68,6 +102,12 @@
                         </span>
                         缩小
                       </el-dropdown-item>
+                      <el-dropdown-item divided command="Remove">
+                        <span class="material-symbols-outlined menu-item-icon">
+                        delete
+                        </span>
+                        删除
+                      </el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
                 </el-dropdown>
@@ -81,14 +121,18 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watchEffect } from 'vue';
-import type { BlockModel } from '@/models/block';
+import { ref, watch } from 'vue';
+import { createBlock, type BlockModel } from '@/models/block';
 import TextBlock from '../TextBlock.vue';
+import FocusableControl from '@/components/FocusableControl.vue';
 
 const block = defineModel<BlockModel>({ required: true })
 
-const textRenderRef = ref<InstanceType<typeof TextBlock>>()
-const imageEl = ref<HTMLImageElement>()
+const emits = defineEmits<{
+  remove: []
+}>()
+
+const imageEl = ref<InstanceType<typeof FocusableControl>>()
 const containerEl = ref<HTMLDivElement>()
 const settingsVisible = ref(false)
 
@@ -98,15 +142,42 @@ enum ImageAlign {
   Right = 'Right'
 }
 
-const src = ref(block.value.data?.src ?? '')
-const align = ref<ImageAlign>(block.value.data?.align ?? ImageAlign.Center)
-const size = ref<number>(block.value.data?.size ?? 50)
+interface ImageData {
+  src: string
+  align: ImageAlign
+  size: number, // 宽度
+  ratio: number, // 长宽比例
+  title: BlockModel,
+}
 
-watchEffect(() => {
-  src.value = block.value.data?.src ?? ''
-  align.value = block.value.data?.align ?? ImageAlign.Center
-  size.value = block.value.data?.size ?? 50
+const data = ref<ImageData>({
+  src: block.value.data?.src ?? '',
+  align: block.value.data?.align ?? ImageAlign.Center,
+  size: block.value.data?.size ?? 50,
+  title: block.value.data?.title ?? createBlock({ type: 'text', data: { html: '图片描述' } }),
+  ratio: block.value.data?.ratio ?? 1,
 })
+
+watch(block, () => {
+  data.value = {
+    src: block.value.data?.src ?? '',
+    align: block.value.data?.align ?? ImageAlign.Center,
+    size: block.value.data?.size ?? 50,
+    title: block.value.data?.title ?? createBlock({ type: 'text', data: { html: '图片描述' } }),
+    ratio: block.value.data?.ratio ?? 1,
+  }
+})
+
+const update = <K extends keyof ImageData>(newData: Partial<ImageData>) => {
+  data.value = {
+    ...data.value,
+    ...newData
+  }
+  block.value = {
+    ...block.value,
+    data: data.value
+  }
+}
 
 const upload = () => {
   const input = document.createElement('input')
@@ -118,7 +189,11 @@ const upload = () => {
 
     // @todo 先简单处理，生成blob，后续需要上传到server端
     const url = URL.createObjectURL(files[0])
-    src.value = url
+    const image = document.createElement('img')
+    image.onload = () => {
+      update({ src: url, ratio: image.naturalWidth / image.naturalHeight })
+    }
+    image.src = url
   })
   input.click()
 }
@@ -126,37 +201,39 @@ const upload = () => {
 const commandHandler = (command: string) => {
   switch (command) {
     case 'Align.Left':
-      align.value = ImageAlign.Left
+      update({ align: ImageAlign.Left })
       break
     case 'Align.Right':
-      align.value = ImageAlign.Right
+      update({ align: ImageAlign.Right })
       break
     case 'Align.Center':
-      align.value = ImageAlign.Center
+      update({ align: ImageAlign.Center })
       break
     case 'Size.Large':
-      size.value = Math.min(100, size.value + 25)
+      update({ size: Math.min(100, data.value.size + 25) })
       break
     case 'Size.Small':
-      size.value = Math.max(0, size.value - 25)
+      update({ size: Math.max(0, data.value.size - 25) })
       break
+    case 'Remove': 
+      emits('remove')
   }
 }
 
 const startPos = { x: 0, y: 0, width: 0, height: 0 }
 const pointerdownHandler = (direction: 'left' | 'right', event: PointerEvent) => {
   startPos.x = event.clientX;
-  startPos.width = imageEl.value?.getBoundingClientRect().width ?? 0;
+  startPos.width = imageEl.value?.$el.getBoundingClientRect().width ?? 0;
   (event.target as HTMLElement).setPointerCapture(event.pointerId)
 }
 const pointermoveHandler = (direction: 'left' | 'right', event: PointerEvent) => {
   if (event.buttons !== 1) return
   const pwidth = containerEl.value!.getBoundingClientRect().width
   let dwidth = direction === 'left' ? startPos.x - event.clientX : event.clientX - startPos.x
-  if (align.value === ImageAlign.Center) {
+  if (data.value.align === ImageAlign.Center) {
     dwidth *= 2
   }
-  size.value = Math.round((startPos.width + dwidth) / pwidth * 100)
+  update({ 'size': Math.round((startPos.width + dwidth) / pwidth * 100) })
 }
 const pointerupHandler = (event: PointerEvent) => {
   (event.target as HTMLElement).releasePointerCapture(event.pointerId)
@@ -164,11 +241,7 @@ const pointerupHandler = (event: PointerEvent) => {
 
 defineExpose({
   save() {
-    return {
-      src: src.value,
-      size: size.value,
-      align: align.value
-    }
+    return data.value
   }
 })
 </script>
@@ -208,10 +281,11 @@ defineExpose({
     width: fit-content;
     transition: width .1s;
   }
-  img {
+  .image {
     width: 100%;
     max-width: 100%;
     height: auto;
+    background: rgba(5, 93, 117, 0.3)
   }
   .image-title {
     text-align: center;
@@ -264,11 +338,26 @@ defineExpose({
       top: 6px;
       right: 6px;
       pointer-events: auto;
+      display: flex;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .replace-tip {
+      color: rgba(0, 0, 0, .6);
+      font-size: 14px;
+      height: 28px;
+      line-height: 28px;
+      margin-right: 6px;
+      pointer-events: none;
     }
     .settings-icon {
       background: rgba(0, 0, 0, .2);
       font-size: 28px;
-      border-radius: 6px;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       transition: background .2s;
       cursor: pointer;
       color: #fff;
@@ -276,6 +365,9 @@ defineExpose({
       overflow: hidden;
       &:hover {
         background: rgba(0, 0, 0, .4);
+      }
+      &.upload-icon, &.delete-icon {
+        font-size: 18px;
       }
     }
   }

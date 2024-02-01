@@ -7,7 +7,6 @@
         :index="index"
         :parent="model"
         @update:modelValue="updateBlock($event, child, index)"
-        @change="changeHandler"
         @add="addBlock($event, child, index)"
         @update="updateBlock($event, child, index)"
         @remove="removeBlock(child, index)"
@@ -38,10 +37,6 @@ const emits = defineEmits<{
 const { el, setBlockRef, addBlock, updateBlock, removeBlock, save } = useBlockOperate(model, emits)
 
 useFocusEvent()
-
-const changeHandler = () => {
-  emits('change', save())
-}
 
 defineExpose({
   save

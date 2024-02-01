@@ -2,6 +2,7 @@ import { heading1, heading2, heading3, heading4, heading5, heading6 } from "../b
 import TextBlock from "../blocks/TextBlock";
 import ListBlock from '../blocks/list/ListBlock';
 import ImageBlock from '../blocks/image/ImageBlock';
+import linkBlock from "../blocks/link/LinkBlock";
 
 const commands = [
   TextBlock,
@@ -11,6 +12,7 @@ const commands = [
   heading4,
   heading5,
   heading6,
+  linkBlock,
   ListBlock,
   ImageBlock,
 ]

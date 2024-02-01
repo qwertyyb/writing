@@ -80,6 +80,7 @@ const onInputBlur = () => {
   background: #fff;
   color: rgba(100, 100, 100, 1);
   min-width: 200px;
+  z-index: 99;
   .command-search-wrapper {
     display: flex;
   }

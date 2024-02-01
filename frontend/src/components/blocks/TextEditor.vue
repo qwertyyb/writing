@@ -34,6 +34,7 @@ const value = ref(model.value ?? '')
 
 const editorEl = ref<HTMLDivElement>()
 const el = ref<HTMLDivElement>()
+let triggerRange: Range | undefined | null = null
 
 const getValue = () => el.value?.innerHTML ?? ''
 
@@ -75,7 +76,6 @@ const keydownHandler = (event: KeyboardEvent) => {
   } else if (event.code === KeyCodes.ArrowDown) {
     if (isInTailing(el.value!)) {
       console.log('focusAfter')
-      // emits('focusAfter')
       focusAfter()
     }
   }
@@ -107,8 +107,22 @@ const triggerKeyHandler = (event: KeyboardEvent) => {
     const { x, y, height } = getCaretPosition() || { x: 0, y: 0, height: 24 }
     const { x: px, y: py } = editorEl.value?.getBoundingClientRect() || { x: 0, y: 0 };
 
+    const curRange = window.getSelection()?.getRangeAt(0).cloneRange()
+    if (curRange?.startOffset ?? 0 > 0) {
+      curRange?.setStart(curRange!.startContainer, curRange!.startOffset - 1)
+      triggerRange = curRange
+    }
+
     emits('openTool', { x: x - px, y: y - py + height })
   })
+}
+
+const removeTriggerKey = () => {
+  if (triggerRange) {
+    triggerRange.deleteContents()
+    triggerRange = null
+    inputHandler()
+  }
 }
 
 const inputHandler = () => {
@@ -116,7 +130,8 @@ const inputHandler = () => {
 }
 
 defineExpose({
-  getValue
+  getValue,
+  removeTriggerKey
 })
 </script>
 
@@ -124,6 +139,7 @@ defineExpose({
 .text-editor {
   [contenteditable] {
     outline: none;
+    min-height: 1.4em;
     &:focus:empty::before {
       content: attr(placeholder);
       color: rgba(0, 0, 0, .3);

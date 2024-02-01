@@ -8,6 +8,7 @@
       @openTool="openToolHandler"
       @focusBefore="$emit('focusBefore')"
       @focusAfter="$emit('focusAfter')"
+      ref="textEditorEl"
     ></text-editor>
 
     <command-tool v-if="commandToolVisible"
@@ -21,7 +22,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, watch, toRaw, watchEffect } from 'vue';
+import { ref, reactive, watch, toRaw, watchEffect, nextTick } from 'vue';
 import CommandTool from '../commands/CommandTool.vue';
 import TextEditor from '@/components/blocks/TextEditor.vue';
 import { setCaretToEnd } from '@/models/caret';
@@ -52,7 +53,7 @@ watchEffect(() => {
   data.value.html = block.value.data?.html ?? ''
 })
 
-const el = ref<HTMLDivElement>()
+const textEditorEl = ref<InstanceType<typeof TextEditor>>()
 
 const commandTool = ref<InstanceType<typeof CommandTool>>()
 const commandToolVisible = ref(false)
@@ -66,6 +67,7 @@ const save = () => {
 }
 
 const onCommand = (command: any) => {
+  textEditorEl.value?.removeTriggerKey()
   commandToolVisible.value = false
   emits('update', { type: command.identifier, data: toRaw(data.value) })
 }
@@ -73,8 +75,8 @@ const onCommand = (command: any) => {
 const onExitTool = (options?: { autofocus: boolean }) => {
   commandToolVisible.value = false
   if (options?.autofocus) {
-    el.value?.focus()
-    setCaretToEnd(el.value!)
+    textEditorEl.value?.$el.focus()
+    textEditorEl.value?.$el && setCaretToEnd(textEditorEl.value?.$el)
   }
 }
 
