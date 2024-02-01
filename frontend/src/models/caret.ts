@@ -17,6 +17,15 @@ export const setCaretToEnd = (textDom: HTMLElement) => {
   sel?.collapseToEnd();
 }
 
+export const setCaretToStart = (textDom: HTMLElement) => {
+  const range = document.createRange();
+  range.selectNodeContents(textDom.childNodes[0] ?? textDom);
+  const sel = window.getSelection();
+  sel?.removeAllRanges();
+  sel?.addRange(range);
+  sel?.collapseToStart()
+}
+
 export const isCaret = () => window.getSelection()?.type === SelectionType.Caret
 
 /**
@@ -48,6 +57,6 @@ export const isInTailing = (element: Node) => {
   const srange = selection.getRangeAt(0)
   const range = document.createRange()
   range.setStart(srange.startContainer, srange.startOffset)
-  range.setEnd(element, 1)
+  range.setEnd(element, 0)
   return range.toString().length === 0
 }

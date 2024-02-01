@@ -14,6 +14,7 @@
 <script lang="ts" setup>
 import { ref, watchEffect } from 'vue';
 import { getCaretPosition, isInHeading, isInTailing } from '@/models/caret';
+import { focusBefore, focusAfter } from '@/hooks/focus'
 
 const model = defineModel<string>({ required: true })
 
@@ -68,12 +69,14 @@ const keydownHandler = (event: KeyboardEvent) => {
     triggerKeyHandler(event)
   } else if (event.code === KeyCodes.ArrowUp) {
     if (isInHeading(el.value!)) {
-      emits('focusBefore')
+      // emits('focusBefore')
+      focusBefore()
     }
   } else if (event.code === KeyCodes.ArrowDown) {
     if (isInTailing(el.value!)) {
       console.log('focusAfter')
-      emits('focusAfter')
+      // emits('focusAfter')
+      focusAfter()
     }
   }
 }

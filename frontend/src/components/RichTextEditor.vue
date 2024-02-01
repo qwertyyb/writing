@@ -11,8 +11,6 @@
         @add="addBlock($event, child, index)"
         @update="updateBlock($event, child, index)"
         @remove="removeBlock(child, index)"
-        @focusBefore="focusBefore"
-        @focusAfter="focusAfter"
         :ref="el => setBlockRef(child.id, el as any)"
       ></block-editor>
     </div>
@@ -23,6 +21,7 @@
 import { createBlock, type BlockModel } from '@/models/block';
 import BlockEditor from './BlockEditor.vue';
 import useBlockOperate from './block-operate';
+import { useFocusEvent } from '@/hooks/focus';
 
 const model = defineModel<ReturnType<typeof createBlock>>({
   required: true
@@ -37,6 +36,8 @@ const emits = defineEmits<{
 }>()
 
 const { el, setBlockRef, addBlock, updateBlock, removeBlock, save } = useBlockOperate(model, emits)
+
+useFocusEvent()
 
 const changeHandler = () => {
   emits('change', save())
