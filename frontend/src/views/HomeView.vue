@@ -5,7 +5,9 @@
     </div>
     <div class="spliter"></div>
     <div class="doc-editor">
-      <doc-editor></doc-editor>
+      <div class="doc-editor-wrapper">
+        <doc-editor></doc-editor>
+      </div>
     </div>
   </main>
 </template>
@@ -29,6 +31,10 @@ import DocEditor from '@/components/DocEditor.vue';
   }
   .doc-editor {
     flex: 4;
+    .doc-editor-wrapper {
+      max-width: 80%;
+      margin: 0 auto;
+    }
   }
 }
 </style>

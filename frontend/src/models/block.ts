@@ -11,11 +11,11 @@ export enum BlockSaveType {
   Data = 'Data',
 }
 
-export interface BlockModel {
+export interface BlockModel<D extends any = any> {
   type: string;
   id: string;
   children?: BlockModel[];
-  data?: any;
+  data?: D;
 }
 
 export enum BlockEventName {

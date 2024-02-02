@@ -1,5 +1,6 @@
 <template>
   <rich-text-editor v-model="defaultValue"
+    :mode="Mode.Edit"
     ref="editorRef"
     @change="changeHandler"></rich-text-editor>
 </template>
@@ -8,6 +9,7 @@
 import RichTextEditor from '@/components/RichTextEditor.vue'
 import { ref, toRaw } from 'vue'
 import { type BlockModel, createBlock } from '@/models/block'
+import { Mode } from './schema';
 
 const getDefaultValue = () => {
   let value = createBlock({

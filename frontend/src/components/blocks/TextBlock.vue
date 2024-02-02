@@ -1,6 +1,8 @@
 <template>
   <div class="text-renderer">
     <text-editor :modelValue="data.html"
+      :readonly="readonly"
+      :spellcheck="spellcheck"
       @update:modelValue="updateModelValue"
       @keyEnter="enterKeyHandler"
       @keyEsc="escapeKeyHandler"
@@ -27,8 +29,11 @@ import CommandTool from '../commands/CommandTool.vue';
 import TextEditor from '@/components/blocks/TextEditor.vue';
 import { setCaretToEnd } from '@/models/caret';
 import type { BlockModel, BlockOptions } from '@/models/block';
+import type { TextData } from './TextBlock';
+import { useMode } from '@/hooks/mode';
+import { useSpellcheck } from '@/hooks/spellcheck';
 
-const block = defineModel<BlockModel>({ required: true })
+const block = defineModel<BlockModel<TextData>>({ required: true })
 
 const props = defineProps<{
   index: number,
@@ -44,7 +49,10 @@ const emits = defineEmits<{
   focusAfter: [],
 }>()
 
-const data = ref<{ html: string }>({ html: block.value.data?.html ?? '' })
+const { readonly } = useMode()
+const { spellcheck } = useSpellcheck()
+
+const data = ref<TextData>({ html: block.value.data?.html ?? '' })
 const updateModelValue = (html: string) => {
   data.value.html = html
   block.value = { ...block.value, data: { html } }

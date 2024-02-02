@@ -1,7 +1,8 @@
 <template>
   <div class="text-editor">
     <div class="text-editor-content"
-      contenteditable
+      :contenteditable="!readonly"
+      :spellcheck="spellcheck"
       data-focusable
       @keydown="keydownHandler($event)"
       @input="inputHandler"
@@ -17,6 +18,17 @@ import { getCaretPosition, isInHeading, isInTailing } from '@/models/caret';
 import { focusBefore, focusAfter } from '@/hooks/focus'
 
 const model = defineModel<string>({ required: true })
+
+defineProps({
+  readonly: {
+    type: Boolean,
+    default: false
+  },
+  spellcheck: {
+    type: Boolean,
+    default: false
+  }
+})
 
 const emits = defineEmits<{
   keyEnter: [event: KeyboardEvent],
@@ -137,12 +149,13 @@ defineExpose({
 
 <style lang="less" scoped>
 .text-editor {
-  [contenteditable] {
+  .text-editor-content {
     outline: none;
     min-height: 1.4em;
     &:focus:empty::before {
       content: attr(placeholder);
       color: rgba(0, 0, 0, .3);
+      position: absolute;
     }
   }
 }

@@ -21,10 +21,28 @@ import { createBlock, type BlockModel } from '@/models/block';
 import BlockEditor from './BlockEditor.vue';
 import useBlockOperate from './block-operate';
 import { useFocusEvent } from '@/hooks/focus';
+import { provide, type PropType, computed } from 'vue';
+import { Mode } from './schema';
 
 const model = defineModel<ReturnType<typeof createBlock>>({
   required: true
 })
+const props = defineProps({
+  mode: {
+    type: String as PropType<Mode>,
+    default: Mode.Edit
+  },
+  spellcheck: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const mode = computed(() => props.mode)
+const spellcheck = computed(() => props.spellcheck)
+
+provide('mode', mode)
+provide('spellcheck', spellcheck)
 
 const emits = defineEmits<{
   added: [{ block: BlockModel, index: number, parent?: BlockModel }],
