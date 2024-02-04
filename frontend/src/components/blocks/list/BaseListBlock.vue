@@ -1,5 +1,5 @@
 <template>
-  <ul ref="el" class="list-block" data-block-node="no-leaf">
+  <component ref="el" class="list-block" data-block-node="no-leaf" :is="tag">
     <li v-for="(child, index) in block.children"
       :key="child.id + child.type"
       class="list-block-item">
@@ -10,11 +10,10 @@
         :ref="el => setBlockRef(child.id, el as any)"
         @update:modelValue="updateBlock($event, child, index)"
         @add="addBlock($event, child, index)"
-        @update="updateBlock($event, child, index)"
         @remove="removeBlock(child, index)"
       ></block-editor>
     </li>
-  </ul>
+  </component>
 </template>
 
 <script lang="ts" setup>
@@ -24,10 +23,11 @@ import BlockEditor from '@/components/BlockEditor.vue';
 
 const block = defineModel<BlockModel>({ required: true })
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   index: number,
   parent?: BlockModel,
-}>()
+  tag: string
+}>(), { tag: 'ul' })
 
 const emits = defineEmits<{
   added: [{ block: BlockModel, index: number, parent?: BlockModel }],

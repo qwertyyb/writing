@@ -152,6 +152,7 @@ defineExpose({
   .text-editor-content {
     outline: none;
     min-height: 1.4em;
+    line-height: 1.4;
     &:focus:empty::before {
       content: attr(placeholder);
       color: rgba(0, 0, 0, .3);

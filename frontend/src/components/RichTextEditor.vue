@@ -8,7 +8,6 @@
         :parent="model"
         @update:modelValue="updateBlock($event, child, index)"
         @add="addBlock($event, child, index)"
-        @update="updateBlock($event, child, index)"
         @remove="removeBlock(child, index)"
         :ref="el => setBlockRef(child.id, el as any)"
       ></block-editor>

@@ -2,9 +2,10 @@
   <a :href="data.href"
     @click="clickHandler"
     class="link-block"
-    :class="{ edit: canEdit }"
+    :class="{ edit: canEdit, readonly }"
     referrerpolicy="strict-origin-when-cross-origin"
     target="_blank"
+    rel="noopener"
   >
     <el-popover :width="400" trigger="click"
       :disabled="readonly"
@@ -13,14 +14,14 @@
         <text-block
           :model-value="data.text"
           @update:modelValue="update({ text: $event })"
-          :index="0"
-          ref="textBlockRef"></text-block>
+          :index="0"></text-block>
       </template>
       <div class="link-content">
         <div>请输入链接</div>
         <el-input size="small" ref="linkInputEl"
           :model-value="data.href"
           @update:modelValue="update({ href: $event })"></el-input>
+        <el-button size="small" @click="openLink">查看</el-button>
       </div>
     </el-popover>
   </a>
@@ -29,16 +30,18 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
 import TextBlock from '../TextBlock.vue';
-import { createBlock, type BlockModel } from '@/models/block';
+import { createBlock, type BlockModel, type BlockOptions } from '@/models/block';
 import type { TextData } from '../TextBlock';
 import { ElInput, ElPopover } from 'element-plus';
 import { useMode } from '@/hooks/mode';
 
 const block = defineModel<BlockModel>({ required: true })
 
-const { readonly, canEdit } = useMode()
+const emits = defineEmits<{
+  add: [options?: Partial<BlockOptions>],
+}>()
 
-const textBlockRef = ref<InstanceType<typeof TextBlock>>()
+const { readonly, canEdit } = useMode()
 
 interface LinkData {
   href: string,
@@ -50,6 +53,9 @@ const data = ref<LinkData>({
 })
 
 const update = (newData: Partial<LinkData>) => {
+  if (newData.text?.type !== 'text') {
+    return emits('add', { type: newData.text!.type })
+  }
   data.value = {
     ...data.value,
     ...newData,
@@ -66,6 +72,10 @@ const clickHandler = (event: MouseEvent) => {
   }
 }
 
+const openLink = () => {
+  window.open(data.value.href, '_blank', 'noreferrer')
+}
+
 defineExpose({
   save() {
     return data.value
@@ -76,6 +86,9 @@ defineExpose({
 .link-block {
   &.edit {
     cursor: text;
+  }
+  &.readonly::v-deep * {
+    display: inline;
   }
 }
 </style>

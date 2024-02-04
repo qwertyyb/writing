@@ -33,7 +33,7 @@ import type { TextData } from './TextBlock';
 import { useMode } from '@/hooks/mode';
 import { useSpellcheck } from '@/hooks/spellcheck';
 
-const block = defineModel<BlockModel<TextData>>({ required: true })
+const block = defineModel<BlockModel<TextData | any>>({ required: true })
 
 const props = defineProps<{
   index: number,
@@ -50,7 +50,7 @@ const emits = defineEmits<{
 }>()
 
 const { readonly } = useMode()
-const { spellcheck } = useSpellcheck()
+const spellcheck = useSpellcheck()
 
 const data = ref<TextData>({ html: block.value.data?.html ?? '' })
 const updateModelValue = (html: string) => {
@@ -77,7 +77,7 @@ const save = () => {
 const onCommand = (command: any) => {
   textEditorEl.value?.removeTriggerKey()
   commandToolVisible.value = false
-  emits('update', { type: command.identifier, data: toRaw(data.value) })
+  block.value = { ...block.value, type: command.identifier, data: toRaw(data.value) }
 }
 
 const onExitTool = (options?: { autofocus: boolean }) => {

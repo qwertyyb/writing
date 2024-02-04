@@ -1,8 +1,18 @@
-import ListBlock from './ListBlock.vue'
+import NumberedListBlock from './NumberedListBlock.vue'
+import BulletedListBlock from './BulletedListBlock.vue'
 
-export default {
-  identifier: 'list',
-  label: '列表',
+const numberedList = {
+  identifier: 'ordered-list',
+  label: '有序列表',
 
-  component: ListBlock
+  component: NumberedListBlock
 }
+
+const bulletedList = {
+  identifier: 'ordered-list',
+  label: '有序列表',
+
+  component: BulletedListBlock
+}
+
+export default [ numberedList, bulletedList ]

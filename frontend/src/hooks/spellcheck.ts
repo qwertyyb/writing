@@ -1,7 +1,7 @@
-import { type Ref, inject } from "vue"
+import { inject, type ComputedRef } from "vue"
 
 export const useSpellcheck = () => {
-  const spellcheck = inject<Ref<boolean>>('spellcheck')
+  const spellcheck = inject<ComputedRef<boolean>>('spellcheck')!
 
   return spellcheck
 }

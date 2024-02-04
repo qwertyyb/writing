@@ -24,7 +24,7 @@ defineExpose({
     return renderer.value?.blockSaveType?.() ?? BlockSaveType.Data
   },
   save() {
-    return renderer.value?.save()
+    return renderer.value?.save?.() ?? null
   }
 })
 
