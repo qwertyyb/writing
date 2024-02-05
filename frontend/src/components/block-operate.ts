@@ -2,6 +2,7 @@ import { addAfter, remove, type BlockModel, type BlockOptions, update } from "@/
 import { setCaretToEnd } from "@/models/caret"
 import { nextTick, ref, type Ref } from "vue"
 import type BlockEditor from "./BlockEditor.vue"
+import { focusBefore } from "@/hooks/focus"
 
 type Emits = ((evt: "added", args_0: {
   block: BlockModel;
@@ -69,13 +70,33 @@ const useBlockOperate = (parent: Ref<BlockModel>, emits: Emits) => {
   }
 
   const removeBlock = (block: BlockModel, index: number) => {
-    remove(parent.value, block.id)
-    focusBlock(el.value, parent.value.children![index - 1].id)
+    const [removed] = remove(parent.value, block.id)
+    focusBefore()
     emits('removed', {
       block,
       index,
       parent: parent.value
     })
+    emitUpdate()
+    return removed
+  }
+
+  // 增加层级，把前一个block作为父block, 当前节点作为前一个节点的子节点
+  const increaseLevelBlock = (block: BlockModel, index: number) => {
+    // 当前已经是第一个节点，无法降低层级
+    if (index === 0) return
+    const [ removed ] = remove(parent.value, block.id)
+    addAfter(parent.value.children![index - 1], removed)
+    emitUpdate()
+    focusBlock(el.value, removed.id)
+  }
+
+  // 增加层级，把前一个block作为父block, 当前节点作为前一个节点的子节点
+  const decreaseLevelBlock = (block: BlockModel, index: number) => {
+    // 当前已经是第一个节点，无法降低层级
+    if (index === 0) return
+    const [ removed ] = remove(parent.value, block.id)
+    addAfter(parent.value.children![index - 1], removed)
     emitUpdate()
   }
 
@@ -86,7 +107,7 @@ const useBlockOperate = (parent: Ref<BlockModel>, emits: Emits) => {
     }
   }
 
-  return { el, setBlockRef, addBlock, updateBlock, removeBlock, save }
+  return { el, setBlockRef, addBlock, updateBlock, removeBlock, increaseLevelBlock, decreaseLevelBlock, save }
 }
 
 export default useBlockOperate

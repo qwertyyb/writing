@@ -9,7 +9,15 @@
         v-model="block"
         :index="index"
         :parent="parent"
+        :path="path"
         ref="renderRef"></command-renderer>
+    </div>
+    <div class="block-children">
+      <block-list-editor
+        v-model="block"
+        @addAfter="$emit('addAfter', $event)"
+        :path="path"
+        :index="index"></block-list-editor>
     </div>
   </div>
 </template>
@@ -18,11 +26,13 @@
 import { type BlockModel, BlockSaveType } from '@/models/block';
 import { ref } from 'vue';
 import CommandRenderer from './commands/CommandRenderer.vue';
+import BlockListEditor from './BlockListEditor.vue';
 
 const block = defineModel<BlockModel>({ required: true })
 
 const props = defineProps<{
   index: number,
+  path: number[],
   parent?: BlockModel
 }>()
 
@@ -48,8 +58,15 @@ defineExpose({
 <style lang="less" scoped>
 .block-editor {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: flex-start;
+  flex-direction: column;
+  & > * {
+    width: 100%;
+  }
+  & > .block-children {
+    margin-left: 28px;
+  }
   &:hover, &focus-within {
     .block-tool {
       opacity: 1;

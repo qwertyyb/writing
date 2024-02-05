@@ -6,6 +6,9 @@
       @update:modelValue="updateModelValue"
       @keyEnter="enterKeyHandler"
       @keyEsc="escapeKeyHandler"
+      @keyTab="tabKeyHandler"
+      @keyShiftTab="shiftTabKeyHandler"
+      @emptyKeyEnter="emptyEnterKeyHandler"
       @emptyKeyBackspace="backspaceKeyHandler"
       @openTool="openToolHandler"
       @focusBefore="$emit('focusBefore')"
@@ -24,7 +27,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, watch, toRaw, watchEffect, nextTick } from 'vue';
+import { ref, reactive, watch, toRaw, watchEffect } from 'vue';
 import CommandTool from '../commands/CommandTool.vue';
 import TextEditor from '@/components/blocks/TextEditor.vue';
 import { setCaretToEnd } from '@/models/caret';
@@ -41,9 +44,14 @@ const props = defineProps<{
 }>()
 
 const emits = defineEmits<{
+  emptyEnterKey: [event: KeyboardEvent]
+
   add: [options?: Partial<BlockOptions>],
   update: [options: Partial<BlockOptions>]
   remove: [],
+  increaseLevel: [],
+  decreaseLevel: [],
+
   change: [block: BlockModel],
   focusBefore: [],
   focusAfter: [],
@@ -91,6 +99,21 @@ const onExitTool = (options?: { autofocus: boolean }) => {
 const enterKeyHandler = (event: KeyboardEvent) => {
   event.preventDefault()
   emits('add')
+}
+
+const emptyEnterKeyHandler = (event: KeyboardEvent) => {
+  event.preventDefault()
+  emits('emptyEnterKey', event)
+}
+
+const tabKeyHandler = (event: KeyboardEvent) => {
+  event.preventDefault()
+  emits('increaseLevel')
+}
+
+const shiftTabKeyHandler = (event: KeyboardEvent) => {
+  event.preventDefault()
+  emits('decreaseLevel')
 }
 
 const backspaceKeyHandler = (event: KeyboardEvent) => {

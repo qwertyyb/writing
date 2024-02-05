@@ -7,13 +7,25 @@
 </template>
 
 <script lang="ts" setup>
+import { useMode } from "@/hooks/mode";
 import type { BlockModel } from "@/models/block";
 import { basicSetup, EditorView } from "codemirror";
-import { onBeforeUnmount, ref, onMounted } from "vue";
+import { Compartment } from "@codemirror/state"
+import { onBeforeUnmount, ref, onMounted, watch } from "vue";
 
 const block = defineModel<BlockModel>({ required: true })
 
 const codeMirrorWrapper = ref<HTMLDivElement>()
+
+const { readonly } = useMode()
+
+let readonlyConfig = new Compartment
+
+watch(readonly, () => {
+  viewer?.dispatch({
+    effects: readonlyConfig.reconfigure(EditorView.editable.of(!readonly.value))
+  })
+})
 
 interface CodeData {
   text: string
@@ -46,7 +58,8 @@ onMounted(() => {
         if (newText !== data.value.text) {
           update({ text: newText })
         }
-      })
+      }),
+      readonlyConfig.of(EditorView.editable.of(!readonly.value))
     ],
   })
 })

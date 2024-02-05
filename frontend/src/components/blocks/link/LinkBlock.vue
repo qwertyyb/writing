@@ -87,7 +87,7 @@ defineExpose({
   &.edit {
     cursor: text;
   }
-  &.readonly::v-deep * {
+  &.readonly :deep(*) {
     display: inline;
   }
 }

@@ -7,6 +7,7 @@
         :model-value="child"
         :index="index"
         :parent="parent"
+        :path="[...path, index]"
         :ref="el => setBlockRef(child.id, el as any)"
         @update:modelValue="updateBlock($event, child, index)"
         @add="addBlock($event, child, index)"
@@ -26,6 +27,7 @@ const block = defineModel<BlockModel>({ required: true })
 const props = withDefaults(defineProps<{
   index: number,
   parent?: BlockModel,
+  path: number[],
   tag: string
 }>(), { tag: 'ul' })
 

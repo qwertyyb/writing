@@ -11,7 +11,7 @@
     :mode="config.mode"
     :spellcheck="config.spellcheck"
     ref="editorRef"
-    @change="changeHandler"></rich-text-editor>
+    @update:model-value="changeHandler"></rich-text-editor>
 </template>
 
 <script lang="ts" setup>

@@ -33,7 +33,10 @@ defineProps({
 const emits = defineEmits<{
   keyEnter: [event: KeyboardEvent],
   keyEsc: [event: KeyboardEvent],
+  keyTab: [event: KeyboardEvent],
+  keyShiftTab: [event: KeyboardEvent],
 
+  emptyKeyEnter: [event: KeyboardEvent],
   emptyKeyBackspace: [event: KeyboardEvent],
 
   openTool: [{ x: number, y: number }],
@@ -62,6 +65,7 @@ enum KeyCodes {
   Backspace = 'Backspace',
   Escape = 'Escape',
   Space = 'Space',
+  Tab = 'Tab',
 
   ArrowUp = 'ArrowUp',
   ArrowDown = 'ArrowDown',
@@ -90,11 +94,19 @@ const keydownHandler = (event: KeyboardEvent) => {
       console.log('focusAfter')
       focusAfter()
     }
+  } else if (event.code === 'Tab' && event.shiftKey) {
+    emits('keyShiftTab', event)
+  } else if (event.code === 'Tab') {
+    emits('keyTab', event)
   }
 }
 
 const enterKeyHandler = (event: KeyboardEvent) => {
-  emits('keyEnter', event);
+  if (isInHeading(el.value!)) {
+    emits('emptyKeyEnter', event)
+  } else {
+    emits('keyEnter', event);
+  }
 }
 
 const backspaceKeyHandler = (event: KeyboardEvent) => {
