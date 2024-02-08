@@ -6,6 +6,7 @@
       data-focusable
       @keydown="keydownHandler($event)"
       @input="inputHandler"
+      @paste="pasteHandler"
       v-html="value"
       placeholder="Type something..."
       ref="el"></div>
@@ -16,6 +17,7 @@
 import { ref, watchEffect } from 'vue';
 import { getCaretPosition, isInHeading, isInTailing } from '@/models/caret';
 import { focusBefore, focusAfter } from '@/hooks/focus'
+import { logger } from '@/utils/logger';
 
 const model = defineModel<string>({ required: true })
 
@@ -38,6 +40,7 @@ const emits = defineEmits<{
 
   emptyKeyEnter: [event: KeyboardEvent],
   emptyKeyBackspace: [event: KeyboardEvent],
+  upload: [file: File],
 
   openTool: [{ x: number, y: number }],
 
@@ -47,7 +50,6 @@ const emits = defineEmits<{
 
 const value = ref(model.value ?? '')
 
-const editorEl = ref<HTMLDivElement>()
 const el = ref<HTMLDivElement>()
 let triggerRange: Range | undefined | null = null
 
@@ -91,7 +93,6 @@ const keydownHandler = (event: KeyboardEvent) => {
     }
   } else if (event.code === KeyCodes.ArrowDown) {
     if (isInTailing(el.value!)) {
-      console.log('focusAfter')
       focusAfter()
     }
   } else if (event.code === 'Tab' && event.shiftKey) {
@@ -129,15 +130,13 @@ const triggerKeyHandler = (event: KeyboardEvent) => {
   // 待输入字符上屏之后再获取位置信息
   setTimeout(() => {
     const { x, y, height } = getCaretPosition() || { x: 0, y: 0, height: 24 }
-    const { x: px, y: py } = editorEl.value?.getBoundingClientRect() || { x: 0, y: 0 };
 
     const curRange = window.getSelection()?.getRangeAt(0).cloneRange()
     if (curRange?.startOffset ?? 0 > 0) {
       curRange?.setStart(curRange!.startContainer, curRange!.startOffset - 1)
       triggerRange = curRange
     }
-
-    emits('openTool', { x: x - px, y: y - py + height })
+    emits('openTool', { x: x, y: y + height })
   })
 }
 
@@ -151,6 +150,19 @@ const removeTriggerKey = () => {
 
 const inputHandler = () => {
   model.value = getValue()
+}
+
+const pasteHandler = (event: ClipboardEvent) => {
+  event.preventDefault()
+  logger.i('paste', event, event.clipboardData?.files)
+  const file = event.clipboardData?.files?.[0]
+  if (file) {
+    emits('upload', file)
+    return
+  }
+  // 先简单全部作为普通文本来处理
+  const plainText = event.clipboardData?.getData('text/plain') ?? ''
+  document.execCommand('insertText', false, plainText)
 }
 
 defineExpose({

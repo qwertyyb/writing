@@ -3,7 +3,7 @@
     <div class="tree-node-content"
       :style="{paddingLeft: 24 * (level || 0) + 'px'}"
       :class="{ selected }"
-      @click="toggleSelected">
+      @click="select">
       <div class="tree-node-expand-icon-wrapper">
         <span class="material-symbols-outlined tree-node-expand-icon"
           :class="{ expanded }"
@@ -14,8 +14,19 @@
       </div>
       <div class="tree-label">
         <slot name="node">
-          {{ node.label }}
+          {{ node.title }}
         </slot>
+      </div>
+      <div class="tree-action">
+        <span class="material-symbols-outlined add-action" title="添加" @click.stop="add">add</span>
+        <el-dropdown trigger="click">
+          <span class="material-symbols-outlined more-acto" title="更多操作">more_vert</span>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item :icon="Delete" @click.stop="remove">删除文档</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>
     </div>
     <div class="tree-node-children" v-if="expanded && node.children?.length">
@@ -25,17 +36,12 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, inject, type Ref } from 'vue';
-
-interface DocTreeNode {
-  id: string,
-  label?: string,
-  children?: DocTreeNode[]
-  [x: string]: any
-}
+import { computed, inject, type ComputedRef } from 'vue';
+import type { TreeNodeModel } from './types';
+import { Delete } from '@element-plus/icons-vue'
 
 const props = defineProps<{
-  node: DocTreeNode,
+  node: TreeNodeModel,
   level?: number,
 }>()
 
@@ -43,20 +49,33 @@ defineEmits<{
   toggleExpand: []
 }>()
 
-const treeExpandedState = inject<Ref<Record<string, boolean>>>('treeExpandedState')
-const treeSelectedState = inject<Ref<Record<string, boolean>>>('treeSelectedState')
+const treeEmits = inject<
+((evt: 'add', parent: TreeNodeModel) => void)
+& ((evt: 'select', node: TreeNodeModel) => void)
+& ((evt: 'toggleExpand', node: TreeNodeModel) => void)
+& ((evt: 'remove', node: TreeNodeModel) => void)
+>('tree')
 
+const treeExpandedState = inject<ComputedRef<Record<string, boolean>>>('treeExpandedIdMap')
+const treeSelectedId = inject<ComputedRef<number | string>>('treeSelectedId')
+
+const selected = computed(() => treeSelectedId?.value === props.node.id)
 const expanded = computed(() => treeExpandedState?.value[props.node.id])
-const selected = computed(() => treeSelectedState?.value[props.node.id])
 
 const toggleExpand = () => {
-  if (!treeExpandedState?.value) return
-  treeExpandedState.value[props.node.id] = !treeExpandedState.value[props.node.id];
+  treeEmits?.('toggleExpand', props.node)
 }
 
-const toggleSelected = () => {
-  if (!treeSelectedState?.value) return
-  treeSelectedState.value[props.node.id] = !treeSelectedState.value[props.node.id];
+const add = () => {
+  treeEmits?.('add', props.node)
+}
+
+const select = () => {
+  treeEmits?.('select', props.node)
+}
+
+const remove = () => {
+  treeEmits?.('remove', props.node)
 }
 
 </script>
@@ -72,9 +91,23 @@ const toggleSelected = () => {
     transition: background .2s;
     &:hover {
       background: rgba(220, 220, 220, .5);
+      .tree-action {
+        opacity: 1;
+      }
+    }
+    &.selected {
+      background: rgba(220, 220, 220, .8);
+      .tree-action {
+        opacity: 1;
+      }
     }
     .tree-node-offset {
       height: 1px;
+    }
+    .tree-label {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .tree-node-expand-icon-wrapper {
       height: 24px;
@@ -89,6 +122,21 @@ const toggleSelected = () => {
       border-radius: 6px;
       &.expanded {
         transform: rotateZ(90deg);
+      }
+    }
+    .tree-action {
+      margin-left: auto;
+      height: 24px;
+      color: #333;
+      opacity: 0;
+      transition: opacity .2s;
+      .add-action {
+        cursor: pointer;
+        border-radius: 4px;
+        transition: background .2s;
+        &:hover {
+          background: #bbb;
+        }
       }
     }
   }

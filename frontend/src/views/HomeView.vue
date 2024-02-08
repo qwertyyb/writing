@@ -1,20 +1,56 @@
 <template>
   <main class="home-view">
     <div class="tree-view">
-      <doc-tree></doc-tree>
+      <document-tree
+        v-if="documentStore.tree"
+        :tree="documentStore.tree"
+        @add="addHandler"
+        @select="selectHandler"
+        @toggleExpand="documentStore.toggleExpand"
+        @remove="documentStore.removeDocument"
+        :selectedId="documentStore.editing?.id"
+        :expandedIdMap="documentStore.expandedIdMap"
+      ></document-tree>
     </div>
     <div class="spliter"></div>
     <div class="doc-editor">
       <div class="doc-editor-wrapper">
-        <doc-editor></doc-editor>
+        <document-editor
+          v-if="documentStore.editing"
+          :model-value="documentStore.editing?.content"
+          @change="updateHandler"
+        ></document-editor>
       </div>
     </div>
   </main>
 </template>
 
 <script setup lang="ts">
-import DocTree from '@/components/tree/DocTree.vue';
-import DocEditor from '@/components/DocEditor.vue';
+import DocumentTree from '@/components/DocumentTree.vue';
+import DocumentEditor from '@/components/DocumentEditor.vue';
+import type { TreeNodeModel } from '@/components/tree/types';
+import { logger } from '@/utils/logger';
+import { type BlockModel } from '@/models/block';
+import { useDocumentStore } from '@/stores/document';
+
+const documentStore = useDocumentStore()
+
+documentStore.getList()
+
+const addHandler = async (parent: TreeNodeModel) => {
+  logger.i('add tree node in', parent, parent.path + '/' + parent.id)
+  documentStore.addDocument(parent)
+}
+
+const selectHandler = async (node: TreeNodeModel) => {
+  logger.i('select tree node', node)
+  documentStore.activeEditing(node.id)
+}
+
+const updateHandler = async (content: BlockModel) => {
+  documentStore.updateEditingContent(content)
+}
+
 </script>
 
 <style lang="less" scoped>
@@ -22,6 +58,7 @@ import DocEditor from '@/components/DocEditor.vue';
   display: flex;
   .tree-view {
     flex: 1;
+    min-width: 300px;
   }
   .spliter {
     height: 100vh;
@@ -31,6 +68,9 @@ import DocEditor from '@/components/DocEditor.vue';
   }
   .doc-editor {
     flex: 4;
+    max-height: 100vh;
+    height: 100%;
+    overflow: auto;
     .doc-editor-wrapper {
       max-width: 80%;
       margin: 0 auto;

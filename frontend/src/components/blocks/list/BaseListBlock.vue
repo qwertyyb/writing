@@ -8,19 +8,19 @@
         :index="index"
         :parent="parent"
         :path="[...path, index]"
-        :ref="el => setBlockRef(child.id, el as any)"
-        @update:modelValue="updateBlock($event, child, index)"
-        @add="addBlock($event, child, index)"
-        @remove="removeBlock(child, index)"
+        @update:modelValue="updateBlock(index, $event, child)"
+        @add="addBlock($event, index)"
+        @remove="removeBlock(index)"
       ></block-editor>
     </li>
   </component>
 </template>
 
 <script lang="ts" setup>
-import { type BlockModel, BlockSaveType } from '@/models/block';
+import { type BlockModel } from '@/models/block';
 import useBlockOperate from '@/components/block-operate';
 import BlockEditor from '@/components/BlockEditor.vue';
+import { watch } from 'vue';
 
 const block = defineModel<BlockModel>({ required: true })
 
@@ -34,28 +34,29 @@ const props = withDefaults(defineProps<{
 const emits = defineEmits<{
   added: [{ block: BlockModel, index: number, parent?: BlockModel }],
   updated: [{ oldBlock: BlockModel, block: BlockModel, index: number, parent?: BlockModel }],
-  removed: [{ block: BlockModel, index: number, parent?: BlockModel }],
+  removed: [{ removed: BlockModel, index: number, parent?: BlockModel }],
   change: [BlockModel],
-  'update:modelValue': [BlockModel]
+  'update:modelValue': [BlockModel],
+  remove: [],
 }>()
 
-const { el, setBlockRef, addBlock, updateBlock, removeBlock, save } = useBlockOperate(block, emits)
+const { el, addBlock, updateBlock, removeBlock } = useBlockOperate(block, emits)
 
 if (!block.value.children?.length) {
   addBlock({
     type: 'text',
     id: Math.random().toString(16).substring(2)
-  }, block.value, 0)
+  }, 0)
 }
 
-defineExpose({
-  blockSaveType: () => BlockSaveType.Raw,
-  save
+watch(() => block.value.children?.length ?? 0, (newVal, oldVal) => {
+  if (oldVal && !newVal) {
+    // 所有的子节点已删除，把当前节点也删除
+    emits('remove')
+  }
 })
+
 </script>
 
 <style lang="less" scoped>
-.list-block-item:has([data-block-node="no-leaf"]) {
-  list-style: none
-}
 </style>

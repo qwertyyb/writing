@@ -1,14 +1,14 @@
 <template>
   <div class="rich-text-editor" ref="el">
-    <block-editor v-model="model" :index="0" :path="[0]"></block-editor>
+    <block-editor v-model="model" :index="0" :path="[0]" :key="model.id"></block-editor>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { createBlock, type BlockModel, Block, ref } from '@/models/block';
+import { createBlock, type BlockModel } from '@/models/block';
 import BlockEditor from './BlockEditor.vue';
 import { useFocusEvent } from '@/hooks/focus';
-import { provide, type PropType, computed, watchEffect } from 'vue';
+import { provide, type PropType, computed } from 'vue';
 import { Mode } from './schema';
 
 const model = defineModel<ReturnType<typeof createBlock>>({
@@ -25,18 +25,13 @@ const props = defineProps({
   }
 })
 
-const value = ref<Block>()
-
-watchEffect(() => {
-  value.value = model
-})
-
 const mode = computed(() => props.mode)
 const spellcheck = computed(() => props.spellcheck)
 
 provide('mode', mode)
 provide('spellcheck', spellcheck)
 provide('root', model)
+provide('blockInstances', new Map())
 
 const emits = defineEmits<{
   change: [BlockModel],

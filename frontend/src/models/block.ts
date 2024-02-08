@@ -1,3 +1,5 @@
+import type { EditingDocument } from "@/stores/document";
+import { logger } from "@/utils/logger";
 import EventEmitter from "events";
 
 export interface BlockOptions {
@@ -27,7 +29,7 @@ export enum BlockEventName {
   Update = 'update',
 }
 
-const add = (block: BlockModel, options: Partial<BlockOptions>, index?: number, position: 'before' | 'after' = 'after') => {
+const addChild = (block: BlockModel, options: Partial<BlockOptions>, index?: number, position: 'before' | 'after' = 'after') => {
   if (!block.children) {
     block.children = []
   }
@@ -51,23 +53,29 @@ const add = (block: BlockModel, options: Partial<BlockOptions>, index?: number, 
 
 export const createBlockId = (): string => Math.random().toString(16).substring(2)
 
-export const addAfter = (block: BlockModel, options: Partial<BlockOptions>, index?: number) => {
-  return add(block, options, index, 'after')
+export const addChildAfter = (block: BlockModel, options: Partial<BlockOptions>, index?: number) => {
+  return addChild(block, options, index, 'after')
 }
 
-export const addBefore = (block: BlockModel, options: Partial<BlockOptions>, index?: number) => {
-  return add(block, options, index, 'before')
+export const addChildBefore = (block: BlockModel, options: Partial<BlockOptions>, index?: number) => {
+  return addChild(block, options, index, 'before')
 }
 
-export const update = (block: BlockModel, options: Partial<BlockOptions>) => {
-  block.id = options.id ?? block.id
-  block.type = options.type ?? block.type
-  block.children = options.children ?? block.children
-  block.data = options.data ?? block.data
-  return block
+export const updateChild = (block: BlockModel, index: number, options: Partial<BlockOptions>) => {
+  const child = block.children?.[index]
+  if (!child) {
+    logger.e('未找到子节点', block, index)
+    throw new Error('未找到子节点')
+  }
+  block.children![index] = {
+    ...child,
+    ...options
+  }
+  logger.i('after update child', block)
+  return block.children![index]
 }
 
-export const remove = (parent: BlockModel, id: string) => {
+export const removeById = (parent: BlockModel, id: string) => {
   if (!parent.children) {
     throw new Error(`删除失败，该节点没有子节点`)
   }
@@ -79,7 +87,7 @@ export const remove = (parent: BlockModel, id: string) => {
   return blocks
 }
 
-export const removeByIndex = (parent: BlockModel, index: number) => {
+export const remove = (parent: BlockModel, index: number) => {
   if (!parent.children) {
     throw new Error(`删除失败，该节点没有子节点`)
   }
@@ -105,44 +113,125 @@ export const createBlock = (options: Partial<BlockOptions>): BlockModel => {
   return block
 }
 
-export class Block extends EventEmitter {
-  readonly model: BlockModel
-  constructor(model: BlockModel) {
+export const createEditingDocument = (parent: { id: number | string, path: string }): Omit<EditingDocument, 'id' | 'updatedAt' | 'createdAt'> => {
+  return {
+    title: '新文档',
+    path: `${parent.path}/${parent.id}`,
+    content: {
+      id: createBlockId(),
+      type: 'doc',
+      data: {
+        title: '新文档',
+      },
+      children: [
+        {
+          id: createBlockId(),
+          type: 'text',
+          data: {
+            html: '',
+          },
+          children: []
+        }
+      ]
+    }
+  }
+}
+
+export interface BlockControllerModel {
+  type: string;
+  id: string;
+  version?: number;
+  children?: BlockController[];
+  data?: any;
+}
+
+const createBlockController = (options: Partial<BlockControllerModel>) => {
+  if (!options.id) {
+    options.id = createBlockId()
+  }
+  if (!options.type) {
+    options.type = 'text'
+  }
+  const model = {
+    ...options,
+    type: options.type ?? 'text',
+    id: options.id ?? createBlockId(),
+  }
+  return new BlockController(model)
+}
+
+export class BlockController extends EventEmitter {
+  private _model: BlockControllerModel
+  get model() {
+    return this._model
+  }
+  constructor(model: BlockControllerModel) {
     super()
-    this.model = model
+    this._model = model
+  }
+
+  private add = (options: Partial<BlockControllerModel>, index?: number, position: 'before' | 'after' = 'after') => {
+    if (!this._model.children) {
+      this._model.children = []
+    }
+    if (typeof index === 'undefined' || index === null) {
+      index = this._model.children.length
+    }
+    if (index < 0) {
+      throw new Error('index 不能为负数')
+    }
+    if (index > this._model.children.length) {
+      throw new Error('index 超出范围, length: ' + this._model.children.length)
+    }
+    const newBlockController = createBlockController(options)
+    if (position === 'after') {
+      this._model.children.splice(index + 1, 0, newBlockController)
+    } else if (position === 'before') {
+      this._model.children.splice(index, 0, newBlockController)
+    }
+    return newBlockController
   }
 
   emitUpdate = () => {
-    this.emit('changed', this.model)
+    this.emit('changed', this._model)
   }
 
-  addAfter = (options: Partial<BlockModel>, index?: number) => {
-    const result = addAfter(this.model, options, index)
-    this.emit('added', { parent: this.model, index: (index || 0) + 1, block: result })
+  addAfter = (options: Partial<BlockControllerModel>, index?: number) => {
+    const result = this.add(options, index, 'after')
+    this.emit('added', { parent: this._model, index: (index || 0) + 1, block: result })
     this.emitUpdate()
     return result
   }
 
-  addBefore = (options: Partial<BlockModel>, index?: number) => {
-    const result = addBefore(this.model, options, index)
-    this.emit('added', { parent: this.model, index: index || 0, block: result })
+  addBefore = (options: Partial<BlockControllerModel>, index?: number) => {
+    const result = this.add(options, index, 'before')
+    this.emit('added', { parent: this._model, index: index || 0, block: result })
     this.emitUpdate()
     return result
   }
 
   removeByIndex = (index: number) => {
-    const [removed] = removeByIndex(this.model, index)
+    if (!this._model.children) {
+      throw new Error(`删除失败，该节点没有子节点`)
+    }
+    if (index < 0 || index > this._model.children.length - 1) {
+      throw new Error(`未找到待删除节点: ${index}`)
+    }
+    const [removed] = this._model.children.splice(index, 1)
     this.emit('removed', {
       block: removed,
       index,
-      parent: this.model
+      parent: this._model
     })
     this.emitUpdate()
     return removed
   }
 
-  update = (options: Partial<BlockModel>) => {
-    update(this.model, options)
+  update = (options: Partial<BlockControllerModel>) => {
+    this._model = {
+      ...this.model,
+      ...options,
+    }
     this.emit('updated', {
       block: this.model,
     })
@@ -150,11 +239,15 @@ export class Block extends EventEmitter {
   }
 }
 
-export const createFromModel = (model: BlockModel) => {
-  if (Array.isArray(model.children)) {
-    model.children = model.children.map(child => createFromModel(child))
+export const createFromBlockModel = (model: BlockModel) => {
+  const { children, ...restData } = model;
+  const blockController = new BlockController(restData)
+  if (Array.isArray(children)) {
+    blockController.update({
+      children: children.map(child => createFromBlockModel(child))
+    })
   }
-  return new Block(model)
+  return blockController
 }
 
 

@@ -4,13 +4,15 @@ import BulletedListBlock from './BulletedListBlock.vue'
 const numberedList = {
   identifier: 'ordered-list',
   label: '有序列表',
+  renderChildren: true,
 
   component: NumberedListBlock
 }
 
 const bulletedList = {
-  identifier: 'ordered-list',
+  identifier: 'unordered-list',
   label: '有序列表',
+  renderChildren: true,
 
   component: BulletedListBlock
 }

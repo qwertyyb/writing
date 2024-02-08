@@ -1,8 +1,9 @@
-import { addAfter, remove, type BlockModel, type BlockOptions, update } from "@/models/block"
+import { addChildAfter, remove, type BlockModel, updateChild } from "@/models/block"
 import { setCaretToEnd } from "@/models/caret"
-import { nextTick, ref, type Ref } from "vue"
-import type BlockEditor from "./BlockEditor.vue"
+import { inject, nextTick, ref, type ModelRef, type Ref } from "vue"
 import { focusBefore } from "@/hooks/focus"
+import { checkMove } from "@/hooks/move"
+import { logger } from "@/utils/logger"
 
 type Emits = ((evt: "added", args_0: {
   block: BlockModel;
@@ -14,7 +15,7 @@ type Emits = ((evt: "added", args_0: {
   index: number;
   parent?: BlockModel | undefined;
 }) => void) & ((evt: "removed", args_0: {
-  block: BlockModel;
+  removed: BlockModel;
   index: number;
   parent?: BlockModel | undefined;
 }) => void) & ((evt: "change", args_0: BlockModel) => void) & ((evt: "update:modelValue", args_0: BlockModel) => void)
@@ -31,37 +32,36 @@ export const focusBlock = (el: HTMLElement | undefined | null, id: string) => {
 
 const useBlockOperate = (parent: Ref<BlockModel>, emits: Emits) => {
   const el = ref<HTMLElement>()
-  const blockRefs = ref<Record<string, InstanceType<typeof BlockEditor> | null>>({})
-
-  const setBlockRef = (id: string, blockRef: InstanceType<typeof BlockEditor> | null) => {
-    blockRefs.value![id] = blockRef
-  }
 
   const emitUpdate = () => {
     nextTick(() => {
-      emits('change', save())
-      emits('update:modelValue', save())
+      emits('change', parent.value)
+      emits('update:modelValue', parent.value)
     })
   }
 
-  const addBlock = (options: Partial<BlockOptions> | undefined | null, block: BlockModel, index: number) => {
-    const newBlock = addAfter(parent.value, {
+  const addBlock = (
+    block: Partial<BlockModel> | undefined | null,
+    index: number
+  ) => {
+    const newBlock = addChildAfter(parent.value, {
       type: 'text',
       id: Math.random().toString(16).substring(2),
-      ...options,
+      ...block,
     }, index)
+    logger.i('addBlock', parent.value, index, newBlock)
     focusBlock(el.value, newBlock.id)
     emits('added', {
-      block,
+      block: newBlock,
       index: index + 1,
       parent: parent.value
     })
     emitUpdate()
   }
 
-  const updateBlock = (options: Partial<BlockOptions>, block: BlockModel, index: number) => {
+  const updateBlock = (index: number, data: Partial<BlockModel>, block: BlockModel) => {
     const oldKey = block.id + block.type
-    update(block, options)
+    updateChild(parent.value, index, data)
     if (oldKey !== block.id + block.type) {
       focusBlock(el.value, block.id)
     }
@@ -69,11 +69,12 @@ const useBlockOperate = (parent: Ref<BlockModel>, emits: Emits) => {
     emitUpdate()
   }
 
-  const removeBlock = (block: BlockModel, index: number) => {
-    const [removed] = remove(parent.value, block.id)
-    focusBefore()
+  const removeBlock = (index: number, options = { autoFocusBefore: true }) => {
+    const [removed] = remove(parent.value, index)
+    logger.i('removeBlock', parent.value, index, removed)
+    options.autoFocusBefore && focusBefore()
     emits('removed', {
-      block,
+      removed,
       index,
       parent: parent.value
     })
@@ -81,33 +82,31 @@ const useBlockOperate = (parent: Ref<BlockModel>, emits: Emits) => {
     return removed
   }
 
-  // 增加层级，把前一个block作为父block, 当前节点作为前一个节点的子节点
-  const increaseLevelBlock = (block: BlockModel, index: number) => {
-    // 当前已经是第一个节点，无法降低层级
-    if (index === 0) return
-    const [ removed ] = remove(parent.value, block.id)
-    addAfter(parent.value.children![index - 1], removed)
-    emitUpdate()
-    focusBlock(el.value, removed.id)
-  }
-
-  // 增加层级，把前一个block作为父block, 当前节点作为前一个节点的子节点
-  const decreaseLevelBlock = (block: BlockModel, index: number) => {
-    // 当前已经是第一个节点，无法降低层级
-    if (index === 0) return
-    const [ removed ] = remove(parent.value, block.id)
-    addAfter(parent.value.children![index - 1], removed)
-    emitUpdate()
-  }
-
-  const save = () => {
-    return {
-      ...parent.value,
-      children: parent.value.children?.map(block => blockRefs.value[block.id]?.save()).filter(i => i)
-    }
-  }
-
-  return { el, setBlockRef, addBlock, updateBlock, removeBlock, increaseLevelBlock, decreaseLevelBlock, save }
+  return { el, addBlock, updateBlock, removeBlock }
 }
 
 export default useBlockOperate
+
+export const useMoveBlock = () => {
+  const root = inject<ModelRef<BlockModel>>('root')
+  const blockInstances = inject<Map<string, Omit<ReturnType<typeof useBlockOperate>, 'el'>>>('blockInstances')
+
+  if (!blockInstances) {
+    throw new Error('未获取到节点实例')
+  }
+
+  const move = (oldPath: number[], newPath: number[]) => {
+    const { oldPathParent, oldIndex, newPathParent, newIndex } = checkMove(root!.value!, oldPath, newPath)
+    logger.i('start move', { oldPath, oldPathParent }, { newPath, newPathParent })
+    const oldIns = blockInstances.get(oldPathParent.id)
+    const newIns = blockInstances.get(newPathParent.id)
+    if (!oldIns || !newIns) {
+      throw new Error('未获取节点实例')
+    }
+    logger.i('move old parent', oldIns, newIns)
+    const removed = oldIns.removeBlock(oldIndex, { autoFocusBefore: false })
+    newIns.addBlock(removed, newIndex)
+  }
+
+  return { move }
+}

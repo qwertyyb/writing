@@ -1,21 +1,26 @@
 <template>
-  <div class="block-editor" :data-block-id="block.id" ref="el">
+  <div class="block-editor" :class="'block-type-' + block.type" :data-block-id="block.id" ref="el">
     <!-- <div class="block-tool">
       <span class="material-symbols-outlined block-tool-icon"> drag_indicator </span>
     </div> -->
     <div class="block-content">
-      <command-renderer
-        v-bind="$attrs"
-        v-model="block"
+      <block-renderer
+        :model-value="block"
         :index="index"
         :parent="parent"
         :path="path"
-        ref="renderRef"></command-renderer>
+        @update:modelValue="$emit('update:modelValue', $event)"
+        @add="$emit('add', $event)"
+        @remove="$emit('remove')"
+        @move="move(path, $event)"
+      ></block-renderer>
     </div>
-    <div class="block-children">
+    <div class="block-children" v-if="needRenderChildren && block.children">
       <block-list-editor
-        v-model="block"
-        @addAfter="$emit('addAfter', $event)"
+        v-model="block.children"
+        @add="addBlock"
+        @update="updateBlock"
+        @remove="removeBlock"
         :path="path"
         :index="index"></block-list-editor>
     </div>
@@ -23,10 +28,12 @@
 </template>
 
 <script lang="ts" setup>
-import { type BlockModel, BlockSaveType } from '@/models/block';
-import { ref } from 'vue';
-import CommandRenderer from './commands/CommandRenderer.vue';
+import { type BlockModel } from '@/models/block';
+import { computed, inject, onBeforeUnmount, onMounted } from 'vue';
+import BlockRenderer from './commands/BlockRenderer.vue';
 import BlockListEditor from './BlockListEditor.vue';
+import useBlockOperate, { useMoveBlock } from './block-operate';
+import { getBlockConfig } from './commands';
 
 const block = defineModel<BlockModel>({ required: true })
 
@@ -36,22 +43,36 @@ const props = defineProps<{
   parent?: BlockModel
 }>()
 
-const el = ref<HTMLDivElement>()
-const renderRef = ref<InstanceType<typeof CommandRenderer>>()
+const emits = defineEmits<{
+  added: [{ block: BlockModel, index: number, parent?: BlockModel }],
+  updated: [{ oldBlock: BlockModel, block: BlockModel, index: number, parent?: BlockModel }],
+  removed: [{ removed: BlockModel, index: number, parent?: BlockModel }],
+  change: [BlockModel],
+  'update:modelValue': [BlockModel]
+  add: [options: Partial<BlockModel>],
+  remove: [],
+}>()
 
-defineExpose({
-  save() {
-    if (renderRef.value?.blockSaveType() === BlockSaveType.Data) {
-      return {
-        ...block.value,
-        data: renderRef.value?.save()
-      }
-    } else {
-      return renderRef.value?.save()
-    }
-  }
+const needRenderChildren = computed(() => {
+  return block.value.children && !getBlockConfig(block.value)?.renderChildren
 })
 
+const {
+  el,
+  addBlock,
+  updateBlock,
+  removeBlock,
+} = useBlockOperate(block, emits)
+
+onMounted(() => {
+  inject<Map<string, Omit<ReturnType<typeof useBlockOperate>, 'el'>>>('blockInstances')?.set(block.value.id, { addBlock, updateBlock, removeBlock })
+})
+
+onBeforeUnmount(() => {
+  inject<Map<string, Omit<ReturnType<typeof useBlockOperate>, 'el'>>>('blockInstances')?.delete(block.value.id)
+})
+
+const { move } = useMoveBlock()
 
 </script>
 
@@ -61,6 +82,7 @@ defineExpose({
   align-items: flex-start;
   justify-content: flex-start;
   flex-direction: column;
+  padding: 6px 0;
   & > * {
     width: 100%;
   }

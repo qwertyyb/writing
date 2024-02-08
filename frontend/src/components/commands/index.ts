@@ -6,8 +6,19 @@ import linkBlock from "../blocks/link/LinkBlock";
 import blockQuote from "../blocks/block-quote/block-quote";
 import divider from "../blocks/divider/divider";
 import codeBlock from "../blocks/code-block/codeBlock";
+import type { BlockModel } from "@/models/block";
+import type { Component } from "vue";
+import docBlock from "../blocks/doc-block/doc-block";
 
-const commands = [
+interface BlockConfig {
+  identifier: string,
+  label: string,
+  renderChildren?: boolean,
+
+  component: Component,
+}
+
+const commands: BlockConfig[] = [
   TextBlock,
   heading1,
   heading2,
@@ -20,7 +31,13 @@ const commands = [
   ImageBlock,
   blockQuote,
   divider,
-  codeBlock
+  codeBlock,
+  docBlock
 ]
 
 export default commands
+
+export const getBlockConfig = (block: BlockModel) => {
+  const config = commands.find(command => command.identifier === block.type)
+  return config
+}

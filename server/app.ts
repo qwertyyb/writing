@@ -1,7 +1,16 @@
 import Koa from 'koa';
+import { koaBody } from 'koa-body';
 import { useRouter } from './routes';
 
 const app = new Koa();
+
+app.use(koaBody({
+  multipart: true,
+  formidable: {
+    keepExtensions: true,
+    hashAlgorithm: 'sha1'
+  }
+}))
 
 useRouter(app);
 

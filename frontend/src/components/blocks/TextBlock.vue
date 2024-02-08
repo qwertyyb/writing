@@ -11,35 +11,43 @@
       @emptyKeyEnter="emptyEnterKeyHandler"
       @emptyKeyBackspace="backspaceKeyHandler"
       @openTool="openToolHandler"
+      @upload="uploadHandler"
       @focusBefore="$emit('focusBefore')"
       @focusAfter="$emit('focusAfter')"
       ref="textEditorEl"
     ></text-editor>
 
-    <command-tool v-if="commandToolVisible"
-      ref="commandTool"
-      @confirm="onCommand"
-      @exit="onExitTool"
-      :keyword="commandToolKeyword"
-      :style="{top: commandToolPoisition.top + 'px', left: commandToolPoisition.left + 'px'}"
-    ></command-tool>
+    <teleport to="body">
+      <command-tool v-if="commandToolVisible"
+        ref="commandTool"
+        @confirm="onCommand"
+        @exit="onExitTool"
+        :keyword="commandToolKeyword"
+        :style="{top: commandToolPoisition.top + 'px', left: commandToolPoisition.left + 'px'}"
+      ></command-tool>
+    </teleport>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, watch, toRaw, watchEffect } from 'vue';
+import { ref, reactive, watch, toRaw, watchEffect, inject, type ModelRef } from 'vue';
 import CommandTool from '../commands/CommandTool.vue';
 import TextEditor from '@/components/blocks/TextEditor.vue';
 import { setCaretToEnd } from '@/models/caret';
-import type { BlockModel, BlockOptions } from '@/models/block';
+import { createBlock, type BlockModel, type BlockOptions } from '@/models/block';
 import type { TextData } from './TextBlock';
 import { useMode } from '@/hooks/mode';
 import { useSpellcheck } from '@/hooks/spellcheck';
+import { getBlockByPath } from '@/hooks/move';
+import { logger } from '@/utils/logger';
+import { upload } from '@/services/upload';
+import { getImageRatio } from './image/utils';
 
 const block = defineModel<BlockModel<TextData | any>>({ required: true })
 
 const props = defineProps<{
   index: number,
+  path?: number[],
   parent?: BlockModel
 }>()
 
@@ -49,8 +57,7 @@ const emits = defineEmits<{
   add: [options?: Partial<BlockOptions>],
   update: [options: Partial<BlockOptions>]
   remove: [],
-  increaseLevel: [],
-  decreaseLevel: [],
+  move: [newPath: number[]]
 
   change: [block: BlockModel],
   focusBefore: [],
@@ -78,10 +85,6 @@ const commandToolKeyword = ref('')
 
 watch(commandToolVisible, () => commandToolKeyword.value = '')
 
-const save = () => {
-  return data.value
-}
-
 const onCommand = (command: any) => {
   textEditorEl.value?.removeTriggerKey()
   commandToolVisible.value = false
@@ -106,14 +109,23 @@ const emptyEnterKeyHandler = (event: KeyboardEvent) => {
   emits('emptyEnterKey', event)
 }
 
+const root = inject<ModelRef<BlockModel>>('root')
+
 const tabKeyHandler = (event: KeyboardEvent) => {
   event.preventDefault()
-  emits('increaseLevel')
+  if (props.index <= 0 || !root?.value || !props.path || props.path.length < 2) return
+  const newParentPath = [...props.path.slice(0, props.path.length - 1), props.index - 1]
+  const parentBlock = getBlockByPath(root.value, newParentPath)
+  const newPath = [...newParentPath, parentBlock.children?.length ?? 0]
+  emits('move', newPath)
 }
 
 const shiftTabKeyHandler = (event: KeyboardEvent) => {
   event.preventDefault()
-  emits('decreaseLevel')
+  if (!props.path || props.path.length <= 2) return
+  const newPath = [...props.path.slice(0, props.path.length - 1)]
+  logger.i('newPath', newPath)
+  emits('move', newPath)
 }
 
 const backspaceKeyHandler = (event: KeyboardEvent) => {
@@ -135,9 +147,18 @@ const openToolHandler = ({ x = 0, y = 0 }) => {
   commandToolVisible.value = true
 }
 
-defineExpose({
-  save
-})
+const uploadHandler = async (file: File) => {
+  const isImage = file.type.startsWith('image/')
+  if (!isImage) {
+    return logger.i('暂不支持的文件类型', file)
+  }
+  const { data: { url } } = await upload(file)
+  const data = await getImageRatio(url)
+  emits('add', createBlock({
+    type: 'image',
+    data
+  }))
+}
 </script>
 
 <style lang="less" scoped>

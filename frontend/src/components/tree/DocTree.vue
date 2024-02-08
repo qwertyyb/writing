@@ -1,31 +1,31 @@
 <template>
   <div class="doc-tree">
-    <DocTreeNode v-for="child in tree"
-      :key="child.id"
-      :node="child"></DocTreeNode>
+    <DocTreeNode
+      :node="tree"></DocTreeNode>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { provide, ref } from 'vue';
+import { computed, provide, ref } from 'vue';
 import DocTreeNode from './DocTreeNode.vue';
+import type { TreeNodeModel } from './types';
 
-const props = defineProps({
-  tree: {
-    default: [
-      { id: '1', label: 'tree1', children: [
-        { id: '11', label: 'tree11', children: [
-          { id: '111', label: 'tree111' }
-        ]}
-      ]}
-    ]
-  }
-})
+const props = defineProps<{
+  tree: TreeNodeModel,
+  expandedIdMap?: Record<number | string, boolean>,
+  selectedId?: number | string
+}>()
 
-const treeExpandedState = ref<Record<string, boolean>>({})
-const treeSelectedState = ref<Record<string, boolean>>({})
+const emits = defineEmits<{
+  add: [parent: TreeNodeModel],
+  select: [node: TreeNodeModel],
+  toggleExpand: [node: TreeNodeModel],
+  remove: [node: TreeNodeModel]
+}>()
 
-provide('treeExpandedState', treeExpandedState)
-provide('treeSelectedState', treeSelectedState)
+
+provide('treeSelectedId', computed(() => props.selectedId))
+provide('treeExpandedIdMap', computed(() => props.expandedIdMap))
+provide('tree', emits)
 
 </script>

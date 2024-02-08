@@ -24,11 +24,11 @@
       v-else>
       <figure class="image-wrapper" :style="{ width: data.size + '%' }">
         <focusable-control tag="img"
-          :src="data.src"
+          :src="uploadState.loading ? uploadState.tempUrl : data.src"
           alt=""
           class="image"
           ref="imageEl"
-          :style="{ aspectRatio: data.ratio }"
+          :style="{ aspectRatio: uploadState.loading ? uploadState.tempRatio : data.ratio }"
           @click="settingsVisible = true"
           @keydown.enter="upload"
           @keydown.delete="$emit('remove')" />
@@ -39,6 +39,14 @@
             @update:modelValue="update({ 'title': $event })"
           ></text-block>
         </figcaption>
+
+
+        <div class="image-upload-status" v-if="uploadState.loading">
+          <span class="material-symbols-outlined loading-icon">
+            progress_activity
+          </span>
+          <p class="upload-text">{{ uploadState.text }}</p>
+        </div>
 
         <transition name="el-fade-in">
           <div class="image-settings-container" v-show="settingsVisible" v-click-outside="() => settingsVisible = false">
@@ -125,6 +133,9 @@ import { ref, watch } from 'vue';
 import { createBlock, type BlockModel } from '@/models/block';
 import TextBlock from '../TextBlock.vue';
 import FocusableControl from '@/components/FocusableControl.vue';
+import { ImageAlign } from '@/components/schema';
+import * as uploadService from '@/services/upload';
+import { getImageRatio } from './utils';
 
 const block = defineModel<BlockModel>({ required: true })
 
@@ -135,12 +146,6 @@ const emits = defineEmits<{
 const imageEl = ref<InstanceType<typeof FocusableControl>>()
 const containerEl = ref<HTMLDivElement>()
 const settingsVisible = ref(false)
-
-enum ImageAlign {
-  Left = 'Left',
-  Center = 'Center',
-  Right = 'Right'
-}
 
 interface ImageData {
   src: string
@@ -158,6 +163,13 @@ const data = ref<ImageData>({
   ratio: block.value.data?.ratio ?? 1,
 })
 
+const uploadState = ref({
+  loading: false,
+  text: '',
+  tempUrl: '',
+  tempRatio: 1,
+})
+
 watch(block, () => {
   data.value = {
     src: block.value.data?.src ?? '',
@@ -168,7 +180,7 @@ watch(block, () => {
   }
 })
 
-const update = <K extends keyof ImageData>(newData: Partial<ImageData>) => {
+const update = (newData: Partial<ImageData>) => {
   data.value = {
     ...data.value,
     ...newData
@@ -183,17 +195,25 @@ const upload = () => {
   const input = document.createElement('input')
   input.type = 'file'
   input.accept = 'image/*'
-  input.addEventListener('change', () => {
+  input.addEventListener('change', async () => {
     const files = input.files
     if (!files?.length) return
 
-    // @todo 先简单处理，生成blob，后续需要上传到server端
     const url = URL.createObjectURL(files[0])
-    const image = document.createElement('img')
-    image.onload = () => {
-      update({ src: url, ratio: image.naturalWidth / image.naturalHeight })
-    }
-    image.src = url
+    const { ratio } = await getImageRatio(url)
+    uploadState.value.tempUrl = url
+    uploadState.value.tempRatio = ratio
+
+    uploadState.value.loading = true
+    uploadState.value.text = ''
+    uploadService.upload(files[0]).then(async (result) => {
+      if (result.errCode === 0) {
+        update(await getImageRatio(result.data.url))
+        uploadState.value.loading = false
+      } else {
+        uploadState.value.text = result.errMsg || '上传失败'
+      }
+    })
   })
   input.click()
 }
@@ -290,6 +310,30 @@ defineExpose({
   .image-title {
     text-align: center;
   }
+  .image-upload-status {
+    position: absolute;
+    left: 6px;
+    top: 6px;
+    display: flex;
+    align-items: center;
+    .loading-icon {
+      animation: rotate 1s infinite both;
+      color: rgba(0, 0, 0, .7);
+      transform-origin: center center;
+      display: block;
+      font-size: 20px;
+      width: fit-content;
+      height: fit-content;
+    }
+    .upload-text {
+      font-size: 12px;
+      padding: 0;
+      margin: 0;
+      margin-left: 6px;
+      color: #f00;
+    }
+  }
+
   .full-size() {
     position: absolute;
     top: 0;
@@ -333,6 +377,10 @@ defineExpose({
     right: 0;
     bottom: 0;
     background: rgba(64, 133, 164, 0.4);
+    @keyframes rotate {
+      from { transform: rotate(0) }
+      to { transform: rotate(360deg);}
+    }
     .image-settings {
       position: absolute;
       top: 6px;
@@ -365,6 +413,10 @@ defineExpose({
       overflow: hidden;
       &:hover {
         background: rgba(0, 0, 0, .4);
+      }
+      &.delete-icon {
+        border-top-left-radius: 4px;
+        border-bottom-left-radius: 4px;
       }
       &.upload-icon, &.delete-icon {
         font-size: 18px;

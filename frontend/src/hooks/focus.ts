@@ -25,7 +25,6 @@ export const focusAfter = () => {
 
 export const useFocusEvent = () => {
   const focusHandler = (event: FocusEvent) => {
-    console.log('focus changed', event.target)
     focusedEl = (event.target as HTMLElement)
   }
 

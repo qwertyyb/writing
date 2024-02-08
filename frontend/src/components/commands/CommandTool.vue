@@ -44,6 +44,7 @@ onMounted(() => {
 watch(keyword, () => selectedIndex.value = 0)
 
 const onKeydown = (event: KeyboardEvent) => {
+  console.log(event.code)
   if (event.code === 'ArrowUp') {
     selectedIndex.value = (selectedIndex.value - 1 + visibleCommands.value.length) % visibleCommands.value.length
   } else if (event.code === 'ArrowDown') {
@@ -57,6 +58,8 @@ const onKeydown = (event: KeyboardEvent) => {
   } else if (event.code === 'Backspace' && keyword.value.length === 0) {
     // 已没有字符可删除，关闭
     event.preventDefault()
+    emits('exit', { autofocus: true })
+  } else if (event.code === 'Escape') {
     emits('exit', { autofocus: true })
   }
 }
