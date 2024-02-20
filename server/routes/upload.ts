@@ -1,8 +1,11 @@
 import KoaRouter from '@koa/router'
 import { readFileSync } from 'node:fs'
 import { prisma } from '../prisma'
+import { needAuth } from '../middlewares/auth'
 
 const router = new KoaRouter()
+
+router.use(needAuth)
 
 router.post('/api/v1/upload', async (ctx, next) => {
   const file = Array.isArray(ctx.request.files?.file) ? ctx.request.files?.file[0] : ctx.request.files?.file

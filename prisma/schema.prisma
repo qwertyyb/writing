@@ -27,4 +27,15 @@ model Document {
 
   deleted Boolean @default(false)
   deletedAt DateTime?
+
+  attributes Attribute[]
+}
+
+model Attribute {
+  doc Document @relation(fields: [docId], references: [id])
+  docId Int
+  key String
+  value String
+
+  @@id([docId, key])
 }

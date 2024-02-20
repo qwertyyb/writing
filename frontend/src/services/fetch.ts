@@ -9,7 +9,13 @@ export interface ResponseData<D extends any> {
 export const apiFetch = async <D extends any>(...args: Parameters<typeof fetch>) => {
   let response: Response | null = null
   try {
-    response = await fetch(args[0], args[1])
+    response = await fetch(args[0], {
+      ...args[1],
+      headers: {
+        ...args[1]?.headers,
+        token: ''
+      }
+    })
   } catch (err: any) {
     const errMsg = `${args[0]}请求失败: ${err.message}`
     ElMessage.error({

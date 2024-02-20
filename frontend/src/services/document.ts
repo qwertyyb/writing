@@ -1,4 +1,6 @@
+import type { Attribute } from "./attribute"
 import { apiFetch } from "./fetch"
+
 
 export interface Document {
   id: number,
@@ -7,10 +9,11 @@ export interface Document {
   path: string,
   createdAt: string,
   updatedAt: string,
+  attributes: Attribute[]
 }
 
 export const getList = () => {
-  return apiFetch<{ total: number, list: Omit<Document, 'content'>[] }>('/api/v1/document/list')
+  return apiFetch<{ total: number, list: Omit<Document, 'content' | 'attributes'>[] }>('/api/v1/document/list')
 }
 
 export const getDocument = (where: { id: number }) => {
@@ -44,7 +47,7 @@ export const removeDocument = (where: { id: number } | { path: string }) => {
 }
 
 export const addDocument = (data: Pick<Document, 'title' | 'content' | 'path'>) => {
-  return apiFetch<Omit<Document, 'content'>>('/api/v1/document/add', {
+  return apiFetch<Omit<Document, 'content' | 'attributes'>>('/api/v1/document/add', {
     method: 'POST',
     headers: {
       'content-type': 'application/json',

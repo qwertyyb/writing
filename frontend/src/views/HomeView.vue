@@ -14,6 +14,10 @@
     </div>
     <div class="spliter"></div>
     <div class="doc-editor">
+      <document-attribute
+        v-if="documentStore.editing"
+        :doc-id="documentStore.editing?.id"
+        :attributes="documentStore.editing?.attributes"></document-attribute>
       <div class="doc-editor-wrapper">
         <document-editor
           v-if="documentStore.editing"
@@ -28,6 +32,7 @@
 <script setup lang="ts">
 import DocumentTree from '@/components/DocumentTree.vue';
 import DocumentEditor from '@/components/DocumentEditor.vue';
+import DocumentAttribute from '@/components/DocumentAttribute.vue';
 import type { TreeNodeModel } from '@/components/tree/types';
 import { logger } from '@/utils/logger';
 import { type BlockModel } from '@/models/block';

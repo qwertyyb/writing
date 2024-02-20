@@ -1,0 +1,61 @@
+<template>
+  <main class="home-view">
+    <div class="spliter"></div>
+    <div class="doc-editor">
+      <div class="doc-editor-wrapper">
+        <document-editor
+          mode="Readonly"
+          v-if="document"
+          :model-value="document"
+        ></document-editor>
+      </div>
+    </div>
+  </main>
+</template>
+
+<script setup lang="ts">
+import DocumentEditor from '@/components/DocumentEditor.vue';
+import type { BlockModel } from '@/models/block';
+import { getDocumentByShareId } from '@/services/public';
+import { ref, watchEffect } from 'vue';
+import { useRoute } from 'vue-router';
+
+const document = ref<BlockModel>()
+
+const route = useRoute()
+
+watchEffect(async () => {
+  const id = route.params.id as string
+  if (!id) return
+  const { data } = await getDocumentByShareId({ id })
+  
+  document.value = JSON.parse(data.doc.content)
+})
+
+</script>
+
+<style lang="less" scoped>
+.home-view {
+  display: flex;
+  .tree-view {
+    flex: 1;
+    min-width: 300px;
+  }
+  .spliter {
+    height: 100vh;
+    width: 4px;
+    background: rgba(220, 220, 220, .8);
+    cursor: ew-resize;
+  }
+  .doc-editor {
+    flex: 4;
+    max-height: 100vh;
+    height: 100%;
+    overflow: auto;
+    .doc-editor-wrapper {
+      max-width: 80%;
+      margin: 0 auto;
+    }
+  }
+}
+</style>
