@@ -14,6 +14,7 @@
       @upload="uploadHandler"
       @focusBefore="$emit('focusBefore')"
       @focusAfter="$emit('focusAfter')"
+      @keydown="keydownHandler"
       ref="textEditorEl"
     ></text-editor>
 
@@ -38,6 +39,7 @@ import { createBlock, type BlockModel, type BlockOptions } from '@/models/block'
 import type { TextData } from './TextBlock';
 import { useMode } from '@/hooks/mode';
 import { useSpellcheck } from '@/hooks/spellcheck';
+import { transformBlock } from '@/hooks/transform';
 import { getBlockByPath } from '@/hooks/move';
 import { logger } from '@/utils/logger';
 import { upload } from '@/services/upload';
@@ -106,7 +108,10 @@ const enterKeyHandler = (event: KeyboardEvent) => {
 
 const emptyEnterKeyHandler = (event: KeyboardEvent) => {
   event.preventDefault()
-  emits('emptyEnterKey', event)
+  if (!props.path || props.path.length <= 2) return
+  const newPath = [...props.path.slice(0, props.path.length - 1)]
+  logger.i('newPath', newPath)
+  emits('move', newPath)
 }
 
 const root = inject<ModelRef<BlockModel>>('root')
@@ -138,6 +143,19 @@ const backspaceKeyHandler = (event: KeyboardEvent) => {
 
 const escapeKeyHandler = (event: KeyboardEvent) => {
   commandToolVisible.value = false
+}
+
+const keydownHandler = (event: KeyboardEvent) => {
+  if (event.key !== ' ') return
+  event.preventDefault()
+  block.value = transformBlock(block.value)
+  // if (/^#{1,6}$/.test(data.value.html)) {
+  //   block.value = { id: block.value.id, type: 'heading' + data.value.html.length, data: { html: '' } }
+  // } else if (data.value.html === '1.') {
+  //   block.value = { id: block.value.id, type: 'ordered-list', children: [] }
+  // } else if (data.value.html === '-') {
+  //   block.value = { id: block.value.id, type: 'unordered-list', children: [] }
+  // }
 }
 
 const openToolHandler = ({ x = 0, y = 0 }) => {

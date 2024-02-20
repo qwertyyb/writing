@@ -1,41 +1,57 @@
 <template>
-  <blockquote class="block-quote-block">
-    <text-block :model-value="data.text"
-      :index="0"
-      @update:modelValue="update({ text: $event })"></text-block>
+  <blockquote class="block-quote-block" ref="el">
+    <div v-for="(child, index) in block.children"
+      :key="child.id + child.type"
+      class="block-quote-content">
+      <block-editor
+        :model-value="child"
+        :index="index"
+        :parent="parent"
+        :path="[...path, index]"
+        @update:modelValue="updateBlock(index, $event, child)"
+        @add="addBlock($event, index)"
+        @remove="removeBlock(index)"
+      ></block-editor>
+    </div>
   </blockquote>
 </template>
 
 <script lang="ts" setup>
-import TextBlock from '@/components/blocks/TextBlock.vue'
-import { createBlock, type BlockModel } from '@/models/block';
-import type { TextData } from '../TextBlock';
-import { ref } from 'vue';
+import { type BlockModel } from '@/models/block';
+import useBlockOperate from '@/components/block-operate';
+import BlockEditor from '@/components/BlockEditor.vue';
+import { watch } from 'vue';
 
 const block = defineModel<BlockModel>({ required: true })
 
-interface BlockQuoteData {
-  text: BlockModel<TextData>
+defineProps<{
+  index: number,
+  parent?: BlockModel,
+  path: number[],
+}>()
+
+const emits = defineEmits<{
+  added: [{ block: BlockModel, index: number, parent?: BlockModel }],
+  updated: [{ oldBlock: BlockModel, block: BlockModel, index: number, parent?: BlockModel }],
+  removed: [{ removed: BlockModel, index: number, parent?: BlockModel }],
+  change: [BlockModel],
+  'update:modelValue': [BlockModel],
+  remove: [],
+}>()
+
+const { el, addBlock, updateBlock, removeBlock } = useBlockOperate(block, emits)
+
+if (!block.value.children?.length) {
+  addBlock({
+    type: 'text',
+    id: Math.random().toString(16).substring(2)
+  }, 0)
 }
 
-const data = ref<BlockQuoteData>({
-  text: block.value?.data.text ?? createBlock({ type: 'text' })
-})
-
-const update = (newData: Partial<BlockQuoteData>) => {
-  data.value = {
-    ...data.value,
-    ...newData,
-  }
-  block.value = {
-    ...block.value,
-    data: data.value
-  }
-}
-
-defineExpose({
-  save() {
-    return data.value
+watch(() => block.value.children?.length ?? 0, (newVal, oldVal) => {
+  if (oldVal && !newVal) {
+    // 所有的子节点已删除，把当前节点也删除
+    emits('remove')
   }
 })
 

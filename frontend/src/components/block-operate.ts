@@ -25,6 +25,7 @@ export const focusBlock = (el: HTMLElement | undefined | null, id: string) => {
     nextTick(() => {
       const input: HTMLDivElement | null | undefined = (el || document.body).querySelector<HTMLDivElement>(`[data-block-id=${JSON.stringify(id)}] [data-focusable]`)
       input?.focus()
+      logger.i('focusBlock', input, id)
       input && setCaretToEnd(input)
     })
   })
@@ -61,11 +62,11 @@ const useBlockOperate = (parent: Ref<BlockModel>, emits: Emits) => {
 
   const updateBlock = (index: number, data: Partial<BlockModel>, block: BlockModel) => {
     const oldKey = block.id + block.type
-    updateChild(parent.value, index, data)
-    if (oldKey !== block.id + block.type) {
-      focusBlock(el.value, block.id)
+    const newBlock = updateChild(parent.value, index, data)
+    if (oldKey !== newBlock.id + newBlock.type) {
+      focusBlock(el.value, newBlock.id)
     }
-    emits('updated', { oldBlock: block, block: block, index, parent: parent.value })
+    emits('updated', { oldBlock: block, block: newBlock, index, parent: parent.value })
     emitUpdate()
   }
 

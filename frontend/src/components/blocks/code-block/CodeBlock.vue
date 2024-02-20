@@ -12,8 +12,14 @@ import type { BlockModel } from "@/models/block";
 import { basicSetup, EditorView } from "codemirror";
 import { Compartment } from "@codemirror/state"
 import { onBeforeUnmount, ref, onMounted, watch } from "vue";
+import type { valueEquals } from "element-plus";
+import { logger } from "@/utils/logger";
 
 const block = defineModel<BlockModel>({ required: true })
+
+const emits = defineEmits<{
+  add: [options?: Partial<BlockOptions>]
+}>()
 
 const codeMirrorWrapper = ref<HTMLDivElement>()
 
@@ -53,6 +59,19 @@ onMounted(() => {
     parent: codeMirrorWrapper.value,  
     extensions: [
       basicSetup,
+      EditorView.domEventHandlers({
+        // keydown 事件监听不到，此处只能监听 keyup 事件
+        keyup: (event: KeyboardEvent) => {
+          if (event.key === 'Enter' && data.value.text.endsWith('\n\n')) {
+            emits('add')
+            viewer.dispatch({changes: {
+              from: 0,
+              to: data.value.text.length,
+              insert: data.value.text.replace(/\n\n$/, '')
+            }})
+          }
+        }
+      }),
       EditorView.updateListener.of(event => {
         const newText = event.state.doc.toString()
         if (newText !== data.value.text) {
@@ -62,6 +81,7 @@ onMounted(() => {
       readonlyConfig.of(EditorView.editable.of(!readonly.value))
     ],
   })
+  viewer.contentDOM?.setAttribute('data-focusable', true)
 })
 
 onBeforeUnmount(() => {

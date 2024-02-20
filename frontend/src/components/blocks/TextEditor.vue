@@ -40,6 +40,9 @@ const emits = defineEmits<{
 
   emptyKeyEnter: [event: KeyboardEvent],
   emptyKeyBackspace: [event: KeyboardEvent],
+
+  keydown: [event: KeyboardEvent],
+
   upload: [file: File],
 
   openTool: [{ x: number, y: number }],
@@ -99,6 +102,8 @@ const keydownHandler = (event: KeyboardEvent) => {
     emits('keyShiftTab', event)
   } else if (event.code === 'Tab') {
     emits('keyTab', event)
+  } else {
+    emits('keydown', event)
   }
 }
 
