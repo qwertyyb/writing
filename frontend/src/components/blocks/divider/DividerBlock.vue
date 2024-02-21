@@ -1,6 +1,8 @@
 <template>
   <div class="divider-block" tabindex="0" data-focusable
     @keydown.backspace="$emit('remove')"
+    @keydown.up="$emit('focusBefore')"
+    @keydown.down="$emit('focusAfter')"
     @keydown.enter="$emit('add', { type: 'text' })">
     <hr>
   </div>

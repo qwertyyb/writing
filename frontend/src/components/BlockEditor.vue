@@ -13,6 +13,8 @@
         @add="$emit('add', $event)"
         @remove="$emit('remove')"
         @move="move(path, $event)"
+        @focusBefore="focusBefore"
+        @focusAfter="focusAfter"
       ></block-renderer>
     </div>
     <div class="block-children" v-if="needRenderChildren && block.children">
@@ -34,6 +36,7 @@ import BlockRenderer from './commands/BlockRenderer.vue';
 import BlockListEditor from './BlockListEditor.vue';
 import useBlockOperate, { useMoveBlock } from './block-operate';
 import { getBlockConfig } from './commands';
+import { focusBefore, focusAfter } from '@/hooks/focus';
 
 const block = defineModel<BlockModel>({ required: true })
 

@@ -16,7 +16,6 @@
 <script lang="ts" setup>
 import { ref, watchEffect } from 'vue';
 import { getCaretPosition, isInHeading, isInTailing } from '@/models/caret';
-import { focusBefore, focusAfter } from '@/hooks/focus'
 import { logger } from '@/utils/logger';
 
 const model = defineModel<string>({ required: true })
@@ -91,12 +90,13 @@ const keydownHandler = (event: KeyboardEvent) => {
     triggerKeyHandler(event)
   } else if (event.code === KeyCodes.ArrowUp) {
     if (isInHeading(el.value!)) {
-      // emits('focusBefore')
-      focusBefore()
+      event.preventDefault()
+      emits('focusBefore')
     }
   } else if (event.code === KeyCodes.ArrowDown) {
     if (isInTailing(el.value!)) {
-      focusAfter()
+      event.preventDefault()
+      emits('focusAfter')
     }
   } else if (event.code === 'Tab' && event.shiftKey) {
     emits('keyShiftTab', event)
@@ -182,7 +182,8 @@ defineExpose({
     outline: none;
     min-height: 1.4em;
     line-height: 1.4;
-    &:focus:empty::before {
+    &:focus:empty::before,
+    &:hover:empty::before {
       content: attr(placeholder);
       color: rgba(0, 0, 0, .3);
       position: absolute;
