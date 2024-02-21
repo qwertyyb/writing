@@ -1,9 +1,11 @@
 import { createEditingDocument, type BlockModel } from "@/models/block";
 import { setAttributes, type Attribute } from "@/services/attribute";
 import { getList, type Document, getDocument, updateDocument, addDocument, removeDocument } from "@/services/document";
-import { logger } from "@/utils/logger";
+import { createLogger } from "@/utils/logger";
 import { ElMessageBox } from "element-plus";
 import { defineStore } from "pinia";
+
+const logger = createLogger('document-store')
 
 type ListItem = Omit<Document, 'content' | 'attributes'>
 
@@ -60,7 +62,8 @@ export const useDocumentStore = defineStore('document', {
       })
       this.editing = {
         ...data,
-        ...newDoc
+        ...newDoc,
+        attributes: []
       }
       this.documents.push(data)
     },

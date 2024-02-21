@@ -11,7 +11,9 @@ import RichTextEditor from '@/components/RichTextEditor.vue'
 import { ref } from 'vue'
 import { type BlockModel } from '@/models/block'
 import { debounce } from '@/utils/utils';
-import { logger } from '@/utils/logger';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('document-editor')
 
 const document = defineModel<BlockModel>({ required: true, })
 

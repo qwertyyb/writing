@@ -3,7 +3,9 @@ import { setCaretToEnd } from "@/models/caret"
 import { inject, nextTick, ref, type ModelRef, type Ref } from "vue"
 import { focusBefore } from "@/hooks/focus"
 import { checkMove } from "@/hooks/move"
-import { logger } from "@/utils/logger"
+import { createLogger } from "@/utils/logger"
+
+const logger = createLogger('block-operate')
 
 type Emits = ((evt: "added", args_0: {
   block: BlockModel;

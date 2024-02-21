@@ -12,7 +12,6 @@ import type { BlockModel, BlockOptions } from "@/models/block";
 import { basicSetup, EditorView } from "codemirror";
 import { Compartment, EditorState } from "@codemirror/state"
 import { onBeforeUnmount, ref, onMounted, watch } from "vue";
-import { logger } from "@/utils/logger";
 
 const block = defineModel<BlockModel>({ required: true })
 

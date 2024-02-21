@@ -16,7 +16,9 @@
 <script lang="ts" setup>
 import { ref, watchEffect } from 'vue';
 import { getCaretPosition, isInHeading, isInTailing } from '@/models/caret';
-import { logger } from '@/utils/logger';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('text-editor')
 
 const model = defineModel<string>({ required: true })
 

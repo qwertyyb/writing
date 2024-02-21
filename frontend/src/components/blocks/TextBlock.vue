@@ -41,9 +41,11 @@ import { useMode } from '@/hooks/mode';
 import { useSpellcheck } from '@/hooks/spellcheck';
 import { transformBlock } from '@/hooks/transform';
 import { getBlockByPath } from '@/hooks/move';
-import { logger } from '@/utils/logger';
+import { createLogger } from '@/utils/logger';
 import { upload } from '@/services/upload';
 import { getImageRatio } from './image/utils';
+
+const logger = createLogger('text-block')
 
 const block = defineModel<BlockModel<TextData | any>>({ required: true })
 

@@ -42,11 +42,13 @@ import DocumentTree from '@/components/DocumentTree.vue';
 import DocumentEditor from '@/components/DocumentEditor.vue';
 import DocumentAttribute from '@/components/DocumentAttribute.vue';
 import type { TreeNodeModel } from '@/components/tree/types';
-import { logger } from '@/utils/logger';
 import { type BlockModel } from '@/models/block';
 import { useDocumentStore } from '@/stores/document';
 import { Setting } from '@element-plus/icons-vue';
 import { ref } from 'vue';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('home-view')
 
 const documentStore = useDocumentStore()
 

@@ -1,5 +1,7 @@
 import type { EditingDocument } from "@/stores/document";
-import { logger } from "@/utils/logger";
+import { createLogger } from "@/utils/logger";
+
+const logger = createLogger('models/logger');
 
 export interface BlockOptions {
   type: string;
@@ -112,7 +114,7 @@ export const createBlock = (options: Partial<BlockOptions>): BlockModel => {
   return block
 }
 
-export const createEditingDocument = (parent: { id: number | string, path: string }): Omit<EditingDocument, 'id' | 'updatedAt' | 'createdAt'> => {
+export const createEditingDocument = (parent: { id: number | string, path: string }): Pick<EditingDocument, 'title' | 'path' | 'content'> => {
   return {
     title: '新文档',
     path: `${parent.path}/${parent.id}`,
