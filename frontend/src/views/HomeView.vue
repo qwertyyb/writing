@@ -14,10 +14,18 @@
     </div>
     <div class="spliter"></div>
     <div class="doc-editor">
-      <document-attribute
-        v-if="documentStore.editing"
-        :doc-id="documentStore.editing?.id"
-        :attributes="documentStore.editing?.attributes"></document-attribute>
+      <div class="doc-editor-header" v-if="documentStore.editing">
+        <el-icon :size="20" class="setting-icon" @click="settingDialogVisible = true"><Setting /></el-icon>
+      </div>
+      <el-dialog
+        title="设置"
+        v-model="settingDialogVisible">
+        <document-attribute
+          v-if="documentStore.editing"
+          :doc-id="documentStore.editing?.id"
+          :attributes="documentStore.editing?.attributes"
+          @change="documentStore.updateAttributes"></document-attribute>
+      </el-dialog>
       <div class="doc-editor-wrapper">
         <document-editor
           v-if="documentStore.editing"
@@ -37,6 +45,8 @@ import type { TreeNodeModel } from '@/components/tree/types';
 import { logger } from '@/utils/logger';
 import { type BlockModel } from '@/models/block';
 import { useDocumentStore } from '@/stores/document';
+import { Setting } from '@element-plus/icons-vue';
+import { ref } from 'vue';
 
 const documentStore = useDocumentStore()
 
@@ -55,6 +65,8 @@ const selectHandler = async (node: TreeNodeModel) => {
 const updateHandler = async (content: BlockModel) => {
   documentStore.updateEditingContent(content)
 }
+
+const settingDialogVisible = ref(false)
 
 </script>
 
@@ -76,6 +88,14 @@ const updateHandler = async (content: BlockModel) => {
     max-height: 100vh;
     height: 100%;
     overflow: auto;
+    .doc-editor-header {
+      padding: 6px 12px;
+      display: flex;
+      justify-content: flex-end;
+      .setting-icon {
+        cursor: pointer;
+      }
+    }
     .doc-editor-wrapper {
       max-width: 80%;
       margin: 0 auto;

@@ -6,7 +6,7 @@ export interface Attribute {
 }
 
 export const setAttributes = (docId: number, attributes: Attribute[]) => {
-  return apiFetch('/api/v1/attribute/update', {
+  return apiFetch<Attribute[]>('/api/v1/attribute/update', {
     method: 'PATCH',
     headers: {
       'content-type': 'application/json'

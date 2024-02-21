@@ -37,23 +37,14 @@ watchEffect(async () => {
 <style lang="less" scoped>
 .home-view {
   display: flex;
-  .tree-view {
-    flex: 1;
-    min-width: 300px;
-  }
-  .spliter {
-    height: 100vh;
-    width: 4px;
-    background: rgba(220, 220, 220, .8);
-    cursor: ew-resize;
-  }
   .doc-editor {
     flex: 4;
     max-height: 100vh;
     height: 100%;
     overflow: auto;
     .doc-editor-wrapper {
-      max-width: 80%;
+      width: 80%;
+      max-width: 1200px;
       margin: 0 auto;
     }
   }

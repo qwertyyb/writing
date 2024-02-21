@@ -43,9 +43,11 @@ const update = (values: { title: string }) => {
 .doc-title-input {
   border: none;
   outline: none;
-  font-size: 36px;
-  margin-bottom: 18px;
+  font-size: var(--document-editor-title-font-size, 36px);
+  margin: var(--document-editor-title-margin);
   width: 100%;
+  font-weight: var(--document-editor-title-font-weight, bolder);
+  color: var(--document-editor-title-color, #000);
   &:disabled {
     background: #fff;
     color: inherit;

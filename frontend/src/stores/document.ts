@@ -1,16 +1,17 @@
 import { createEditingDocument, type BlockModel } from "@/models/block";
+import { setAttributes, type Attribute } from "@/services/attribute";
 import { getList, type Document, getDocument, updateDocument, addDocument, removeDocument } from "@/services/document";
 import { logger } from "@/utils/logger";
 import { ElMessageBox } from "element-plus";
 import { defineStore } from "pinia";
 
-type ListItem = Omit<Document, 'content'>
+type ListItem = Omit<Document, 'content' | 'attributes'>
 
 export interface DocumentItem extends ListItem {
   children: DocumentItem[]
 }
 
-export interface EditingDocument extends ListItem {
+export interface EditingDocument extends Omit<Document, 'content'> {
   content: BlockModel
 }
 
@@ -34,7 +35,7 @@ const buildTree = (node: ListItem, list: ListItem[]): DocumentItem => {
 
 export const useDocumentStore = defineStore('document', {
   state: () => ({
-    documents: [] as Omit<Document, 'content'>[],
+    documents: [] as ListItem[],
     editing: null as (EditingDocument | null),
     expandedIdMap: {} as Record<number, boolean>
   }),
@@ -112,6 +113,20 @@ export const useDocumentStore = defineStore('document', {
         title
       }
       await updateDocument({ id: this.editing.id, title, content: JSON.stringify(this.editing.content) })
+    },
+    async updateAttributes(attributes: Attribute[]) {
+      if (!this.editing) return
+      const { data } = await setAttributes(this.editing.id, attributes)
+      const newAttributes = this.editing.attributes.map(item => {
+        const row = data.find(item => item.key === item.key)
+        return row ?? item
+      })
+      data.forEach(row => {
+        if (newAttributes.every(item => item.key !== row.key)) {
+          newAttributes.push(row)
+        }
+      })
+      this.editing.attributes = newAttributes
     },
     async updateEditingPath() {
       // @todo 
