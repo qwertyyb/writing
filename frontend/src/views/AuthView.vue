@@ -7,6 +7,7 @@
       <el-form-item>
         <el-button type="primary" @click="login">登录</el-button>
         <el-button @click="webAuthnLogin" v-if="supportsWebAuthn">无密码登录</el-button>
+        <el-button @click="webAuthnRegister" v-if="supportsWebAuthn">无密码注册</el-button>
       </el-form-item>
     </el-form>
   </div>
@@ -18,6 +19,7 @@ import { ElMessage } from 'element-plus';
 import { ref } from 'vue';
 import { startRegistration, startAuthentication, browserSupportsWebAuthn } from '@simplewebauthn/browser';
 import router from '@/router';
+import { getAuthOptions, getRegisterOptions, verifyRegister } from '@/services/auth';
 
 const authStore = useAuthStore()
 
@@ -33,7 +35,16 @@ const login = async () => {
 }
 
 const webAuthnLogin = async () => {
+  const { data } = await getAuthOptions()
+  const result = await startAuthentication(data)
+  console.log(result)
+}
 
+const webAuthnRegister = async () => {
+  const { data } = await getRegisterOptions()
+  const result = await startRegistration(data)
+  const { data: regResult } = await verifyRegister(result)
+  console.log(data, regResult)
 }
 
 </script>

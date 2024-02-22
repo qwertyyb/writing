@@ -12,6 +12,7 @@
   "dependencies": {
     "@koa/router": "^12.0.1",
     "@prisma/client": "5.9.1",
+    "@simplewebauthn/server": "^9.0.3",
     "hexo": "^7.1.1",
     "jose": "^5.2.2",
     "koa": "^2.15.0",
