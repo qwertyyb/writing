@@ -10,4 +10,7 @@ import { RouterView } from 'vue-router'
 body {
   font-family: Consolas, Monaco, monospace;
 }
+html, body, #app {
+  height: 100%;
+}
 </style>

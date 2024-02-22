@@ -11,7 +11,7 @@ router
   .patch('/update', async (ctx) => {
     const { docId, attributes } = ctx.request.body as ({ docId: number, attributes: {key: string, value: string }[] });
     if (!docId || attributes.some(attr => !attr.key)) {
-      ctx.body = createRes(null, 403, '未传入id或key')
+      ctx.body = createRes(null, 400, '未传入id或key')
       return
     }
     const results = await Promise.all(attributes.map(attr => prisma.attribute.upsert({

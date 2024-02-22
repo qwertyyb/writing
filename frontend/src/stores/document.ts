@@ -78,6 +78,16 @@ export const useDocumentStore = defineStore('document', {
             type: 'warning'
           }
         )
+      } else {
+        await ElMessageBox.confirm(
+          '确认删除此文档，可在回收站恢复？',
+          'warning',
+          {
+            confirmButtonText: '删除',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }
+        )
       }
       logger.i('remove document', node)
       const path = `${node.path}/${node.id}`

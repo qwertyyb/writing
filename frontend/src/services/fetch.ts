@@ -1,3 +1,5 @@
+import router from "@/router"
+import { useAuthStore } from "@/stores/auth"
 import { ElMessage } from "element-plus"
 
 export interface ResponseData<D extends any> {
@@ -13,7 +15,7 @@ export const apiFetch = async <D extends any>(...args: Parameters<typeof fetch>)
       ...args[1],
       headers: {
         ...args[1]?.headers,
-        token: ''
+        Authorization: `Bearer ${useAuthStore().token}`
       }
     })
   } catch (err: any) {
@@ -31,6 +33,15 @@ export const apiFetch = async <D extends any>(...args: Parameters<typeof fetch>)
     const errMsg =`${args[0]}解析请求结果失败: ${err.message}`
     ElMessage.error({ message: errMsg })
     throw new Error(errMsg)
+  }
+
+  if (json?.errCode === 403) {
+    router.replace({
+      name: 'auth',
+      query: {
+        ru: router.currentRoute.value.fullPath || ''
+      }
+    })
   }
 
   if (json?.errCode !== 0) {

@@ -136,11 +136,9 @@ const shiftTabKeyHandler = (event: KeyboardEvent) => {
 }
 
 const backspaceKeyHandler = (event: KeyboardEvent) => {
-  if (props.index! > 0) {
-    // 前面没有字符可删除时，删除此block, 把光标移动到上一个block
-    event.preventDefault()
-    emits('remove')
-  }
+  // 前面没有字符可删除时，删除此block, 把光标移动到上一个block
+  event.preventDefault()
+  emits('remove')
 }
 
 const escapeKeyHandler = (event: KeyboardEvent) => {
@@ -149,15 +147,11 @@ const escapeKeyHandler = (event: KeyboardEvent) => {
 
 const keydownHandler = (event: KeyboardEvent) => {
   if (event.key !== ' ') return
-  event.preventDefault()
+  const originType = block.value.type
   block.value = transformBlock(block.value)
-  // if (/^#{1,6}$/.test(data.value.html)) {
-  //   block.value = { id: block.value.id, type: 'heading' + data.value.html.length, data: { html: '' } }
-  // } else if (data.value.html === '1.') {
-  //   block.value = { id: block.value.id, type: 'ordered-list', children: [] }
-  // } else if (data.value.html === '-') {
-  //   block.value = { id: block.value.id, type: 'unordered-list', children: [] }
-  // }
+  if (originType !== block.value.type) {
+    event.preventDefault()
+  }
 }
 
 const openToolHandler = ({ x = 0, y = 0 }) => {

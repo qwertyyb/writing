@@ -185,7 +185,7 @@ defineExpose({
     min-height: 1.4em;
     line-height: 1.4;
     &:focus:empty::before,
-    &:hover:empty::before {
+    &[contenteditable="true"]:hover:empty::before {
       content: attr(placeholder);
       color: rgba(0, 0, 0, .3);
       position: absolute;

@@ -6,7 +6,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, provide, ref } from 'vue';
+import { computed, provide } from 'vue';
 import DocTreeNode from './DocTreeNode.vue';
 import type { TreeNodeModel } from './types';
 

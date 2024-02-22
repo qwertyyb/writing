@@ -12,6 +12,9 @@
           "-r",
           "ts-node/register"
       ],
+      "env": {
+        "TOKEN": "34dfercv"
+      },
       "args": [
           "${workspaceFolder}/server/app.ts"
       ]

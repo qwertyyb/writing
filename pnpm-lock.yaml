@@ -14,6 +14,9 @@ dependencies:
   hexo:
     specifier: ^7.1.1
     version: 7.1.1
+  jose:
+    specifier: ^5.2.2
+    version: 5.2.2
   koa:
     specifier: ^2.15.0
     version: 2.15.0
@@ -901,6 +904,10 @@ packages:
 
   /isexe@2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
+    dev: false
+
+  /jose@5.2.2:
+    resolution: {integrity: sha512-/WByRr4jDcsKlvMd1dRJnPfS1GVO3WuKyaurJ/vvXcOaUQO8rnNObCQMlv/5uCceVQIq5Q4WLF44ohsdiTohdg==}
     dev: false
 
   /js-yaml-js-types@1.0.1(js-yaml@4.1.0):

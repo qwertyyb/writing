@@ -9,6 +9,7 @@ import codeBlock from "../blocks/code-block/codeBlock";
 import type { BlockModel } from "@/models/block";
 import type { Component } from "vue";
 import docBlock from "../blocks/doc-block/doc-block";
+import todo from "../blocks/todo/todo";
 
 interface BlockConfig {
   identifier: string,
@@ -32,7 +33,8 @@ const commands: BlockConfig[] = [
   blockQuote,
   divider,
   codeBlock,
-  docBlock
+  docBlock,
+  todo,
 ]
 
 export default commands

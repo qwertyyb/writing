@@ -4,6 +4,7 @@
     placeholder="此处填写标题"
     :disabled="readonly"
     :value="data.title"
+    @keydown.enter.prevent="$emit('focusAfter')"
     @input="event => update({ title: (event.target as HTMLInputElement).value })">
 </template>
 
