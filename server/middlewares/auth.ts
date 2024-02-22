@@ -3,9 +3,9 @@ import { JWT_SECRET } from '../config'
 import { createRes } from '../utils'
 import { base64url, jwtDecrypt } from 'jose'
 
-export const needAuth: Koa.Middleware = async (ctx, next) => {
+export const checkLogin = async (ctx: Koa.DefaultContext) => {
   if (!ctx.request.header.authorization) {
-    ctx.body = createRes(null, 403, 'need auth')
+    return false
   }
   try {
     const token = ctx.request.header.authorization.replace(/^Bearer\s/, '')
@@ -15,6 +15,13 @@ export const needAuth: Koa.Middleware = async (ctx, next) => {
     })
   } catch (err) {
     console.error(err)
+    return false
+  }
+  return true
+}
+
+export const needAuth: Koa.Middleware = async (ctx, next) => {
+  if (!checkLogin(ctx)) {
     ctx.body = createRes(null, 403, 'auth failed')
     return
   }

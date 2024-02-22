@@ -6,8 +6,8 @@
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="login">登录</el-button>
-        <el-button @click="webAuthnLogin" v-if="supportsWebAuthn">无密码登录</el-button>
-        <el-button @click="webAuthnRegister" v-if="supportsWebAuthn">无密码注册</el-button>
+        <el-button type="success" @click="webAuthnLogin" v-if="supportsWebAuthn && !canRegisterWebAuthn">无密码登录</el-button>
+        <el-button @click="webAuthnRegister" v-if="supportsWebAuthn && canRegisterWebAuthn">无密码注册</el-button>
       </el-form-item>
     </el-form>
   </div>
@@ -19,32 +19,44 @@ import { ElMessage } from 'element-plus';
 import { ref } from 'vue';
 import { startRegistration, startAuthentication, browserSupportsWebAuthn } from '@simplewebauthn/browser';
 import router from '@/router';
-import { getAuthOptions, getRegisterOptions, verifyRegister } from '@/services/auth';
+import { getAuthOptions, getCanRegisterWebAuthn, getRegisterOptions, verifyAuth, verifyRegister } from '@/services/auth';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('AuthView')
 
 const authStore = useAuthStore()
 
 const form = ref({ password: '' })
 const supportsWebAuthn = ref(browserSupportsWebAuthn())
+const canRegisterWebAuthn = ref(false)
 
 const login = async () => {
   if (!form.value.password.trim()) {
     return ElMessage.warning('请输入密码')
   }
   await authStore.login(form.value)
-  router.replace(router.currentRoute.value.query.ru as string | undefined || '/home')
+  router.replace(router.currentRoute.value.query.ru as string | undefined || '/admin')
 }
 
+const refreshCanRegisterWebAuthn = async () => {
+  const { data } = await getCanRegisterWebAuthn()
+  canRegisterWebAuthn.value = data.canRegister
+}
+
+refreshCanRegisterWebAuthn()
+
 const webAuthnLogin = async () => {
-  const { data } = await getAuthOptions()
-  const result = await startAuthentication(data)
-  console.log(result)
+  await authStore.webAuthnLogin()
+  router.replace(router.currentRoute.value.query.ru as string | undefined || '/admin')
 }
 
 const webAuthnRegister = async () => {
   const { data } = await getRegisterOptions()
   const result = await startRegistration(data)
   const { data: regResult } = await verifyRegister(result)
-  console.log(data, regResult)
+  logger.i('注册结果', regResult)
+
+  await refreshCanRegisterWebAuthn()
 }
 
 </script>

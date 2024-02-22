@@ -13,7 +13,7 @@ const router = createRouter({
       children: [
         {
           path: 'admin',
-          name: 'home',
+          name: 'admin',
           component: LayoutViewVue,
           children: [
             {

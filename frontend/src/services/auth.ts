@@ -11,6 +11,10 @@ export const login = ({ password = '' }) => {
   })
 }
 
+export const getCanRegisterWebAuthn = () => {
+  return apiFetch<{ canRegister: boolean }>('/api/v1/auth/webauthn/can-register')
+}
+
 export const getRegisterOptions = () => {
   return apiFetch<PublicKeyCredentialCreationOptionsJSON>('/api/v1/auth/webauthn/register-options', {
     method: 'POST'
@@ -34,7 +38,7 @@ export const getAuthOptions = () => {
 }
 
 export const verifyAuth = (data: AuthenticationResponseJSON) => {
-  return apiFetch<{ verified: boolean }>('/api/v1/auth/webauthn/auth-verify', {
+  return apiFetch<{ verified: boolean, token: string }>('/api/v1/auth/webauthn/auth-verify', {
     method: 'POST',
     headers: {
       'content-type': 'application/json'
