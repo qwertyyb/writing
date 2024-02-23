@@ -1,5 +1,5 @@
 import { addChildAfter, remove, type BlockModel, updateChild } from "@/models/block"
-import { setCaretToEnd } from "@/models/caret"
+import { setCaretToEnd, setCaretToStart } from "@/models/caret"
 import { inject, nextTick, ref, type ModelRef, type Ref } from "vue"
 import { focusBefore } from "@/hooks/focus"
 import { checkMove } from "@/hooks/move"
@@ -22,13 +22,13 @@ type Emits = ((evt: "added", args_0: {
   parent?: BlockModel | undefined;
 }) => void) & ((evt: "change", args_0: BlockModel) => void) & ((evt: "update:modelValue", args_0: BlockModel) => void)
 
-export const focusBlock = (el: HTMLElement | undefined | null, id: string) => {
+export const focusBlock = (el: HTMLElement | undefined | null, id: string, pos: 'start' | 'end' = 'end') => {
   setTimeout(() => {
     nextTick(() => {
       const input: HTMLDivElement | null | undefined = (el || document.body).querySelector<HTMLDivElement>(`[data-block-id=${JSON.stringify(id)}] [data-focusable]`)
       input?.focus()
       logger.i('focusBlock', input, id)
-      input && setCaretToEnd(input)
+      input && (pos === 'end' && setCaretToEnd(input) || pos === 'start' && setCaretToStart(input))
     })
   })
 }
@@ -53,7 +53,7 @@ const useBlockOperate = (parent: Ref<BlockModel>, emits: Emits) => {
       ...block,
     }, index)
     logger.i('addBlock', parent.value, index, newBlock)
-    focusBlock(el.value, newBlock.id)
+    focusBlock(el.value, newBlock.id, 'start')
     emits('added', {
       block: newBlock,
       index: index + 1,

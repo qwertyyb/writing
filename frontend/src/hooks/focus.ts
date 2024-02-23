@@ -1,4 +1,4 @@
-import { isInHeading, isInTailing } from '@/models/caret'
+import { isInHeading, isInTailing, setCaretToEnd } from '@/models/caret'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 let focusedEl: HTMLElement | null = null
@@ -8,8 +8,10 @@ export const focusBefore = () => {
   const index = (focusedEl && doms.indexOf(focusedEl)) ?? -1
   if (doms[0] && (!focusedEl || index === -1)) {
     doms[0].focus()
+    setCaretToEnd(doms[0])
   } else if (index > 0) {
     doms[index - 1].focus()
+    setCaretToEnd(doms[index - 1])
   }
 }
 

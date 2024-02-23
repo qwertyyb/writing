@@ -8,7 +8,6 @@
       @keyEsc="escapeKeyHandler"
       @keyTab="tabKeyHandler"
       @keyShiftTab="shiftTabKeyHandler"
-      @emptyKeyEnter="emptyEnterKeyHandler"
       @emptyKeyBackspace="backspaceKeyHandler"
       @openTool="openToolHandler"
       @upload="uploadHandler"
@@ -34,7 +33,7 @@
 import { ref, reactive, watch, toRaw, watchEffect, inject, type ModelRef } from 'vue';
 import CommandTool from '../commands/CommandTool.vue';
 import TextEditor from '@/components/blocks/TextEditor.vue';
-import { setCaretToEnd } from '@/models/caret';
+import { afterText, beforeText, isInHeading, setCaretToEnd } from '@/models/caret';
 import { createBlock, type BlockModel, type BlockOptions } from '@/models/block';
 import type { TextData } from './TextBlock';
 import { useMode } from '@/hooks/mode';
@@ -61,7 +60,7 @@ const emits = defineEmits<{
   add: [options?: Partial<BlockOptions>],
   update: [options: Partial<BlockOptions>]
   remove: [],
-  move: [newPath: number[]]
+  move: [newPath: number[]],
 
   change: [block: BlockModel],
   focusBefore: [],
@@ -103,20 +102,42 @@ const onExitTool = (options?: { autofocus: boolean }) => {
   }
 }
 
-const enterKeyHandler = (event: KeyboardEvent) => {
+const enterKeyHandler = (event: KeyboardEvent, options: { before: string, after: string }) => {
   event.preventDefault()
-  emits('add')
+  if (!data.value.html.length) {
+    const handled = emptyEnterKeyHandler(event)
+    if (handled) return
+  }
+  event.preventDefault()
+  updateModelValue(options.before)
+  console.log(options)
+  emits('add', {
+    type: 'text',
+    data: {
+      html: options.after
+    }
+  })
 }
 
 const emptyEnterKeyHandler = (event: KeyboardEvent) => {
+  if (!props.path || props.path.length <= 2) {
+    return false
+  }
   event.preventDefault()
-  if (!props.path || props.path.length <= 2) return
   const newPath = [...props.path.slice(0, props.path.length - 1)]
   logger.i('newPath', newPath)
   emits('move', newPath)
 }
 
 const root = inject<ModelRef<BlockModel>>('root')
+
+const moveUpper = () => {
+  if (!props.path || props.path.length <= 2) return false
+  const newPath = [...props.path.slice(0, props.path.length - 1)]
+  logger.i('newPath', newPath)
+  emits('move', newPath)
+  return true
+}
 
 const tabKeyHandler = (event: KeyboardEvent) => {
   event.preventDefault()
@@ -129,16 +150,22 @@ const tabKeyHandler = (event: KeyboardEvent) => {
 
 const shiftTabKeyHandler = (event: KeyboardEvent) => {
   event.preventDefault()
-  if (!props.path || props.path.length <= 2) return
-  const newPath = [...props.path.slice(0, props.path.length - 1)]
-  logger.i('newPath', newPath)
-  emits('move', newPath)
+  moveUpper()
 }
 
-const backspaceKeyHandler = (event: KeyboardEvent) => {
-  // 前面没有字符可删除时，删除此block, 把光标移动到上一个block
-  event.preventDefault()
-  emits('remove')
+const backspaceKeyHandler = (event: KeyboardEvent, options: { isInHeading: boolean, isInTailing: boolean }) => {
+  console.log(data.value.html, options.isInHeading)
+  if (data.value.html && options.isInHeading) {
+    event.preventDefault()
+    if (!moveUpper()) {
+      // 无法向上级移动了，需要和上一个合并？
+    }
+    return
+  } else if (!data.value.html) {
+    // 前面没有字符可删除时，删除此block, 把光标移动到上一个block
+    event.preventDefault()
+    emits('remove')
+  }
 }
 
 const escapeKeyHandler = (event: KeyboardEvent) => {

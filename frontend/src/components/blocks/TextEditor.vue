@@ -15,7 +15,7 @@
 
 <script lang="ts" setup>
 import { ref, watchEffect } from 'vue';
-import { getCaretPosition, isInHeading, isInTailing } from '@/models/caret';
+import { afterText, beforeText, getCaretPosition, isInHeading, isInTailing } from '@/models/caret';
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('text-editor')
@@ -34,13 +34,12 @@ defineProps({
 })
 
 const emits = defineEmits<{
-  keyEnter: [event: KeyboardEvent],
+  keyEnter: [event: KeyboardEvent, { before: string, after: string }],
   keyEsc: [event: KeyboardEvent],
   keyTab: [event: KeyboardEvent],
   keyShiftTab: [event: KeyboardEvent],
 
-  emptyKeyEnter: [event: KeyboardEvent],
-  emptyKeyBackspace: [event: KeyboardEvent],
+  emptyKeyBackspace: [event: KeyboardEvent, { isInHeading: boolean, isInTailing: boolean }],
 
   keydown: [event: KeyboardEvent],
 
@@ -110,22 +109,17 @@ const keydownHandler = (event: KeyboardEvent) => {
 }
 
 const enterKeyHandler = (event: KeyboardEvent) => {
-  if (isInHeading(el.value!)) {
-    emits('emptyKeyEnter', event)
-  } else {
-    emits('keyEnter', event);
-  }
+  const [ after, before ] = [afterText(el.value!), beforeText(el.value!)]
+  emits('keyEnter', event, { before, after });
 }
 
 const backspaceKeyHandler = (event: KeyboardEvent) => {
   const target = event.target as HTMLDivElement
   if (!target.contentEditable) return false
-  const text = target.textContent
-  if (text?.length === 0) {
-    // 前面没有字符可删除时，删除此block, 把光标移动到上一个block
-    event.preventDefault()
-    emits('emptyKeyBackspace', event)
-  }
+  emits('emptyKeyBackspace', event, {
+    isInHeading: isInHeading(el.value!), 
+    isInTailing: isInTailing(el.value!)
+  })
 }
 
 const escapeKeyHandler = (event: KeyboardEvent) => {
@@ -183,7 +177,8 @@ defineExpose({
   .text-editor-content {
     outline: none;
     min-height: 1.4em;
-    line-height: 1.4;
+    line-height: 1.75;
+    word-break: break-all;
     &:focus:empty::before,
     &[contenteditable="true"]:hover:empty::before {
       content: attr(placeholder);

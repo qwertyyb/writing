@@ -1,6 +1,7 @@
 import KoaRouter from '@koa/router'
 import { base64url, EncryptJWT } from 'jose'
-import { generateRegistrationOptions, verifyRegistrationResponse, generateAuthenticationOptions, verifyAuthenticationResponse } from '@simplewebauthn/server'
+import { generateRegistrationOptions, verifyRegistrationResponse, generateAuthenticationOptions, verifyAuthenticationResponse,
+  type VerifiedRegistrationResponse, type VerifiedAuthenticationResponse } from '@simplewebauthn/server'
 import { createRes } from '../utils'
 import { JWT_SECRET, TOKEN } from '../config'
 import { prisma } from '../prisma'
@@ -49,10 +50,10 @@ enum ConfigKey {
 
 authRouter.get('/webauthn/can-register', async (ctx) => {
   // 在未登录情况下，只有未设置密码，且没有注册过webAuthn时才可以注册
-  if (await checkLogin(ctx)) {
-    ctx.body = createRes({ canRegister: true })
-    return
-  }
+  // if (await checkLogin(ctx)) {
+  //   ctx.body = createRes({ canRegister: true })
+  //   return
+  // }
   if (TOKEN) {
     ctx.body = createRes({ canRegister: false })
     return
@@ -113,7 +114,7 @@ authRouter.post('/webauthn/verify-register', async (ctx) => {
   const expectedChallenge: string = await prisma.config.findFirst({ where: { key: ConfigKey.WebAuthnChallenge } })
     .then(row => row.value)
 
-  let verification;
+  let verification: VerifiedRegistrationResponse | null = null;
   try {
     verification = await verifyRegistrationResponse({
       response: body,
@@ -216,7 +217,7 @@ authRouter.post('/webauthn/auth-verify', async (ctx) => {
     throw new Error(`Could not find authenticator ${body.id}`);
   }
 
-  let verification = null;
+  let verification: VerifiedAuthenticationResponse | null = null;
   try {
     verification = await verifyAuthenticationResponse({
       response: body,
