@@ -1,5 +1,5 @@
 <template>
-  <div class="command-tool">
+  <div class="command-tool" ref="el">
     <div class="command-search-wrapper">
       <input class="command-search-input"
         v-model="keyword"
@@ -19,22 +19,24 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, ref, watch } from 'vue';
-import commands from '../commands';
+import { computed, onMounted, ref, watch, nextTick } from 'vue';
+import blocks from '../blocks';
+import type { el } from 'element-plus/es/locale/index.mjs';
 
 const emits = defineEmits<{
   confirm: [command: any],
   exit: [options?: { autofocus: boolean }]
 }>()
 
+const el = ref<HTMLDivElement>()
 const keyword = ref('')
 const searchInput = ref<HTMLInputElement>()
 
 const selectedIndex = ref(0)
 
 const visibleCommands = computed(() => {
-  if (!keyword.value) return commands
-  return commands.filter(command => command.identifier.includes(keyword.value))
+  if (!keyword.value) return blocks
+  return blocks.filter(block => block.identifier.includes(keyword.value))
 })
 
 onMounted(() => {
@@ -42,6 +44,13 @@ onMounted(() => {
 })
 
 watch(keyword, () => selectedIndex.value = 0)
+
+watch(selectedIndex, async () => {
+  await nextTick()
+  el.value.querySelector<HTMLElement>('.command-tool-item.selected')?.scrollIntoView({
+    block: 'nearest'
+  })
+})
 
 const onKeydown = (event: KeyboardEvent) => {
   console.log(event.code)
@@ -65,7 +74,7 @@ const onKeydown = (event: KeyboardEvent) => {
 }
 
 const onInputBlur = () => {
-  // 等待处理完其它事件之后再关闭组件
+  等待处理完其它事件之后再关闭组件
   setTimeout(() => {
     emits('exit', { autofocus: false })
   })
@@ -101,9 +110,19 @@ const onInputBlur = () => {
     list-style: none;
     margin: 6px 0;
     padding: 0;
+    max-height: 200px;
+    overflow: auto;
+    &::-webkit-scrollbar {
+      border: none;
+      width: 8px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background-color: #ddd;
+      border-radius: 100px;
+    }
   }
   .command-tool-item {
-    padding: 4px 18px;
+    padding: 8px 18px;
     font-size: 14px;
     border-radius: 6px;
     cursor: pointer;
@@ -115,4 +134,4 @@ const onInputBlur = () => {
     }
   }
 }
-</style>
+</style>../blocks

@@ -1,15 +1,15 @@
-import { heading1, heading2, heading3, heading4, heading5, heading6 } from "../blocks/heading";
-import TextBlock from "../blocks/TextBlock";
-import ListBlocks from '../blocks/list/ListBlock';
-import ImageBlock from '../blocks/image/ImageBlock';
-import linkBlock from "../blocks/link/LinkBlock";
-import blockQuote from "../blocks/block-quote/block-quote";
-import divider from "../blocks/divider/divider";
-import codeBlock from "../blocks/code-block/codeBlock";
+import { heading1, heading2, heading3, heading4, heading5, heading6 } from "./heading";
+import TextBlock from "./TextBlock";
+import ListBlocks from './list/list';
+import ImageBlock from './image/ImageBlock';
+import linkBlock from "./link/LinkBlock";
+import blockQuote from "./block-quote/block-quote";
+import divider from "./divider/divider";
+import codeBlock from "./code/code";
 import type { BlockModel } from "@/models/block";
 import type { Component } from "vue";
-import docBlock from "../blocks/doc-block/doc-block";
-import todo from "../blocks/todo/todo";
+import documentBlock from "./document/document";
+import todo from "./todo/todo";
 
 interface BlockConfig {
   identifier: string,
@@ -33,7 +33,7 @@ const commands: BlockConfig[] = [
   blockQuote,
   divider,
   codeBlock,
-  docBlock,
+  documentBlock,
   todo,
 ]
 

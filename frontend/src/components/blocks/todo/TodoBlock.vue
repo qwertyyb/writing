@@ -2,6 +2,7 @@
   <div class="todo-block" ref="el">
     <div v-for="(child, index) in block.children"
       :key="child.id + child.type"
+      :data-block-id="child.id"
       class="todo-item">
       <input type="checkbox"
         :checked="data.checked[child.id]"

@@ -1,9 +1,11 @@
 <template>
-  <component ref="el" class="list-block" data-block-node="no-leaf" :is="tag">
+  <component ref="el" :class="`list-block ${tag}`" data-block-node="no-leaf" :is="tag">
     <li v-for="(child, index) in block.children"
       :key="child.id + child.type"
-      class="list-block-item">
+      :data-block-id="child.id"
+      class="list-item">
       <block-editor
+        class="list-item-content"
         :model-value="child"
         :index="index"
         :parent="parent"
@@ -59,4 +61,67 @@ watch(() => block.value.children?.length ?? 0, (newVal, oldVal) => {
 </script>
 
 <style lang="less" scoped>
+.list-block {
+  --list-counter-name: list-level;
+  --list-counter-style: decimal;
+  padding: 0;
+  list-style: none;
+  counter-reset: var(--list-counter-name);
+  & > .list-item {
+    display: flex;
+    align-items: first baseline;
+    &::before {
+      counter-increment: var(--list-counter-name);
+      content: counter(var(--list-counter-name), var(--list-counter-style))".";
+      margin-right: 0.5em;
+    }
+    .list-item-content {
+      flex: 1;
+    }
+  }
+  &.ul {
+    --list-counter-style: disc;
+    & > .list-item::before {
+      content: counter(var(--list-counter-name), var(--list-counter-style));
+    }
+  }
+}
+</style>
+<style lang="less">
+.rich-text-editor .list-block {
+  --list-counter-name: list-level-1;
+  --list-counter-style: decimal;
+  &.ul {
+    --list-counter-style: disc;
+  }
+  .list-block {
+    --list-counter-name: list-level-2;
+    --list-counter-style: upper-alpha;
+    &.ul {
+      --list-counter-style: circle;
+    }
+    .list-block {
+      --list-counter-name: list-level-3;
+      --list-counter-style: lower-alpha;
+      &.ul {
+        --list-counter-style: square;
+      }
+        // 回退
+        .list-block {
+          --list-counter-name: list-level-1;
+          --list-counter-style: decimal;
+          &.ul {
+            --list-counter-style: disc;
+          }
+          .list-block {
+            --list-counter-name: list-level-2;
+            --list-counter-style: upper-alpha;
+            &.ul {
+              --list-counter-style: circle;
+            }
+          }
+        }
+      }
+  }
+}
 </style>

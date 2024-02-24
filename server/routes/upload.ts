@@ -5,9 +5,7 @@ import { needAuth } from '../middlewares/auth'
 
 const router = new KoaRouter()
 
-router.use(needAuth)
-
-router.post('/api/v1/upload', async (ctx, next) => {
+router.post('/api/v1/upload', needAuth, async (ctx, next) => {
   const file = Array.isArray(ctx.request.files?.file) ? ctx.request.files?.file[0] : ctx.request.files?.file
   if (!file) {
     ctx.body = {

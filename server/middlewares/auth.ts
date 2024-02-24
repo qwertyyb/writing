@@ -21,7 +21,7 @@ export const checkLogin = async (ctx: Koa.DefaultContext) => {
 }
 
 export const needAuth: Koa.Middleware = async (ctx, next) => {
-  if (!checkLogin(ctx)) {
+  if (!await checkLogin(ctx)) {
     ctx.body = createRes(null, 403, 'auth failed')
     return
   }

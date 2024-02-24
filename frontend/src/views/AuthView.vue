@@ -19,7 +19,7 @@ import { ElMessage } from 'element-plus';
 import { ref } from 'vue';
 import { startRegistration, startAuthentication, browserSupportsWebAuthn } from '@simplewebauthn/browser';
 import router from '@/router';
-import { getAuthOptions, getCanRegisterWebAuthn, getRegisterOptions, verifyAuth, verifyRegister } from '@/services/auth';
+import { checkLogin as checkLoginApi, getCanRegisterWebAuthn, getRegisterOptions, verifyRegister } from '@/services/auth';
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('AuthView')
@@ -30,12 +30,16 @@ const form = ref({ password: '' })
 const supportsWebAuthn = ref(browserSupportsWebAuthn())
 const canRegisterWebAuthn = ref(false)
 
+const redirectAfterLogin = () => {
+  router.replace(router.currentRoute.value.query.ru as string | undefined || '/admin')
+}
+
 const login = async () => {
   if (!form.value.password.trim()) {
     return ElMessage.warning('请输入密码')
   }
   await authStore.login(form.value)
-  router.replace(router.currentRoute.value.query.ru as string | undefined || '/admin')
+  redirectAfterLogin()
 }
 
 const refreshCanRegisterWebAuthn = async () => {
@@ -47,7 +51,7 @@ refreshCanRegisterWebAuthn()
 
 const webAuthnLogin = async () => {
   await authStore.webAuthnLogin()
-  router.replace(router.currentRoute.value.query.ru as string | undefined || '/admin')
+  redirectAfterLogin()
 }
 
 const webAuthnRegister = async () => {
@@ -58,6 +62,17 @@ const webAuthnRegister = async () => {
 
   await refreshCanRegisterWebAuthn()
 }
+
+const checkLogin = async () => {
+  const { data } = await checkLoginApi()
+  if (data.isLogin) {
+    redirectAfterLogin()
+  } else {
+    authStore.logout()
+  }
+}
+
+checkLogin()
 
 </script>
 

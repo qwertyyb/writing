@@ -11,6 +11,8 @@ export const login = ({ password = '' }) => {
   })
 }
 
+export const checkLogin = () => apiFetch<{ isLogin: boolean }>('/api/v1/auth/check')
+
 export const getCanRegisterWebAuthn = () => {
   return apiFetch<{ canRegister: boolean }>('/api/v1/auth/webauthn/can-register')
 }

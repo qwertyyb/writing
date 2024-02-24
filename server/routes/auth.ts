@@ -21,6 +21,11 @@ const createJWT = async () => {
   return jwt
 }
 
+authRouter.get('/check', async (ctx) => {
+  const isLogin = await checkLogin(ctx)
+  ctx.body = createRes({ isLogin })
+})
+
 authRouter.post('/login', async (ctx) => {
   const { password } = ctx.request.body
   if (!password) {
@@ -50,10 +55,10 @@ enum ConfigKey {
 
 authRouter.get('/webauthn/can-register', async (ctx) => {
   // 在未登录情况下，只有未设置密码，且没有注册过webAuthn时才可以注册
-  // if (await checkLogin(ctx)) {
-  //   ctx.body = createRes({ canRegister: true })
-  //   return
-  // }
+  if (await checkLogin(ctx)) {
+    ctx.body = createRes({ canRegister: true })
+    return
+  }
   if (TOKEN) {
     ctx.body = createRes({ canRegister: false })
     return

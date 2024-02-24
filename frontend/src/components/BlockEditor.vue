@@ -1,5 +1,5 @@
 <template>
-  <div class="block-editor" :class="'block-type-' + block.type" :data-block-id="block.id" ref="el">
+  <div class="block-editor" :class="'block-type-' + block.type" ref="el">
     <!-- <div class="block-tool">
       <span class="material-symbols-outlined block-tool-icon"> drag_indicator </span>
     </div> -->
@@ -12,6 +12,7 @@
         @update:modelValue="$emit('update:modelValue', $event)"
         @add="$emit('add', $event)"
         @remove="$emit('remove')"
+        @merge="merge(path, $event)"
         @move="move(path, $event)"
         @focusBefore="focusBefore"
         @focusAfter="focusAfter"
@@ -32,10 +33,10 @@
 <script lang="ts" setup>
 import { type BlockModel } from '@/models/block';
 import { computed, inject, onBeforeUnmount, onMounted } from 'vue';
-import BlockRenderer from './commands/BlockRenderer.vue';
+import BlockRenderer from './blocks/BlockRenderer.vue';
 import BlockListEditor from './BlockListEditor.vue';
-import useBlockOperate, { useMoveBlock } from './block-operate';
-import { getBlockConfig } from './commands';
+import useBlockOperate, { useMergeBlock, useMoveBlock } from './block-operate';
+import { getBlockConfig } from './blocks';
 import { focusBefore, focusAfter } from '@/hooks/focus';
 
 const block = defineModel<BlockModel>({ required: true })
@@ -50,6 +51,7 @@ const emits = defineEmits<{
   added: [{ block: BlockModel, index: number, parent?: BlockModel }],
   updated: [{ oldBlock: BlockModel, block: BlockModel, index: number, parent?: BlockModel }],
   removed: [{ removed: BlockModel, index: number, parent?: BlockModel }],
+  merge: [mergePath: number[]],
   change: [BlockModel],
   'update:modelValue': [BlockModel]
   add: [options: Partial<BlockModel>],
@@ -77,6 +79,8 @@ onBeforeUnmount(() => {
 
 const { move } = useMoveBlock()
 
+const { merge } = useMergeBlock()
+
 </script>
 
 <style lang="less" scoped>
@@ -86,36 +90,16 @@ const { move } = useMoveBlock()
   justify-content: flex-start;
   flex-direction: column;
   padding: 6px 0;
+  box-sizing: border-box;
   & > * {
     width: 100%;
   }
   & > .block-children {
-    margin-left: 28px;
-  }
-  &:hover, &focus-within {
-    .block-tool {
-      opacity: 1;
-    }
-  }
-  .block-tool {
-    width: 24px;
-    height: 24px;
-    cursor: pointer;
-    opacity: 0;
-  }
-  .block-tool-icon {
-    font-size: 24px;
-    user-select: none;
-    color: rgb(190, 190, 190);
-    font-weight: 300;
-    border-radius: 4px;
-    transition: background .2s;
-    &:hover {
-      background: rgba(230, 230, 230);
-    }
+    padding-left: 28px;
+    box-sizing: border-box;
   }
   .block-content {
     flex: 1;
   }
 }
-</style>
+</style>./blocks

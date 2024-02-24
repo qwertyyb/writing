@@ -11,7 +11,7 @@ const numberedList = {
 
 const bulletedList = {
   identifier: 'unordered-list',
-  label: '有序列表',
+  label: '无序列表',
   renderChildren: true,
 
   component: BulletedListBlock

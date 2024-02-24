@@ -16,4 +16,4 @@ const block = defineModel<BlockModel>({ required: true })
 const component = computed(() => {
   return commands.find(command => command.identifier === block?.value.type)?.component
 })
-</script>
+</script>../blocks

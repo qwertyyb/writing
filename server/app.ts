@@ -1,8 +1,12 @@
 import Koa from 'koa';
 import { koaBody } from 'koa-body';
 import { useRouter } from './routes';
+import { createRes } from './utils';
+import { fallback } from './middlewares/404';
 
 const app = new Koa();
+
+app.use(fallback)
 
 app.use(koaBody({
   multipart: true,

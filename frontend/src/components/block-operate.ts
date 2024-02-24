@@ -1,8 +1,8 @@
 import { addChildAfter, remove, type BlockModel, updateChild } from "@/models/block"
-import { setCaretToEnd, setCaretToStart } from "@/models/caret"
+import { moveCaret, moveCaretToEnd, moveCaretToStart } from "@/models/caret"
 import { inject, nextTick, ref, type ModelRef, type Ref } from "vue"
 import { focusBefore } from "@/hooks/focus"
-import { checkMove } from "@/hooks/move"
+import { checkMove, getBlockByPath } from "@/hooks/move"
 import { createLogger } from "@/utils/logger"
 
 const logger = createLogger('block-operate')
@@ -22,13 +22,17 @@ type Emits = ((evt: "added", args_0: {
   parent?: BlockModel | undefined;
 }) => void) & ((evt: "change", args_0: BlockModel) => void) & ((evt: "update:modelValue", args_0: BlockModel) => void)
 
+const focusBlockImmediate = (el: HTMLElement | undefined | null, id: string, pos: 'start' | 'end') => {
+  const input: HTMLDivElement | null | undefined = (el || document.body).querySelector<HTMLDivElement>(`[data-block-id=${JSON.stringify(id)}] [data-focusable]`)
+  input?.focus()
+  logger.i('focusBlock', input, id)
+  input && (pos === 'end' && moveCaretToEnd(input) || pos === 'start' && moveCaretToStart(input))
+}
+
 export const focusBlock = (el: HTMLElement | undefined | null, id: string, pos: 'start' | 'end' = 'end') => {
   setTimeout(() => {
     nextTick(() => {
-      const input: HTMLDivElement | null | undefined = (el || document.body).querySelector<HTMLDivElement>(`[data-block-id=${JSON.stringify(id)}] [data-focusable]`)
-      input?.focus()
-      logger.i('focusBlock', input, id)
-      input && (pos === 'end' && setCaretToEnd(input) || pos === 'start' && setCaretToStart(input))
+      focusBlockImmediate(el, id, pos)
     })
   })
 }
@@ -112,4 +116,30 @@ export const useMoveBlock = () => {
   }
 
   return { move }
+}
+
+export const useMergeBlock = () => {
+  const root = inject<ModelRef<BlockModel>>('root')
+  const blockInstances = inject<Map<string, Omit<ReturnType<typeof useBlockOperate>, 'el'>>>('blockInstances')
+
+  if (!blockInstances) {
+    throw new Error('未获取到节点实例')
+  }
+
+  const merge = (originPath: number[], mergePath: number[]) => {
+    const originParent = getBlockByPath(root!.value, [...originPath.slice(0, originPath.length - 1)])
+    const origin = getBlockByPath(root!.value, originPath)
+    const mergeBlock = getBlockByPath(root!.value, mergePath)
+    logger.i('merge', originPath, originParent, origin, mergePath, mergeBlock)
+    
+    const offset = mergeBlock.data.html.length
+
+    mergeBlock.data.html += origin.data.html
+    blockInstances.get(originParent.id)?.removeBlock(originPath[originPath.length - 1], { autoFocusBefore: false })
+    setTimeout(() => {
+      moveCaret(document.body.querySelector<HTMLDivElement>(`[data-block-id=${JSON.stringify(mergeBlock.id)}] [data-focusable]`)!, offset)
+    })
+  }
+
+  return { merge }
 }

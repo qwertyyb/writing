@@ -3,6 +3,7 @@
     <div class="block-list">
       <block-editor v-for="(child, index) in children"
         :key="child.id + child.type"
+        :data-block-id="child.id"
         :model-value="child"
         :index="index"
         :path="[...path, index]"

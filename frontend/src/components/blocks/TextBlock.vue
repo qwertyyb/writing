@@ -18,22 +18,22 @@
     ></text-editor>
 
     <teleport to="body">
-      <command-tool v-if="commandToolVisible"
+      <block-tool v-if="commandToolVisible"
         ref="commandTool"
         @confirm="onCommand"
         @exit="onExitTool"
         :keyword="commandToolKeyword"
         :style="{top: commandToolPoisition.top + 'px', left: commandToolPoisition.left + 'px'}"
-      ></command-tool>
+      ></block-tool>
     </teleport>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { ref, reactive, watch, toRaw, watchEffect, inject, type ModelRef } from 'vue';
-import CommandTool from '../commands/CommandTool.vue';
+import BlockTool from '../tool/BlockTool.vue';
 import TextEditor from '@/components/blocks/TextEditor.vue';
-import { afterText, beforeText, isInHeading, setCaretToEnd } from '@/models/caret';
+import { moveCaretToEnd } from '@/models/caret';
 import { createBlock, type BlockModel, type BlockOptions } from '@/models/block';
 import type { TextData } from './TextBlock';
 import { useMode } from '@/hooks/mode';
@@ -61,6 +61,7 @@ const emits = defineEmits<{
   update: [options: Partial<BlockOptions>]
   remove: [],
   move: [newPath: number[]],
+  merge: [mergePath: number[]],
 
   change: [block: BlockModel],
   focusBefore: [],
@@ -98,7 +99,7 @@ const onExitTool = (options?: { autofocus: boolean }) => {
   commandToolVisible.value = false
   if (options?.autofocus) {
     textEditorEl.value?.$el.focus()
-    textEditorEl.value?.$el && setCaretToEnd(textEditorEl.value?.$el)
+    textEditorEl.value?.$el && moveCaretToEnd(textEditorEl.value?.$el.querySelector('[contenteditable]'))
   }
 }
 
@@ -153,12 +154,51 @@ const shiftTabKeyHandler = (event: KeyboardEvent) => {
   moveUpper()
 }
 
+const getPrevMergablePath = () => {
+  if (!props.path || !root?.value) return null
+
+  const getMergablePathLast = (root: BlockModel, path: number[]): number[] | null => {
+    const block = getBlockByPath(root, path)
+
+    for(let i = (block.children?.length ?? 0) - 1; i >= 0; i -= 1) {
+      const mergablePath = getMergablePathLast(root, [...path, i])
+      if (mergablePath) return mergablePath
+    }
+
+    if (block.type === 'text') {
+      return path
+    }
+    return null
+  }
+
+  let prevPath = [...props.path]
+  while(prevPath.length) {
+    let prevPathIndex = prevPath.pop()! - 1
+    while(prevPathIndex >= 0) {
+      const prevBlock = getBlockByPath(root.value, [...prevPath, prevPathIndex])
+      if (!prevBlock) break
+
+      const mergablePath = getMergablePathLast(root.value, [...prevPath, prevPathIndex])
+      if (mergablePath) {
+        return mergablePath
+      }
+
+      prevPathIndex -= 1
+    }
+  }
+  return null
+}
+
 const backspaceKeyHandler = (event: KeyboardEvent, options: { isInHeading: boolean, isInTailing: boolean }) => {
-  console.log(data.value.html, options.isInHeading)
   if (data.value.html && options.isInHeading) {
     event.preventDefault()
     if (!moveUpper()) {
       // 无法向上级移动了，需要和上一个合并？
+      const prevPath = getPrevMergablePath()
+      if (prevPath) {
+        logger.i('merge', prevPath)
+        emits('merge', prevPath)
+      }
     }
     return
   } else if (!data.value.html) {
