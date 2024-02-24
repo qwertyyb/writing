@@ -4,8 +4,7 @@
       class="upload-tip"
       @click="upload"
       v-if="!data.src"
-      tabindex="0"
-      data-focusable
+      :disabled="readonly"
       @keydown.enter="upload"
       @keydown.delete="$emit('remove')">
       <span class="material-symbols-outlined upload-icon">
@@ -28,8 +27,9 @@
           alt=""
           class="image"
           ref="imageEl"
+          :disabled="readonly"
           :style="{ aspectRatio: uploadState.loading ? uploadState.tempRatio : data.ratio }"
-          @click="settingsVisible = true"
+          @click="canEdit && (settingsVisible = true)"
           @keydown.enter="upload"
           @keydown.delete="$emit('remove')" />
         <figcaption class="image-title">
@@ -136,8 +136,11 @@ import FocusableControl from '@/components/FocusableControl.vue';
 import { ImageAlign } from '@/components/schema';
 import * as uploadService from '@/services/upload';
 import { getImageRatio } from './utils';
+import { useMode } from '@/hooks/mode';
 
 const block = defineModel<BlockModel>({ required: true })
+
+const { readonly, canEdit } = useMode()
 
 const emits = defineEmits<{
   remove: []

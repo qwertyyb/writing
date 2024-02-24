@@ -1,6 +1,8 @@
 <template>
   <div class="rich-text-editor" ref="el">
-    <div class="block-tool" :style="{left: toolPos.left + 'px', top: toolPos.top + 'px'}">
+    <div class="block-tool"
+      v-if="mode === Mode.Edit"
+      :style="{left: toolPos.left + 'px', top: toolPos.top + 'px'}">
       <span class="material-symbols-outlined block-tool-icon"> drag_indicator </span>
     </div>
     <block-editor v-model="model" :index="0" :path="[0]" :key="model.id" @pointermove="pointerMoveHandler"></block-editor>
@@ -54,6 +56,7 @@ const emits = defineEmits<{
 useFocusEvent()
 
 const selectionChangeHandler = () => {
+  if (mode.value === Mode.Readonly) return
   const selection = window.getSelection()
   if (!selection) return
   const range = selection.getRangeAt(0)
@@ -68,6 +71,7 @@ const selectionChangeHandler = () => {
 }
 
 const pointerMoveHandler = (event: PointerEvent) => {
+  if (mode.value === Mode.Readonly) return
   const blockEl = (event.target as HTMLElement).closest('[data-block-id]')
   if (!blockEl) return
   const blockContentEl = blockEl.querySelector<HTMLDivElement>('.block-content')

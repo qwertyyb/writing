@@ -2,8 +2,8 @@
   <component :is="tag"
     class="focusable-control"
     ref="el"
-    tabindex="0"
-    data-focusable
+    :tabindex="disabled ? null : 0"
+    :data-focusable="disabled ? null : 0"
     @keydown="keydownHandler">
     <slot></slot>
   </component>
@@ -16,6 +16,10 @@ defineProps({
   tag: {
     type: String,
     default: 'div'
+  },
+  disabled: {
+    type: Boolean,
+    default: false
   }
 })
 
