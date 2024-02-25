@@ -30,7 +30,7 @@
           :disabled="readonly"
           :style="{ aspectRatio: uploadState.loading ? uploadState.tempRatio : data.ratio }"
           @click="canEdit && (settingsVisible = true)"
-          @keydown.enter="upload"
+          @keydown.enter="$emit('add')"
           @keydown.delete="$emit('remove')" />
         <figcaption class="image-title">
           <text-block
@@ -63,9 +63,6 @@
 
             <div class="image-settings-wrapper">
               <div class="image-settings">
-                <span class="replace-tip">
-                  回车上传图片
-                </span>
                 <span class="material-symbols-outlined settings-icon delete-icon"
                   title="删除"
                   @click="$emit('remove')">
@@ -143,7 +140,8 @@ const block = defineModel<BlockModel>({ required: true })
 const { readonly, canEdit } = useMode()
 
 const emits = defineEmits<{
-  remove: []
+  remove: [],
+  add: []
 }>()
 
 const imageEl = ref<InstanceType<typeof FocusableControl>>()
@@ -291,7 +289,8 @@ defineExpose({
 
 .image-container {
   &.Center .image-wrapper {
-    margin: 0 auto;
+    margin-left: auto;
+    margin-right: auto;
   }
   &.Left .image-wrapper {
     margin-right: auto;
@@ -303,6 +302,7 @@ defineExpose({
     position: relative;
     width: fit-content;
     transition: width .1s;
+    margin: 12px 0;
   }
   .image {
     width: 100%;

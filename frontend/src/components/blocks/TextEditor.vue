@@ -14,9 +14,10 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watchEffect } from 'vue';
-import { afterText, beforeText, getCaretPosition, isInHeading, isInTailing } from '@/models/caret';
+import { nextTick, ref, watchEffect } from 'vue';
+import { getCaretPosition, getCaretOffset, moveCaret } from '@/models/caret';
 import { createLogger } from '@/utils/logger';
+import { focusAfter, focusBefore } from '@/hooks/focus';
 
 const logger = createLogger('text-editor')
 
@@ -34,21 +35,21 @@ defineProps({
 })
 
 const emits = defineEmits<{
-  keyEnter: [event: KeyboardEvent, { before: string, after: string }],
+  keyEnter: [offset: number],
   keyEsc: [event: KeyboardEvent],
   keyTab: [event: KeyboardEvent],
   keyShiftTab: [event: KeyboardEvent],
 
-  emptyKeyBackspace: [event: KeyboardEvent, { isInHeading: boolean, isInTailing: boolean }],
+  backspace: [offset: number],
 
-  keydown: [event: KeyboardEvent],
+  keydown: [event: KeyboardEvent, offset: number],
 
   upload: [file: File],
 
   openTool: [{ x: number, y: number }],
 
-  focusBefore: [],
-  focusAfter: [],
+  focusBefore: [offset: number],
+  focusAfter: [offset: number],
 }>()
 
 const value = ref(model.value ?? '')
@@ -56,11 +57,13 @@ const value = ref(model.value ?? '')
 const el = ref<HTMLDivElement>()
 let triggerRange: Range | undefined | null = null
 
-const getValue = () => el.value?.innerHTML ?? ''
+const getValue = () => el.value?.textContent ?? ''
 
 watchEffect(() => {
   if (getValue() !== (model.value ?? '')) {
     value.value = model.value ?? ''
+    if (!el.value) return
+    el.value.innerHTML = value.value
   }
 })
 
@@ -74,11 +77,12 @@ enum KeyCodes {
 
   ArrowUp = 'ArrowUp',
   ArrowDown = 'ArrowDown',
-  ArrowLeft = 'ArrowLeft',
-  ArrowRight = 'ArrowRight',
 }
 const keydownHandler = (event: KeyboardEvent) => {
   if (event.isComposing) return
+  if (Object.keys(KeyCodes).includes(event.code)) {
+    event.preventDefault()
+  }
   if (event.code === KeyCodes.Enter) {
     enterKeyHandler(event)
   } else if (event.code === KeyCodes.Escape) {
@@ -89,37 +93,43 @@ const keydownHandler = (event: KeyboardEvent) => {
   } else if (event.key === TRIGGER_KEY) {
     // 打开命令选择
     triggerKeyHandler(event)
-  } else if (event.code === KeyCodes.ArrowUp) {
-    if (isInHeading(el.value!)) {
-      event.preventDefault()
-      emits('focusBefore')
-    }
-  } else if (event.code === KeyCodes.ArrowDown) {
-    if (isInTailing(el.value!)) {
-      event.preventDefault()
-      emits('focusAfter')
-    }
-  } else if (event.code === 'Tab' && event.shiftKey) {
+  // } else if (event.code === KeyCodes.ArrowUp) {
+  //   const offset = getCaretOffset(el.value!)
+  //   // emits('focusBefore', offset)
+  //   focusBefore()
+  // } else if (event.code === KeyCodes.ArrowDown) {
+  //   const offset = getCaretOffset(el.value!)
+  //   focusAfter()
+  } else if (event.code === KeyCodes.Tab && event.shiftKey) {
     emits('keyShiftTab', event)
-  } else if (event.code === 'Tab') {
+  } else if (event.code === KeyCodes.Tab) {
     emits('keyTab', event)
   } else {
-    emits('keydown', event)
+    const offset = getCaretOffset(el.value!)
+    emits('keydown', event, offset)
   }
 }
 
 const enterKeyHandler = (event: KeyboardEvent) => {
-  const [ after, before ] = [afterText(el.value!), beforeText(el.value!)]
-  emits('keyEnter', event, { before, after });
+  const offset = getCaretOffset(el.value!)
+  emits('keyEnter', offset);
 }
 
 const backspaceKeyHandler = (event: KeyboardEvent) => {
   const target = event.target as HTMLDivElement
   if (!target.contentEditable) return false
-  emits('emptyKeyBackspace', event, {
-    isInHeading: isInHeading(el.value!), 
-    isInTailing: isInTailing(el.value!)
-  })
+  const offset = getCaretOffset(el.value!)
+  logger.i('offset', offset)
+  if (offset > 0 && offset <= getValue().length) {
+    const arr = Array.from(getValue())
+    arr.splice(offset - 1, 1)
+    model.value = arr.join('')
+    nextTick(() => {
+      moveCaret(el.value!, offset - 1)
+    })
+    return
+  }
+  emits('backspace', offset)
 }
 
 const escapeKeyHandler = (event: KeyboardEvent) => {

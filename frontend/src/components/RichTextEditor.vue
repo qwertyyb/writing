@@ -59,6 +59,7 @@ const selectionChangeHandler = () => {
   if (mode.value === Mode.Readonly) return
   const selection = window.getSelection()
   if (!selection) return
+  if (selection.rangeCount < 1) return
   const range = selection.getRangeAt(0)
   if (!range) return
   const closestBlockEl = range.startContainer.parentElement?.closest<HTMLElement>('[data-block-id]')

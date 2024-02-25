@@ -1,23 +1,84 @@
-import type { BlockModel } from '@/models/block';
+import { createBlock, type BlockModel } from '@/models/block';
+import { createLogger } from '@/utils/logger';
 
-export const transformBlock = (origin: BlockModel) => {
-  if (/^#{1,6}$/.test(origin.data.html)) {
-    return { id: origin.id, type: 'heading' + origin.data.html.length, data: { html: '' } }
+const logger = createLogger('transform')
+
+export const transformBlock = (trigger: string, origin: BlockModel, content: string) => {
+  logger.i('transform', trigger, origin)
+  if (/^#{1,6}/.test(trigger)) {
+    return {
+      id: origin.id,
+      type: 'heading' + trigger.length,
+      data: { html: content } 
+    }
   }
-  if (origin.data.html === '1.') {
-    return { id: origin.id, type: 'ordered-list', children: [] }
+  if (/^1\./.test(trigger)) {
+    return {
+      id: origin.id,
+      type: 'ordered-list',
+      children: [
+        createBlock({
+          type: 'text',
+          data: {
+            html: content
+          }
+        })
+      ]
+    }
   }
-  if (['-', '*', '+'].includes(origin.data.html)) {
-    return { id: origin.id, type: 'unordered-list', children: [] }
+  if (['-', '*', '+'].includes(trigger)) {
+    return {
+      id:origin.id,
+      type: 'unordered-list',
+      children: [
+        createBlock({
+          type: 'text',
+          data: {
+            html: content
+          }
+        })
+      ]
+    }
   }
-  if (['>', '&gt;'].includes(origin.data.html)) {
-    return { id: origin.id, type: 'block-quote' }
+  if (['>', '&gt;'].includes(trigger)) {
+    return {
+      id: origin.id,
+      type: 'block-quote',
+      children: [
+        createBlock({
+          type: 'text',
+          data: {
+            html: content
+          }
+        })
+      ]
+    }
   }
-  if (origin.data.html === '```') {
-    return { id: origin.id, type: 'code' }
+  if (trigger === '```') {
+    return {
+      id: origin.id,
+      type: 'code',
+      data: {
+        text: content
+      }
+    }
+  }
+  if (trigger === '[]' || trigger === '[x]') {
+    return {
+      id: origin.id,
+      type: 'todo',
+      children: [
+        createBlock({
+          type: 'text',
+          data: {
+            html: content
+          }
+        })
+      ]
+    }
   }
   if (['***', '---', '___'].includes(origin.data.html)) {
     return { id: origin.id, type: 'divider' }
   }
-  return origin
+  return null
 }

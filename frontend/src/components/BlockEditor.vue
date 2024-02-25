@@ -1,8 +1,5 @@
 <template>
   <div class="block-editor" :class="'block-type-' + block.type" ref="el">
-    <!-- <div class="block-tool">
-      <span class="material-symbols-outlined block-tool-icon"> drag_indicator </span>
-    </div> -->
     <div class="block-content">
       <block-renderer
         :model-value="block"

@@ -8,8 +8,8 @@
         :index="index"
         :path="[...path, index]"
         @update:modelValue="$emit('update', index, $event, child)"
-        @add="$emit('add', $event, index)"
-        @remove="$emit('remove', index)"
+        @add="$emit('add', $event, index, child)"
+        @remove="$emit('remove', index, [...path, index])"
       ></block-editor>
     </div>
   </div>
@@ -36,8 +36,8 @@ defineProps({
 })
 
 defineEmits<{
-  add: [options: Partial<BlockModel>, index: number],
-  remove: [index: number],
+  add: [options: Partial<BlockModel>, index: number, child: BlockModel],
+  remove: [index: number, path: number[]],
   update: [index: number, options: Partial<BlockModel>, child: BlockModel]
 }>()
 

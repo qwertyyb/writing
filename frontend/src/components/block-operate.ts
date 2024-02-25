@@ -1,4 +1,4 @@
-import { addChildAfter, remove, type BlockModel, updateChild } from "@/models/block"
+import { remove, type BlockModel, updateChild, addChildBefore, addChildAfter } from "@/models/block"
 import { moveCaret, moveCaretToEnd, moveCaretToStart } from "@/models/caret"
 import { inject, nextTick, ref, type ModelRef, type Ref } from "vue"
 import { focusBefore } from "@/hooks/focus"
@@ -48,16 +48,21 @@ const useBlockOperate = (parent: Ref<BlockModel>, emits: Emits) => {
   }
 
   const addBlock = (
-    block: Partial<BlockModel> | undefined | null,
-    index: number
+    data: Partial<BlockModel> | undefined | null,
+    index: number,
+    block: BlockModel | null = null,
   ) => {
     const newBlock = addChildAfter(parent.value, {
       type: 'text',
       id: Math.random().toString(16).substring(2),
-      ...block,
+      ...data,
+      children: block?.children ?? [],
     }, index)
     logger.i('addBlock', parent.value, index, newBlock)
     focusBlock(el.value, newBlock.id, 'start')
+    if (block) {
+      updateBlock(index, { children: [] }, block)
+    }
     emits('added', {
       block: newBlock,
       index: index + 1,
@@ -76,10 +81,18 @@ const useBlockOperate = (parent: Ref<BlockModel>, emits: Emits) => {
     emitUpdate()
   }
 
-  const removeBlock = (index: number, options = { autoFocusBefore: true }) => {
+  const removeBlock = (index: number, path: number[], options = { autoFocusBefore: true }) => {
+    if (path.length === 2 && index === 0) {
+      // 不可删除文档的第一个节点
+      return
+    }
     const [removed] = remove(parent.value, index)
     logger.i('removeBlock', parent.value, index, removed)
-    options.autoFocusBefore && focusBefore()
+    if (options.autoFocusBefore) {
+      focusBefore()
+      logger.i('removeBlock focus', document.activeElement)
+      moveCaretToEnd(document.activeElement! as HTMLElement)
+    }
     emits('removed', {
       removed,
       index,
@@ -110,8 +123,7 @@ export const useMoveBlock = () => {
     if (!oldIns || !newIns) {
       throw new Error('未获取节点实例')
     }
-    logger.i('move old parent', oldIns, newIns)
-    const removed = oldIns.removeBlock(oldIndex, { autoFocusBefore: false })
+    const removed = oldIns.removeBlock(oldIndex, oldPath, { autoFocusBefore: false })
     newIns.addBlock(removed, newIndex)
   }
 
@@ -135,7 +147,7 @@ export const useMergeBlock = () => {
     const offset = mergeBlock.data.html.length
 
     mergeBlock.data.html += origin.data.html
-    blockInstances.get(originParent.id)?.removeBlock(originPath[originPath.length - 1], { autoFocusBefore: false })
+    blockInstances.get(originParent.id)?.removeBlock(originPath[originPath.length - 1], originPath, { autoFocusBefore: false })
     setTimeout(() => {
       moveCaret(document.body.querySelector<HTMLDivElement>(`[data-block-id=${JSON.stringify(mergeBlock.id)}] [data-focusable]`)!, offset)
     })

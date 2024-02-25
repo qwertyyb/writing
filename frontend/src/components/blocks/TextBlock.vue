@@ -8,7 +8,7 @@
       @keyEsc="escapeKeyHandler"
       @keyTab="tabKeyHandler"
       @keyShiftTab="shiftTabKeyHandler"
-      @emptyKeyBackspace="backspaceKeyHandler"
+      @backspace="backspaceKeyHandler"
       @openTool="openToolHandler"
       @upload="uploadHandler"
       @focusBefore="$emit('focusBefore')"
@@ -30,7 +30,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, watch, toRaw, watchEffect, inject, type ModelRef } from 'vue';
+import { ref, reactive, watch, toRaw, watchEffect, inject, type ModelRef, nextTick } from 'vue';
 import BlockTool from '../tool/BlockTool.vue';
 import TextEditor from '@/components/blocks/TextEditor.vue';
 import { moveCaretToEnd } from '@/models/caret';
@@ -82,7 +82,7 @@ watchEffect(() => {
 
 const textEditorEl = ref<InstanceType<typeof TextEditor>>()
 
-const commandTool = ref<InstanceType<typeof CommandTool>>()
+const commandTool = ref<InstanceType<typeof BlockTool>>()
 const commandToolVisible = ref(false)
 const commandToolPoisition = reactive({ top: 0, left: 0 })
 const commandToolKeyword = ref('')
@@ -103,31 +103,22 @@ const onExitTool = (options?: { autofocus: boolean }) => {
   }
 }
 
-const enterKeyHandler = (event: KeyboardEvent, options: { before: string, after: string }) => {
-  event.preventDefault()
+const enterKeyHandler = async (offset: number) => {
   if (!data.value.html.length) {
-    const handled = emptyEnterKeyHandler(event)
+    // 没有输入字符时，回车，往上级移动
+    const handled = moveUpper()
     if (handled) return
   }
-  event.preventDefault()
-  updateModelValue(options.before)
-  console.log(options)
+  // 把当前内容截断
+  const after = data.value.html.substring(offset)
+  updateModelValue(data.value.html.substring(0, offset))
+  logger.i('add text node', after)
   emits('add', {
     type: 'text',
     data: {
-      html: options.after
+      html: after
     }
   })
-}
-
-const emptyEnterKeyHandler = (event: KeyboardEvent) => {
-  if (!props.path || props.path.length <= 2) {
-    return false
-  }
-  event.preventDefault()
-  const newPath = [...props.path.slice(0, props.path.length - 1)]
-  logger.i('newPath', newPath)
-  emits('move', newPath)
 }
 
 const root = inject<ModelRef<BlockModel>>('root')
@@ -140,8 +131,7 @@ const moveUpper = () => {
   return true
 }
 
-const tabKeyHandler = (event: KeyboardEvent) => {
-  event.preventDefault()
+const tabKeyHandler = () => {
   if (props.index <= 0 || !root?.value || !props.path || props.path.length < 2) return
   const newParentPath = [...props.path.slice(0, props.path.length - 1), props.index - 1]
   const parentBlock = getBlockByPath(root.value, newParentPath)
@@ -149,8 +139,7 @@ const tabKeyHandler = (event: KeyboardEvent) => {
   emits('move', newPath)
 }
 
-const shiftTabKeyHandler = (event: KeyboardEvent) => {
-  event.preventDefault()
+const shiftTabKeyHandler = () => {
   moveUpper()
 }
 
@@ -189,9 +178,8 @@ const getPrevMergablePath = () => {
   return null
 }
 
-const backspaceKeyHandler = (event: KeyboardEvent, options: { isInHeading: boolean, isInTailing: boolean }) => {
-  if (data.value.html && options.isInHeading) {
-    event.preventDefault()
+const backspaceKeyHandler = (offset: number) => {
+  if (data.value.html && offset === 0) {
     if (!moveUpper()) {
       // 无法向上级移动了，需要和上一个合并？
       const prevPath = getPrevMergablePath()
@@ -203,7 +191,6 @@ const backspaceKeyHandler = (event: KeyboardEvent, options: { isInHeading: boole
     return
   } else if (!data.value.html) {
     // 前面没有字符可删除时，删除此block, 把光标移动到上一个block
-    event.preventDefault()
     emits('remove')
   }
 }
@@ -212,12 +199,14 @@ const escapeKeyHandler = (event: KeyboardEvent) => {
   commandToolVisible.value = false
 }
 
-const keydownHandler = (event: KeyboardEvent) => {
+const keydownHandler = (event: KeyboardEvent, offset: number) => {
   if (event.key !== ' ') return
-  const originType = block.value.type
-  block.value = transformBlock(block.value)
-  if (originType !== block.value.type) {
+  const trigger = data.value.html?.substring(0, offset)
+  const content = data.value.html?.substring(offset)
+  const newBlock = transformBlock(trigger, block.value, content)
+  if (newBlock) {
     event.preventDefault()
+    block.value = newBlock
   }
 }
 

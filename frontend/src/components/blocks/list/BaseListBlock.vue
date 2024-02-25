@@ -65,6 +65,7 @@ watch(() => block.value.children?.length ?? 0, (newVal, oldVal) => {
   --list-counter-name: list-level;
   --list-counter-style: decimal;
   padding: 0;
+  margin: 0;
   list-style: none;
   counter-reset: var(--list-counter-name);
   & > .list-item {

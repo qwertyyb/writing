@@ -2,6 +2,7 @@
   <blockquote class="block-quote-block" ref="el">
     <div v-for="(child, index) in block.children"
       :key="child.id + child.type"
+      :data-block-id="child.id"
       class="block-quote-content">
       <block-editor
         :model-value="child"
@@ -59,8 +60,8 @@ watch(() => block.value.children?.length ?? 0, (newVal, oldVal) => {
 
 <style lang="less" scoped>
 blockquote.block-quote-block {
-  margin: 16px 0;
+  margin: 0;
   border-left: 4px solid #dfe2e5;
-  padding: 6px 0 6px 16px;
+  padding: 3px 0 3px 16px;
 }
 </style>

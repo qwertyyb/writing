@@ -21,7 +21,6 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch, nextTick } from 'vue';
 import blocks from '../blocks';
-import type { el } from 'element-plus/es/locale/index.mjs';
 
 const emits = defineEmits<{
   confirm: [command: any],
@@ -74,7 +73,7 @@ const onKeydown = (event: KeyboardEvent) => {
 }
 
 const onInputBlur = () => {
-  等待处理完其它事件之后再关闭组件
+  //等待处理完其它事件之后再关闭组件
   setTimeout(() => {
     emits('exit', { autofocus: false })
   })

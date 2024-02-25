@@ -63,6 +63,7 @@ export const addChildBefore = (block: BlockModel, options: Partial<BlockOptions>
 }
 
 export const updateChild = (block: BlockModel, index: number, options: Partial<BlockOptions>) => {
+  logger.i('update child', index, options)
   const child = block.children?.[index]
   if (!child) {
     logger.e('未找到子节点', block, index)

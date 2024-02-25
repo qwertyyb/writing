@@ -40,7 +40,7 @@ const changeHandler = (value: BlockModel) => {
   --document-editor-title-font-size: 36px;
   --document-editor-title-font-weight: bolder;
   --document-editor-title-color: #000;
-  --document-editor-title-margin: 0 0 18px 0;
+  --document-editor-title-margin: 0 0 18px 28px;
 
   // heading
   --document-editor-heading-margin: 0.1em 0;

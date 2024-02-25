@@ -1,5 +1,8 @@
-import { isInHeading, isInTailing, moveCaretToEnd } from '@/models/caret'
+import { getCaretOffset, moveCaret, moveCaretToEnd, moveCaretToStart } from '@/models/caret'
+import { createLogger } from '@/utils/logger'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
+
+const logger = createLogger('focus')
 
 let focusedEl: HTMLElement | null = null
 
@@ -8,10 +11,8 @@ export const focusBefore = () => {
   const index = (focusedEl && doms.indexOf(focusedEl)) ?? -1
   if (doms[0] && (!focusedEl || index === -1)) {
     doms[0].focus()
-    moveCaretToEnd(doms[0])
   } else if (index > 0) {
     doms[index - 1].focus()
-    moveCaretToEnd(doms[index - 1])
   }
 }
 
@@ -43,13 +44,11 @@ export const useFocusControl = () => {
 
   const keydownHandler = (event: KeyboardEvent) => {
     if (event.code === 'ArrowUp') {
-      if (isInHeading(el.value!)) {
-        focusBefore()
-      }
+      focusBefore()
+      moveCaretToEnd(document.activeElement! as HTMLElement)
     } else if (event.code === 'ArrowDown') {
-      if (isInTailing(el.value!)) {
-        focusAfter()
-      }
+      focusAfter()
+      moveCaretToStart(document.activeElement! as HTMLElement)
     }
   }
 
