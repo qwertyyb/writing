@@ -133,6 +133,7 @@ export const splitWithCaret = (element: HTMLElement) => {
 }
 
 export const moveCaret = (element: HTMLElement, offset: number) => {
+  logger.i('moveCaret', element, offset)
   if (offset === 0) {
     return moveCaretToStart(element)
   }
@@ -149,7 +150,7 @@ export const moveCaret = (element: HTMLElement, offset: number) => {
     }
   }
   if (!focusNode) {
-    focusNode = lastNode
+    focusNode = lastNode || element
     offset = focusNode?.nodeValue?.length ?? 0
   }
   logger.i('focusNode', focusNode, offset)
@@ -159,10 +160,7 @@ export const moveCaret = (element: HTMLElement, offset: number) => {
 
 export const moveCaretToEnd = (element: HTMLElement) => {
   logger.i('moveCaretToEnd', element)
-  const selection = window.getSelection()!
-  selection.selectAllChildren(element)
-  selection.collapseToEnd()
-  logger.i('moveCaretToEnd', selection)
+  moveCaret(element, element.textContent?.length ?? 0)
 }
 
 export const moveCaretToStart = (element: HTMLElement) => {

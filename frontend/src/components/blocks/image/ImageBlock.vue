@@ -6,7 +6,7 @@
       v-if="!data.src"
       :disabled="readonly"
       @keydown.enter="upload"
-      @keydown.delete="$emit('remove')">
+      @keydown.delete.prevent="$emit('remove')">
       <span class="material-symbols-outlined upload-icon">
       image
       </span>
@@ -17,144 +17,37 @@
         回车或点击上传图片
       </span>
     </focusable-control>
-    <div class="image-container"
-      :class="data.align"
-      ref="containerEl"
-      v-else>
-      <figure class="image-wrapper" :style="{ width: data.size + '%' }">
-        <focusable-control tag="img"
-          :src="uploadState.loading ? uploadState.tempUrl : data.src"
-          alt=""
-          class="image"
-          ref="imageEl"
-          :disabled="readonly"
-          :style="{ aspectRatio: uploadState.loading ? uploadState.tempRatio : data.ratio }"
-          @click="canEdit && (settingsVisible = true)"
-          @keydown.enter="$emit('add')"
-          @keydown.delete="$emit('remove')" />
-        <figcaption class="image-title">
-          <text-block
-            :model-value="data.title"
-            :index="0"
-            @update:modelValue="update({ 'title': $event })"
-          ></text-block>
-        </figcaption>
-
-
-        <div class="image-upload-status" v-if="uploadState.loading">
-          <span class="material-symbols-outlined loading-icon">
-            progress_activity
-          </span>
-          <p class="upload-text">{{ uploadState.text }}</p>
-        </div>
-
-        <transition name="el-fade-in">
-          <div class="image-settings-container" v-show="settingsVisible" v-click-outside="() => settingsVisible = false">
-            <div class="image-resizer">
-              <div class="resizer-left"
-                @pointerdown="pointerdownHandler('left', $event)"
-                @pointermove="pointermoveHandler('left', $event)"
-                @pointerup="pointerupHandler($event)"></div>
-              <div class="resizer-right"
-                @pointerdown="pointerdownHandler('right', $event)"
-                @pointermove="pointermoveHandler('right', $event)"
-                @pointerup="pointerupHandler($event)"></div>
-            </div>
-
-            <div class="image-settings-wrapper">
-              <div class="image-settings">
-                <span class="material-symbols-outlined settings-icon delete-icon"
-                  title="删除"
-                  @click="$emit('remove')">
-                delete
-                </span>
-                <span class="material-symbols-outlined settings-icon upload-icon"
-                  title="更换图片"
-                  @click="upload">
-                image
-                </span>
-                <el-dropdown popper-class="image-setting-menu-popper" @command="commandHandler">
-                  <span class="material-symbols-outlined settings-icon">more_horiz</span>
-                  <template #dropdown>
-                    <el-dropdown-menu>
-                      <el-dropdown-item command="Align.Left">
-                        <span class="material-symbols-outlined menu-item-icon">
-                        format_image_left
-                        </span>
-                        左对齐
-                      </el-dropdown-item>
-                      <el-dropdown-item command="Align.Center">
-                        <span class="material-symbols-outlined menu-item-icon">
-                        format_align_center
-                        </span>
-                        居中对齐
-                      </el-dropdown-item>
-                      <el-dropdown-item command="Align.Right">
-                        <span class="material-symbols-outlined menu-item-icon">
-                        format_image_right
-                        </span>
-                        右对齐
-                      </el-dropdown-item>
-                      <el-dropdown-item divided command="Size.Large">
-                        <span class="material-symbols-outlined menu-item-icon">
-                        photo_size_select_large
-                        </span>
-                        放大
-                      </el-dropdown-item>
-                      <el-dropdown-item command="Size.Small">
-                        <span class="material-symbols-outlined menu-item-icon">
-                        photo_size_select_small
-                        </span>
-                        缩小
-                      </el-dropdown-item>
-                      <el-dropdown-item divided command="Remove">
-                        <span class="material-symbols-outlined menu-item-icon">
-                        delete
-                        </span>
-                        删除
-                      </el-dropdown-item>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
-              </div>
-            </div>
-          </div>
-        </transition>
-      </figure>
-    </div>
+    <base-image :model-value="data" @update:model-value="update">
+      <template v-slot:menu-item-list>
+        <span class="material-symbols-outlined settings-icon upload-icon"
+          title="更换图片"
+          @click="upload">
+          image
+        </span>
+      </template>
+    </base-image>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { ref, watch } from 'vue';
 import { createBlock, type BlockModel } from '@/models/block';
-import TextBlock from '../TextBlock.vue';
+import BaseImage from '../BaseImage.vue';
 import FocusableControl from '@/components/FocusableControl.vue';
 import { ImageAlign } from '@/components/schema';
 import * as uploadService from '@/services/upload';
 import { getImageRatio } from './utils';
 import { useMode } from '@/hooks/mode';
+import type { ImageData } from '@/components/schema';
 
 const block = defineModel<BlockModel>({ required: true })
 
-const { readonly, canEdit } = useMode()
+const { readonly } = useMode()
 
-const emits = defineEmits<{
+defineEmits<{
   remove: [],
   add: []
 }>()
-
-const imageEl = ref<InstanceType<typeof FocusableControl>>()
-const containerEl = ref<HTMLDivElement>()
-const settingsVisible = ref(false)
-
-interface ImageData {
-  src: string
-  align: ImageAlign
-  size: number, // 宽度
-  ratio: number, // 长宽比例
-  title: BlockModel,
-}
 
 const data = ref<ImageData>({
   src: block.value.data?.src ?? '',
@@ -162,13 +55,6 @@ const data = ref<ImageData>({
   size: block.value.data?.size ?? 50,
   title: block.value.data?.title ?? createBlock({ type: 'text', data: { html: '图片描述' } }),
   ratio: block.value.data?.ratio ?? 1,
-})
-
-const uploadState = ref({
-  loading: false,
-  text: '',
-  tempUrl: '',
-  tempRatio: 1,
 })
 
 watch(block, () => {
@@ -191,6 +77,13 @@ const update = (newData: Partial<ImageData>) => {
     data: data.value
   }
 }
+
+const uploadState = ref({
+  loading: false,
+  text: '',
+  tempUrl: '',
+  tempRatio: 1,
+})
 
 const upload = () => {
   const input = document.createElement('input')
@@ -218,53 +111,6 @@ const upload = () => {
   })
   input.click()
 }
-
-const commandHandler = (command: string) => {
-  switch (command) {
-    case 'Align.Left':
-      update({ align: ImageAlign.Left })
-      break
-    case 'Align.Right':
-      update({ align: ImageAlign.Right })
-      break
-    case 'Align.Center':
-      update({ align: ImageAlign.Center })
-      break
-    case 'Size.Large':
-      update({ size: Math.min(100, data.value.size + 25) })
-      break
-    case 'Size.Small':
-      update({ size: Math.max(0, data.value.size - 25) })
-      break
-    case 'Remove': 
-      emits('remove')
-  }
-}
-
-const startPos = { x: 0, y: 0, width: 0, height: 0 }
-const pointerdownHandler = (direction: 'left' | 'right', event: PointerEvent) => {
-  startPos.x = event.clientX;
-  startPos.width = imageEl.value?.$el.getBoundingClientRect().width ?? 0;
-  (event.target as HTMLElement).setPointerCapture(event.pointerId)
-}
-const pointermoveHandler = (direction: 'left' | 'right', event: PointerEvent) => {
-  if (event.buttons !== 1) return
-  const pwidth = containerEl.value!.getBoundingClientRect().width
-  let dwidth = direction === 'left' ? startPos.x - event.clientX : event.clientX - startPos.x
-  if (data.value.align === ImageAlign.Center) {
-    dwidth *= 2
-  }
-  update({ 'size': Math.round((startPos.width + dwidth) / pwidth * 100) })
-}
-const pointerupHandler = (event: PointerEvent) => {
-  (event.target as HTMLElement).releasePointerCapture(event.pointerId)
-}
-
-defineExpose({
-  save() {
-    return data.value
-  }
-})
 </script>
 
 <style lang="less" scoped>

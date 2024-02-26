@@ -195,12 +195,12 @@ const backspaceKeyHandler = (offset: number) => {
   }
 }
 
-const escapeKeyHandler = (event: KeyboardEvent) => {
+const escapeKeyHandler = () => {
   commandToolVisible.value = false
 }
 
 const keydownHandler = (event: KeyboardEvent, offset: number) => {
-  if (event.key !== ' ') return
+  if (event.code !== 'Space') return
   const trigger = data.value.html?.substring(0, offset)
   const content = data.value.html?.substring(offset)
   const newBlock = transformBlock(trigger, block.value, content)

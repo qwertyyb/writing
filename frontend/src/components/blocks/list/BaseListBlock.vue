@@ -11,8 +11,8 @@
         :parent="parent"
         :path="[...path, index]"
         @update:modelValue="updateBlock(index, $event, child)"
-        @add="addBlock($event, index)"
-        @remove="removeBlock(index)"
+        @add="addBlock($event, index, child)"
+        @remove="removeBlock(index, [...path, index])"
       ></block-editor>
     </li>
   </component>

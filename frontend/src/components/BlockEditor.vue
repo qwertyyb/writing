@@ -1,5 +1,5 @@
 <template>
-  <div class="block-editor" :class="'block-type-' + block.type" ref="el">
+  <div class="block-editor" :class="'block-type-' + block.type" ref="el" contenteditable="false">
     <div class="block-content">
       <block-renderer
         :model-value="block"

@@ -80,39 +80,30 @@ enum KeyCodes {
 }
 const keydownHandler = (event: KeyboardEvent) => {
   if (event.isComposing) return
-  if (Object.keys(KeyCodes).includes(event.code)) {
-    event.preventDefault()
-  }
+  const offset = getCaretOffset(el.value!)
   if (event.code === KeyCodes.Enter) {
-    enterKeyHandler(event)
+    event.preventDefault()
+    emits('keyEnter', offset)
   } else if (event.code === KeyCodes.Escape) {
+    event.preventDefault()
     // 根据当前状态，判断是否要关闭命令选择
     escapeKeyHandler(event)
   } else if (event.code === KeyCodes.Backspace) {
+    event.preventDefault()
     backspaceKeyHandler(event)
   } else if (event.key === TRIGGER_KEY) {
     // 打开命令选择
     triggerKeyHandler(event)
-  // } else if (event.code === KeyCodes.ArrowUp) {
-  //   const offset = getCaretOffset(el.value!)
-  //   // emits('focusBefore', offset)
-  //   focusBefore()
-  // } else if (event.code === KeyCodes.ArrowDown) {
-  //   const offset = getCaretOffset(el.value!)
-  //   focusAfter()
   } else if (event.code === KeyCodes.Tab && event.shiftKey) {
+    event.preventDefault()
     emits('keyShiftTab', event)
   } else if (event.code === KeyCodes.Tab) {
+    event.preventDefault()
     emits('keyTab', event)
   } else {
     const offset = getCaretOffset(el.value!)
     emits('keydown', event, offset)
   }
-}
-
-const enterKeyHandler = (event: KeyboardEvent) => {
-  const offset = getCaretOffset(el.value!)
-  emits('keyEnter', offset);
 }
 
 const backspaceKeyHandler = (event: KeyboardEvent) => {
