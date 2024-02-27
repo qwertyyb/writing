@@ -26,6 +26,7 @@ const changeHandler = (elements: any[], appState: any, files: any[]) => {
 }
 
 onMounted(() => {
+  console.log('initialData', model.value)
   const App = () => {
     return window.React.createElement(
       window.React.Fragment,

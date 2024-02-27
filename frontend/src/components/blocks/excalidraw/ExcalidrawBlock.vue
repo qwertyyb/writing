@@ -40,8 +40,8 @@
 <script lang="ts" setup>
 import { markRaw, ref, shallowRef, toRaw } from 'vue';
 import { useMode } from '@/hooks/mode'
-import type { BlockModel } from '@/models/block'
-import { type ImageData } from '@/components/schema';
+import { createBlock, type BlockModel } from '@/models/block'
+import { ImageAlign, type ImageData } from '@/components/schema';
 import BaseImage from '../BaseImage.vue';
 import ExcalidrawEditor from './ExcalidrawEditor.vue';
 import { createImageData } from '../image/utils';
@@ -58,7 +58,6 @@ declare global {
 interface ExcalidrawData {
   excalidraw: {
     elements: any[],
-    appState: any,
     files: any
   },
   cover: ImageData
@@ -74,13 +73,21 @@ const { state: uploadState, uploadBlob } = useUpload()
 
 const data = ref<Partial<ExcalidrawData>>({
   excalidraw: block.value.data?.excalidraw ?? null,
-  cover: block.value.data?.cover ?? null
+  cover: block.value.data?.cover ?? {
+    src: '/images/excalidraw.png',
+    ratio: 1280 / 336,
+    align: ImageAlign.Center,
+    size: 50,
+    title: createBlock({
+      type: 'text',
+      data: {
+        html: 'Excalidraw绘图'
+      }
+    })
+  }
 })
 
-const excalidrawData = shallowRef(markRaw(toRaw({
-  ...block.value.data?.excalidraw,
-  appState: { ...block.value.data?.excalidraw.appState, collaborators: new Map() }
-} ?? { elements: [], appState: {}, files: {} })))
+const excalidrawData = shallowRef(markRaw(toRaw(block.value.data?.excalidraw ?? { elements: [], files: {} })))
 
 const update = (newData: Partial<ExcalidrawData>) => {
   data.value = {
@@ -94,8 +101,11 @@ const update = (newData: Partial<ExcalidrawData>) => {
 }
 
 const updateExcalidrawData = (newData: any) => {
-  excalidrawData.value = newData
-  data.value.excalidraw = excalidrawData.value
+  // appState不需要保存到数据库
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { appState, ...rest } = newData
+  excalidrawData.value = markRaw(newData)
+  data.value.excalidraw = markRaw(rest)
   block.value = {
     ...block.value,
     data: data.value
