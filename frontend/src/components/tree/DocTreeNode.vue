@@ -29,9 +29,24 @@
         </el-dropdown>
       </div>
     </div>
-    <div class="tree-node-children" v-if="expanded && node.children?.length">
-      <DocTreeNode v-for="child in node.children" :key="child.id" :node="child" :level="(level || 0) + 1"></DocTreeNode>
-    </div>
+    <vue-draggable :modelValue="node.children"
+      class="tree-node-children"
+      v-if="expanded && node.children?.length"
+      :data-tree-parent-path="node.path"
+      :data-tree-parent-id="node.id"
+      :data-tree-parent-index-path="path.join(',')"
+      item-key="id"
+      group="node"
+      @update:modelValue="updateChildren"
+      @end="dragEndHandler"
+    >
+      <template #item="{element, index}">
+        <DocTreeNode
+          :data-tree-id="element.id"
+          :path="[...path, index]"
+          :node="element" :level="(level || 0) + 1" @update:node="childUpdateHandler(index, $event)"></DocTreeNode>
+      </template>
+    </vue-draggable>
   </div>
 </template>
 
@@ -39,14 +54,19 @@
 import { computed, inject, type ComputedRef } from 'vue';
 import type { TreeNodeModel } from './types';
 import { Delete } from '@element-plus/icons-vue'
+import VueDraggable from 'vuedraggable'
+import { logger } from '@/utils/logger';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   node: TreeNodeModel,
+  path?: number[]
   level?: number,
-}>()
+}>(), {
+  path: () => ([])
+})
 
-defineEmits<{
-  toggleExpand: []
+const emits = defineEmits<{
+  'update:node': [TreeNodeModel]
 }>()
 
 const treeEmits = inject<
@@ -54,6 +74,12 @@ const treeEmits = inject<
 & ((evt: 'select', node: TreeNodeModel) => void)
 & ((evt: 'toggleExpand', node: TreeNodeModel) => void)
 & ((evt: 'remove', node: TreeNodeModel) => void)
+& ((evt: 'move', args: {
+    fromId: number, fromIndexPath: number,
+    toId: number, toIndexPath: number,
+    itemId: number,
+    oldIndex: number, newIndex: number
+  }) => void)
 >('tree')
 
 const treeExpandedState = inject<ComputedRef<Record<string, boolean>>>('treeExpandedIdMap')
@@ -76,6 +102,29 @@ const select = () => {
 
 const remove = () => {
   treeEmits?.('remove', props.node)
+}
+
+const updateChildren = (children: TreeNodeModel[]) => {
+  emits('update:node', { ...props.node, children })
+}
+
+const childUpdateHandler = (childIndex: number, node: TreeNodeModel) => {
+  const children = props.node.children.map((item, index) => {
+    if (index === childIndex) return node
+    return item
+  })
+  emits('update:node', { ...props.node, children })
+}
+
+const dragEndHandler = (event: any) => {
+  const { from, to, item, oldIndex, newIndex } = event
+  const fromId = Number(from.dataset.treeParentId)
+  const toId = Number(to.dataset.treeParentId)
+  const itemId = Number(item.dataset.treeId)
+  const fromIndexPath = from.dataset.treeParentIndexPath.split(',').map((item: string) => Number(item))
+  const toIndexPath = to.dataset.treeParentIndexPath.split(',').map((item: string) => Number(item))
+  const options = { fromId, fromIndexPath, toId, toIndexPath, itemId, oldIndex, newIndex }
+  treeEmits?.('move', options)
 }
 
 </script>

@@ -4,6 +4,7 @@
       <document-tree
         v-if="documentStore.tree"
         :tree="documentStore.tree"
+        @move="documentStore.move"
         @add="addHandler"
         @select="selectHandler"
         @toggleExpand="documentStore.toggleExpand"

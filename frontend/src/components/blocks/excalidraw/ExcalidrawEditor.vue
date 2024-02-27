@@ -6,6 +6,7 @@
 <script lang="ts" setup>
 import { useMode } from '@/hooks/mode';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { excalidraw } from './excalidraw';
 
 const model = defineModel<{
   elements: any[],
@@ -24,31 +25,35 @@ const changeHandler = (elements: any[], appState: any, files: any[]) => {
     elements, appState, files
   }
 }
-
 onMounted(() => {
-  console.log('initialData', model.value)
-  const App = () => {
-    return window.React.createElement(
-      window.React.Fragment,
-      null,
-      window.React.createElement(
-        window.ExcalidrawLib.Excalidraw,
-        {
-          initialData: model.value,
-          onChange: changeHandler,
-          langCode: 'zh-CN',
-          viewModeEnabled: readonly.value,
-        }
-      ),
-    );
-  };
+  setTimeout(() => {
+    const App = () => {
+      return window.React.createElement(
+        window.React.Fragment,
+        null,
+        window.React.createElement(
+          window.ExcalidrawLib.Excalidraw,
+          {
+            initialData: {
+              ...model.value,
+              scrollToContent: true,
+            },
+            onChange: changeHandler,
+            langCode: 'zh-CN',
+            viewModeEnabled: readonly.value,
+          }
+        ),
+      );
+    };
 
-  reactRoot = window.ReactDOM.createRoot(el.value!);
-  reactRoot.render(window.React.createElement(App));
+    reactRoot = window.ReactDOM.createRoot(el.value!);
+    reactRoot.render(window.React.createElement(App));
+  }, 100)
 })
 
 onBeforeUnmount(() => {
-  reactRoot.unmount()
+  resizeObserver.disconnect()
+  reactRoot?.unmount()
 })
 
 defineExpose({
@@ -65,6 +70,6 @@ defineExpose({
 
 <style lang="less" scoped>
 .excalidraw-editor {
-  height: calc(100vh - 120px);
+  height: 100%;
 }
 </style>

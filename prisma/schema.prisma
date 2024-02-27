@@ -11,30 +11,33 @@ datasource db {
 }
 
 model File {
-  name String @unique
-  content Bytes
-  mimetype String
+  name      String   @unique
+  content   Bytes
+  mimetype  String
   createdAt DateTime
 }
 
 model Document {
-  id Int @id @default(autoincrement())
-  title String
-  content String
-  path String
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  path      String
+  nextId    Int?     @unique
+  next      Document? @relation("closestDocument", fields: [nextId], references: [id])
+  prev      Document? @relation("closestDocument")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  deleted Boolean @default(false)
+  deleted   Boolean   @default(false)
   deletedAt DateTime?
 
   attributes Attribute[]
 }
 
 model Attribute {
-  doc Document @relation(fields: [docId], references: [id])
+  doc   Document @relation(fields: [docId], references: [id])
   docId Int
-  key String
+  key   String
   value String
 
   @@id([docId, key])
@@ -46,7 +49,7 @@ model Config {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  key String @unique
-  value String
+  key     String  @unique
+  value   String
   comment String?
 }

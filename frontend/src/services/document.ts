@@ -7,6 +7,7 @@ export interface Document {
   title: string,
   content: string,
   path: string,
+  nextId: number | null,
   createdAt: string,
   updatedAt: string,
   attributes: Attribute[]
@@ -55,3 +56,11 @@ export const addDocument = (data: Pick<Document, 'title' | 'content' | 'path'>) 
     body: JSON.stringify(data)
   })
 }
+
+export const moveDocument = (data: { id: number, path: string, nextId: number | null }[]) => apiFetch<{ success: boolean }>('/api/v1/document/move', {
+  method: 'POST',
+  headers: {
+    'content-type': 'application/json'
+  },
+  body: JSON.stringify(data)
+})

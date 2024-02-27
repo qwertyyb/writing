@@ -14,7 +14,7 @@ router
       prisma.document.count({ where }),
       prisma.document.findMany({
         where: { deleted: false, ...where },
-        select: { id: true, path: true, title: true, updatedAt: true, createdAt: true, deleted: true, deletedAt: true }
+        select: { id: true, path: true, title: true, updatedAt: true, createdAt: true, deleted: true, deletedAt: true, nextId: true }
       })
     ])
     ctx.body = createRes({ total, list })
@@ -56,6 +56,14 @@ router
     })
     ctx.body = createRes(data)
   })
+  .patch('/move', async (ctx) => {
+    const updates = ctx.request.body as { id: number, path: string, nextId: number | null }[]
+    if (!updates || !updates.length) {
+      ctx.body = createRes(null, 400, '未传入参数')
+      return
+    }
+    prisma.$transaction(updates.map(item => prisma.document.update({ where: { id: item.id }, data: { path: item.path, nextId: item.nextId } })))
+  })
   .del('/remove', async (ctx) => {
     let id = Number(ctx.query.id)
     let path = ctx.query.path as string
@@ -83,7 +91,7 @@ router
         title, content, path
       },
       select: {
-        title: true, path: true, id: true, createdAt: true, updatedAt: true,
+        title: true, path: true, id: true, createdAt: true, updatedAt: true, nextId: true
       }
     })
     ctx.body = createRes(record)

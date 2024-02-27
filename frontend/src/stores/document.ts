@@ -1,6 +1,6 @@
 import { createEditingDocument, type BlockModel } from "@/models/block";
 import { setAttributes, type Attribute } from "@/services/attribute";
-import { getList, type Document, getDocument, updateDocument, addDocument, removeDocument } from "@/services/document";
+import { getList, type Document, getDocument, updateDocument, addDocument, removeDocument, moveDocument } from "@/services/document";
 import { createLogger } from "@/utils/logger";
 import { ElMessageBox } from "element-plus";
 import { defineStore } from "pinia";
@@ -21,18 +21,24 @@ const getRoot = (list: ListItem[]): ListItem | undefined => {
   return list.find(item => item.path === '')
 }
 
-const buildTree = (node: ListItem, list: ListItem[]): DocumentItem => {
-  return {
-    ...node,
-    children: list.reduce<DocumentItem[]>((arr, item) => {
-      const isChild = item.path === `${node.path}/${node.id}`
-      if (!isChild) return arr
-      return [
-        ...arr,
-        buildTree(item, list)
-      ]
-    }, [])
+const buildTree = (list: ListItem[], path: string, id: number | null): DocumentItem[] => {
+  const previousNode = list.find(item => item.path === path && item.nextId === id)
+  if (!previousNode) return []
+  return [
+    ...buildTree(list, path, previousNode.id),
+    {
+      ...previousNode,
+      children: buildTree(list, `${previousNode.path}/${previousNode.id}`, null)
+    }
+  ]
+}
+
+const getNodeFromIndexPath = (node: DocumentItem, path: number[]): DocumentItem => {
+  const index = path.shift()
+  if (index || index === 0) {
+    return getNodeFromIndexPath(node.children[index], path)
   }
+  return node
 }
 
 export const useDocumentStore = defineStore('document', {
@@ -45,7 +51,10 @@ export const useDocumentStore = defineStore('document', {
     tree(): DocumentItem | null {
       const root = getRoot(this.documents)
       if (!root) return null
-      return buildTree(root, this.documents)
+      return {
+        ...root,
+        children: buildTree(this.documents, `${root.path}/${root.id}`, null)
+      }
     }
   },
   actions: {
@@ -53,6 +62,41 @@ export const useDocumentStore = defineStore('document', {
       const { data: { list: documents } } = await getList()
       this.documents = documents
       this.expandAll()
+    },
+    async move(options: { fromId: number, fromIndexPath: number[], toId: number, toIndexPath: number[], itemId: number, oldIndex: number, newIndex: number }) {
+      logger.i('move', options)
+      // @todo 调用接口调整顺序
+      const updates: { id: number, path: string, nextId: number | null }[] = []
+
+      const item = this.documents.find(item => item.id === options.itemId)
+      if (!item) return
+      const fromNode = this.documents.find(item => item.id === options.fromId)
+      const toNode = this.documents.find(item => item.id === options.toId)
+      if (!fromNode || !toNode || !this.tree) return
+      // 修改原index位置的nextId
+      const fromTreeNode = getNodeFromIndexPath(this.tree, [...options.fromIndexPath])
+      // 当前位于第一个位置时，无须更新前一个节点，否则需要更新前一个节点
+      const fromPrevNode = options.oldIndex > 0 ? this.documents.find(item => item.id === fromTreeNode.children[options.oldIndex - 1].id) : null
+      // 先从fromNode中移除此子节点
+      if (fromPrevNode) {
+        fromPrevNode!.nextId = item.nextId
+        updates.push({ id: fromPrevNode.id, path: fromPrevNode.path, nextId: fromPrevNode.nextId })
+      }
+      item.path = 'xxxx'
+
+      const toTreeNode = getNodeFromIndexPath(this.tree, [...options.toIndexPath])
+      const newPrevNode = options.newIndex > 0 ? this.documents.find(item => item.id === toTreeNode.children[options.newIndex - 1].id) : null
+      logger.i('prevNode', newPrevNode, toTreeNode.children)
+      const originNextId = newPrevNode ? newPrevNode.nextId : toTreeNode.children[0]?.id ?? null
+      item.path = `${toTreeNode.path}/${toTreeNode.id}`
+      item.nextId = originNextId
+      updates.push({ id: item.id, path: item.path, nextId: item.nextId })
+      if (newPrevNode) {
+        newPrevNode.nextId = item.id
+        updates.push({ id: newPrevNode.id, path: newPrevNode.path, nextId: newPrevNode.nextId })
+      }
+      logger.i('updates backend', updates)
+      await moveDocument(updates)
     },
     async addDocument(parent: DocumentItem): Promise<void> {
       const newDoc = createEditingDocument(parent)
