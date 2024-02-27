@@ -62,7 +62,9 @@ router
       ctx.body = createRes(null, 400, '未传入参数')
       return
     }
-    prisma.$transaction(updates.map(item => prisma.document.update({ where: { id: item.id }, data: { path: item.path, nextId: item.nextId } })))
+    const resetList = updates.map(item => ({ ...item, nextId: null }))
+    const result = await prisma.$transaction([...resetList, ...updates].map(item => prisma.document.update({ where: { id: item.id }, data: { path: item.path, nextId: item.nextId } })))
+    ctx.body = createRes(result)
   })
   .del('/remove', async (ctx) => {
     let id = Number(ctx.query.id)

@@ -75,6 +75,7 @@ export const useDocumentStore = defineStore('document', {
       if (!fromNode || !toNode || !this.tree) return
       // 修改原index位置的nextId
       const fromTreeNode = getNodeFromIndexPath(this.tree, [...options.fromIndexPath])
+      logger.i('move remove node', fromTreeNode, options.oldIndex, fromTreeNode.children[options.oldIndex - 1])
       // 当前位于第一个位置时，无须更新前一个节点，否则需要更新前一个节点
       const fromPrevNode = options.oldIndex > 0 ? this.documents.find(item => item.id === fromTreeNode.children[options.oldIndex - 1].id) : null
       // 先从fromNode中移除此子节点
@@ -85,6 +86,7 @@ export const useDocumentStore = defineStore('document', {
       item.path = 'xxxx'
 
       const toTreeNode = getNodeFromIndexPath(this.tree, [...options.toIndexPath])
+      logger.i('move add node', toTreeNode, options.newIndex, toTreeNode.children[options.newIndex - 1])
       const newPrevNode = options.newIndex > 0 ? this.documents.find(item => item.id === toTreeNode.children[options.newIndex - 1].id) : null
       logger.i('prevNode', newPrevNode, toTreeNode.children)
       const originNextId = newPrevNode ? newPrevNode.nextId : toTreeNode.children[0]?.id ?? null

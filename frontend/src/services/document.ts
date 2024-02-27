@@ -58,7 +58,7 @@ export const addDocument = (data: Pick<Document, 'title' | 'content' | 'path'>) 
 }
 
 export const moveDocument = (data: { id: number, path: string, nextId: number | null }[]) => apiFetch<{ success: boolean }>('/api/v1/document/move', {
-  method: 'POST',
+  method: 'PATCH',
   headers: {
     'content-type': 'application/json'
   },
