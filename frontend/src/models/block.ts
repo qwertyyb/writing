@@ -115,10 +115,11 @@ export const createBlock = (options: Partial<BlockOptions>): BlockModel => {
   return block
 }
 
-export const createEditingDocument = (parent: { id: number | string, path: string }): Pick<EditingDocument, 'title' | 'path' | 'content'> => {
+export const createEditingDocument = (parentPath: string): Pick<EditingDocument, 'title' | 'path' | 'content'> & Partial<EditingDocument> => {
   return {
     title: '新文档',
-    path: `${parent.path}/${parent.id}`,
+    path: parentPath,
+    nextId: null,
     content: {
       id: createBlockId(),
       type: 'doc',

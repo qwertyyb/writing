@@ -1,5 +1,8 @@
 <template>
-  <div class="doc-tree">
+  <div class="doc-tree"
+    @pointerdown="pointerdownHandler"
+    @pointermove="pointermoveHandler"
+    @pointerup="pointerupHandler">
     <DocTreeNode
       :node="tree"
       @update:node="nodeUpdateHandler"></DocTreeNode>
@@ -10,6 +13,7 @@
 import { computed, provide } from 'vue';
 import DocTreeNode from './DocTreeNode.vue';
 import type { TreeNodeModel } from './types';
+import { useMove } from './useMove';
 
 const props = defineProps<{
   tree: TreeNodeModel,
@@ -18,11 +22,10 @@ const props = defineProps<{
 }>()
 
 const emits = defineEmits<{
-  add: [parent: TreeNodeModel],
+  add: [current: TreeNodeModel, position: 'before' | 'after' | 'inside'],
   select: [node: TreeNodeModel],
   toggleExpand: [node: TreeNodeModel],
   remove: [node: TreeNodeModel],
-  move: [{ fromId: number, fromIndexPath: number[], toId: number, toIndexPath: number[], itemId: number, oldIndex: number, newIndex: number }],
   'update:tree': [TreeNodeModel],
 }>()
 
@@ -33,5 +36,7 @@ const nodeUpdateHandler = (node: TreeNodeModel) => {
 provide('treeSelectedId', computed(() => props.selectedId))
 provide('treeExpandedIdMap', computed(() => props.expandedIdMap))
 provide('tree', emits)
+
+const { pointerdownHandler, pointermoveHandler, pointerupHandler } = useMove()
 
 </script>

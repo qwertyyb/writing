@@ -1,5 +1,8 @@
 <template>
-  <div class="doc-tree-node">
+  <div class="doc-tree-node"
+    :data-tree-node-id-path="node.path"
+    :data-tree-node-id="node.id"
+    :data-tree-index-path="path.join(',')">
     <div class="tree-node-content"
       :style="{paddingLeft: 24 * (level || 0) + 'px'}"
       :class="{ selected }"
@@ -12,44 +15,34 @@
         chevron_right
         </span>
       </div>
-      <div class="tree-label">
-        <slot name="node">
-          {{ node.title }}
-        </slot>
+      <div class="tree-label-wrapper">
+        <div class="tree-label">
+          <slot name="node">
+            {{ node.title }}
+          </slot>
+        </div>
       </div>
       <div class="tree-action">
-        <span class="material-symbols-outlined add-action" title="添加" @click.stop="add">add</span>
+        <span class="material-symbols-outlined add-action" title="添加" @click.stop="addChild">add</span>
         <el-dropdown trigger="click">
           <span class="material-symbols-outlined more-acto" title="更多操作">more_vert</span>
           <template #dropdown>
             <el-dropdown-menu>
+              <el-dropdown-item :icon="Plus" @click.stop="addBefore">在上方插入</el-dropdown-item>
+              <el-dropdown-item :icon="Plus" @click.stop="addAfter">在下方插入</el-dropdown-item>
               <el-dropdown-item :icon="Delete" @click.stop="remove">删除文档</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
       </div>
     </div>
-    <div :modelValue="node.children"
-      class="tree-node-children"
-      :data-tree-parent-path="node.path"
-      :data-tree-parent-id="node.id"
-      :data-tree-parent-index-path="path.join(',')"
-      :options="{sort: false,animation: 200}"
-      :move="moveHandler"
-      item-key="id"
-      group="node"
-      @update:modelValue="updateChildren"
-      @end="dragEndHandler"
-    >
+    <div :modelValue="node.children" class="tree-node-children">
       <DocTreeNode
-        @pointerdown="pointerdownHandler"
-        @pointermove="pointermoveHandler"
-        @pointerup="pointerupHandler"
         v-for="(element, index) in node.children"
         :key="element.id"
         :data-tree-id="element.id"
         :path="[...path, index]"
-        :node="element" :level="(level || 0) + 1" @update:node="childUpdateHandler(index, $event)"></DocTreeNode>
+        :node="element" :level="(level || 0) + 1"></DocTreeNode>
     </div>
   </div>
 </template>
@@ -57,8 +50,7 @@
 <script lang="ts" setup>
 import { computed, inject, type ComputedRef } from 'vue';
 import type { TreeNodeModel } from './types';
-import { Delete } from '@element-plus/icons-vue'
-import { logger } from '@/utils/logger';
+import { Delete, Plus } from '@element-plus/icons-vue'
 
 const props = withDefaults(defineProps<{
   node: TreeNodeModel,
@@ -68,21 +60,11 @@ const props = withDefaults(defineProps<{
   path: () => ([])
 })
 
-const emits = defineEmits<{
-  'update:node': [TreeNodeModel]
-}>()
-
 const treeEmits = inject<
-((evt: 'add', parent: TreeNodeModel) => void)
+((evt: 'add', current: TreeNodeModel, position: 'before' | 'after' | 'inside') => void)
 & ((evt: 'select', node: TreeNodeModel) => void)
 & ((evt: 'toggleExpand', node: TreeNodeModel) => void)
 & ((evt: 'remove', node: TreeNodeModel) => void)
-& ((evt: 'move', args: {
-    fromId: number, fromIndexPath: number,
-    toId: number, toIndexPath: number,
-    itemId: number,
-    oldIndex: number, newIndex: number
-  }) => void)
 >('tree')
 
 const treeExpandedState = inject<ComputedRef<Record<string, boolean>>>('treeExpandedIdMap')
@@ -95,8 +77,16 @@ const toggleExpand = () => {
   treeEmits?.('toggleExpand', props.node)
 }
 
-const add = () => {
-  treeEmits?.('add', props.node)
+const addChild = () => {
+  treeEmits?.('add', props.node, 'inside')
+}
+
+const addBefore = () => {
+  treeEmits?.('add', props.node, 'before')
+}
+
+const addAfter = () => {
+  treeEmits?.('add', props.node, 'after')
 }
 
 const select = () => {
@@ -107,78 +97,24 @@ const remove = () => {
   treeEmits?.('remove', props.node)
 }
 
-const updateChildren = (children: TreeNodeModel[]) => {
-  emits('update:node', { ...props.node, children })
-}
-
-const childUpdateHandler = (childIndex: number, node: TreeNodeModel) => {
-  const children = props.node.children.map((item, index) => {
-    if (index === childIndex) return node
-    return item
-  })
-  emits('update:node', { ...props.node, children })
-}
-
-const dragEndHandler = (event: any) => {
-  logger.i('dragEndHandler', event)
-  const { from, to, item, oldIndex, newIndex } = event
-  const fromId = Number(from.dataset.treeParentId)
-  const toId = Number(to.dataset.treeParentId)
-  const itemId = Number(item.dataset.treeId)
-  const fromIndexPath = from.dataset.treeParentIndexPath
-    .split(',')
-    .filter((str: string) => str)
-    .map((item: string) => Number(item))
-  const toIndexPath = to.dataset.treeParentIndexPath
-    .split(',')
-    .filter((str: string) => str)
-    .map((item: string) => Number(item))
-  const options = { fromId, fromIndexPath, toId, toIndexPath, itemId, oldIndex, newIndex }
-  treeEmits?.('move', options)
-}
-
-const moveHandler = (event: any) => {
-}
-
-const pointerdownHandler = (event: PointerEvent) => {
-  (event.target as HTMLElement).setPointerCapture(event.pointerId)
-}
-
-const pointermoveHandler = (event: PointerEvent) => {
-  if (event.buttons !== 1) return
-  event.preventDefault()
-  let element = document.elementFromPoint(event.clientX, event.clientY)
-  if (!element?.classList.contains('doc-tree-node')) {
-    element = element!.closest('.doc-tree-node')
-  }
-  element = element?.querySelector('.tree-node-content') ?? null
-  if (!element) return
-  const { height, top } = element.getBoundingClientRect()
-  const areaTop = top + height / 4
-  const areaBottom = top + height / 4 * 3
-
-  document.querySelectorAll('.movable-selected').forEach(d => d.classList.remove('movable-selected', 'movable-insert-children', 'movable-insert-before', 'movable-insert-after'))
-  logger.i('area', event.clientY, areaTop, areaBottom)
-  if (event.clientY < areaTop) {
-    element.classList.add('movable-selected', 'movable-insert-before')
-  } else if (event.clientY > areaBottom) {
-    element.classList.add('movable-selected', 'movable-insert-after')
-  } else {
-    element.classList.add('movable-selected', 'movable-insert-children')
-  }
-  logger.i('moveHandler', element, element?.textContent)
-}
-
-const pointerupHandler = (event: PointerEvent) => {
-  document.querySelectorAll('.movable-selected')
-  .forEach(d => d.classList.remove('movable-selected', 'movable-insert-children', 'movable-insert-before', 'movable-insert-after'));
-  (event.target as HTMLElement).releasePointerCapture(event.pointerId)
-}
-
 </script>
 
 <style lang="less" scoped>
 .doc-tree-node {
+  position: relative;
+  transition: opacity .3s;
+  &.movable-cloned {
+    background: #fff;
+    box-shadow: 0px 4px 7px #bbb;
+    border-radius: 4px;
+    pointer-events: none;
+    opacity: .9;
+    position: absolute;
+    z-index: 100;
+  }
+  &.movable-source {
+    opacity: .4;
+  }
   .tree-node-content {
     display: flex;
     align-items: center;
@@ -187,8 +123,7 @@ const pointerupHandler = (event: PointerEvent) => {
     border-radius: 4px;
     transition: background .2s;
     box-sizing: border-box;
-    border-top: 3px solid transparent;
-    border-bottom: 3px solid transparent;
+    position: relative;
     &:hover {
       background: rgba(220, 220, 220, .5);
       .tree-action {
@@ -202,11 +137,11 @@ const pointerupHandler = (event: PointerEvent) => {
       }
     }
     &.movable-selected {
-      &.movable-insert-before {
-        border-top: 3px solid rgb(227, 219, 5);
+      &.movable-insert-before .tree-label-wrapper::before {
+        opacity: 1;
       }
-      &.movable-insert-after {
-        border-bottom: 3px solid rgb(227, 219, 5);
+      &.movable-insert-after .tree-label-wrapper::after {
+        opacity: 1;
       }
       &.movable-insert-children {
         background: rgb(227, 219, 5);
@@ -215,15 +150,37 @@ const pointerupHandler = (event: PointerEvent) => {
     .tree-node-offset {
       height: 1px;
     }
+    .tree-label-wrapper {
+      width: 0;
+      position: relative;
+      flex: 1;
+      &::before, &::after {
+        content: " ";
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background-color: rgb(227, 219, 5);
+        opacity: 0;
+      }
+      &::before {
+        top: -1.5px;
+      }
+      &::after {
+        bottom: -1.5px;
+      }
+    }
     .tree-label {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      padding: 3px;
     }
     .tree-node-expand-icon-wrapper {
       height: 24px;
       width: 24px;
       transition: background .2s;
+      flex-shrink: 0;
       &:not(:empty):hover {
         background: rgba(200, 200, 200, .8);
       }
@@ -251,8 +208,6 @@ const pointerupHandler = (event: PointerEvent) => {
       }
     }
   }
-  // .tree-node-children:empty {
-  //   padding: 10px 0;
-  // }
+  
 }
 </style>

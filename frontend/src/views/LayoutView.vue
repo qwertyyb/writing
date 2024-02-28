@@ -5,7 +5,7 @@
         v-if="documentStore.tree"
         :tree="documentStore.tree"
         @move="documentStore.move"
-        @add="addHandler"
+        @add="documentStore.add"
         @select="selectHandler"
         @toggleExpand="documentStore.toggleExpand"
         @remove="documentStore.removeDocument"
@@ -35,11 +35,6 @@ const logger = createLogger('layout-view')
 const documentStore = useDocumentStore()
 
 documentStore.getList()
-
-const addHandler = async (parent: TreeNodeModel) => {
-  logger.i('add tree node in', parent, parent.path + '/' + parent.id)
-  documentStore.addDocument(parent)
-}
 
 const selectHandler = async (node: TreeNodeModel) => {
   logger.i('select tree node', node)

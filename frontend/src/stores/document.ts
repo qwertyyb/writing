@@ -33,14 +33,6 @@ const buildTree = (list: ListItem[], path: string, id: number | null): DocumentI
   ]
 }
 
-const getNodeFromIndexPath = (node: DocumentItem, path: number[]): DocumentItem => {
-  const index = path.shift()
-  if (index || index === 0) {
-    return getNodeFromIndexPath(node.children[index], path)
-  }
-  return node
-}
-
 export const useDocumentStore = defineStore('document', {
   state: () => ({
     documents: [] as ListItem[],
@@ -63,55 +55,78 @@ export const useDocumentStore = defineStore('document', {
       this.documents = documents
       this.expandAll()
     },
-    async move(options: { fromId: number, fromIndexPath: number[], toId: number, toIndexPath: number[], itemId: number, oldIndex: number, newIndex: number }) {
-      logger.i('move', options)
-      // @todo 调用接口调整顺序
+    moveToTarget(source: ListItem, target: ListItem, position: 'before' | 'after' | 'inside') {
+      const updates: { id: number, path: string, nextId: number | null }[] = []
+      if (position === 'after') {
+        [target.nextId, source.nextId] = [source.id, target.nextId]
+        updates.push({ id: target.id, path: target.path, nextId: target.nextId })
+      } else if (position === 'before') {
+        const prev = this.documents.find(item => item.nextId === target.id)
+        if (prev) {
+          prev.nextId = source.id
+          updates.push({ id: prev.id, path: prev.path, nextId: prev.nextId })
+        }
+        source.nextId = target.id
+      } else if (position === 'inside') {
+        source.path = `${target.path}/${target.id}`
+        const last = this.documents.find(item => item.path === source.path && item.nextId === null)
+        if (last) {
+          last.nextId = source.id
+          source.nextId = null
+          updates.push({ id: last.id, path: last.path, nextId: last.nextId })
+        }
+      }
+      updates.push({ id: source.id, path: source.path, nextId: source.nextId })
+      return updates
+    },
+    async move({ sourceId, sourceIndexPath, toIndexPath, toId, position }
+      : {
+        sourceIndexPath: number[], sourceId: number,
+        toIndexPath: number[], toId: number,
+        position: 'inside' | 'before' | 'after'
+      }
+    ) {
+      logger.i('move', sourceId, sourceIndexPath, toId, toIndexPath, position)
       const updates: { id: number, path: string, nextId: number | null }[] = []
 
-      const item = this.documents.find(item => item.id === options.itemId)
-      if (!item) return
-      const fromNode = this.documents.find(item => item.id === options.fromId)
-      const toNode = this.documents.find(item => item.id === options.toId)
-      if (!fromNode || !toNode || !this.tree) return
-      // 修改原index位置的nextId
-      const fromTreeNode = getNodeFromIndexPath(this.tree, [...options.fromIndexPath])
-      logger.i('move remove node', fromTreeNode, options.oldIndex, fromTreeNode.children[options.oldIndex - 1])
-      // 当前位于第一个位置时，无须更新前一个节点，否则需要更新前一个节点
-      const fromPrevNode = options.oldIndex > 0 ? this.documents.find(item => item.id === fromTreeNode.children[options.oldIndex - 1].id) : null
-      // 先从fromNode中移除此子节点
-      if (fromPrevNode) {
-        fromPrevNode!.nextId = item.nextId
-        updates.push({ id: fromPrevNode.id, path: fromPrevNode.path, nextId: fromPrevNode.nextId })
-      }
-      item.path = 'xxxx'
+      const source = this.documents.find(item => item.id === sourceId)
+      if (!source) return
+      const sourcePrev = this.documents.find(item => item.path === source.path && item.nextId === source.id)
+      const target = this.documents.find(item => item.id === toId)
+      if (!target) return
 
-      const toTreeNode = getNodeFromIndexPath(this.tree, [...options.toIndexPath])
-      logger.i('move add node', toTreeNode, options.newIndex, toTreeNode.children[options.newIndex - 1])
-      const newPrevNode = options.newIndex > 0 ? this.documents.find(item => item.id === toTreeNode.children[options.newIndex - 1].id) : null
-      logger.i('prevNode', newPrevNode, toTreeNode.children)
-      const originNextId = newPrevNode ? newPrevNode.nextId : toTreeNode.children[0]?.id ?? null
-      item.path = `${toTreeNode.path}/${toTreeNode.id}`
-      item.nextId = originNextId
-      updates.push({ id: item.id, path: item.path, nextId: item.nextId })
-      if (newPrevNode) {
-        newPrevNode.nextId = item.id
-        updates.push({ id: newPrevNode.id, path: newPrevNode.path, nextId: newPrevNode.nextId })
+      logger.i('move', { ...source }, {...target })
+      if (!source) return
+
+      // 把原位置的元素删除，即把前一个元素的下一个节点指向原位置的下一节点
+      if (sourcePrev) {
+        sourcePrev.nextId = source.nextId
+        updates.push({ id: sourcePrev.id, path: sourcePrev.path, nextId: sourcePrev.nextId})
       }
-      logger.i('updates backend', updates)
+
+      updates.push(...this.moveToTarget(source, target, position))
+
+      // 调用接口更新
       await moveDocument(updates)
     },
-    async addDocument(parent: DocumentItem): Promise<void> {
-      const newDoc = createEditingDocument(parent)
+    async add(current: DocumentItem, position: 'before' | 'after' | 'inside'): Promise<void> {
+      logger.i('add', {...current}, position)
+      const newDoc = createEditingDocument(current.path)
+      const cur = this.documents.find(item => item.id === current.id)
+      if (!cur) return
       const { data } = await addDocument({
         ...newDoc,
         content: JSON.stringify(newDoc.content)
       })
+      const updates = this.moveToTarget(data, cur, position)
       this.editing = {
         ...data,
         ...newDoc,
         attributes: []
       }
       this.documents.push(data)
+      logger.i('move updates', updates)
+      updates.length && await moveDocument(updates)
     },
     async removeDocument(node: DocumentItem) {
       if (node.children.length) {
