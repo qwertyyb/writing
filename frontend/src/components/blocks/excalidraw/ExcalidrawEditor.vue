@@ -6,7 +6,6 @@
 <script lang="ts" setup>
 import { useMode } from '@/hooks/mode';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
-import { excalidraw } from './excalidraw';
 
 const model = defineModel<{
   elements: any[],
@@ -52,7 +51,6 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  resizeObserver.disconnect()
   reactRoot?.unmount()
 })
 
