@@ -36,14 +36,16 @@
         </el-dropdown>
       </div>
     </div>
-    <div :modelValue="node.children" class="tree-node-children">
-      <DocTreeNode
-        v-for="(element, index) in node.children"
-        :key="element.id"
-        :data-tree-id="element.id"
-        :path="[...path, index]"
-        :node="element" :level="(level || 0) + 1"></DocTreeNode>
-    </div>
+    <transition name="slide-vertical" @enter="onAnimEnter" @before-leave="setHeight">
+      <div v-if="expanded" class="tree-node-children">
+        <DocTreeNode
+          v-for="(element, index) in node.children"
+          :key="element.id"
+          :data-tree-id="element.id"
+          :path="[...path, index]"
+          :node="element" :level="(level || 0) + 1"></DocTreeNode>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -97,12 +99,26 @@ const remove = () => {
   treeEmits?.('remove', props.node)
 }
 
+const onAnimEnter = (el: Element) => {
+  setHeight(el);
+  (el as HTMLElement).style.height = '0'
+  setTimeout(() => {
+    (el as HTMLElement).style.height = ''
+  })
+}
+
+const setHeight = (el: Element) => {
+  (el as HTMLElement).style.setProperty('--children-height', el.getBoundingClientRect().height + 'px');
+}
+
 </script>
 
 <style lang="less" scoped>
 .doc-tree-node {
   position: relative;
   transition: opacity .3s;
+  display: grid;
+  grid-template-rows: auto 1fr;
   &.movable-cloned {
     background: #fff;
     box-shadow: 0px 4px 7px #bbb;
@@ -208,6 +224,19 @@ const remove = () => {
       }
     }
   }
-  
+  .tree-node-children {
+    transition: height .3s;
+  }
+  .slide-vertical-enter-active,
+  .slide-vertical-leave-active {
+    overflow: hidden;
+  }
+  .slide-vertical-leave-to {
+    height: 0;
+  }
+  .slide-vertical-enter-to,
+  .slide-vertical-leave-from {
+    height: var(--children-height, auto)
+  }
 }
 </style>

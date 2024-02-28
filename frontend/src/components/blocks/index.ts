@@ -10,7 +10,7 @@ import type { Component } from "vue";
 import documentBlock from "./document/document";
 import todo from "./todo/todo";
 import { excalidraw } from "./excalidraw/excalidraw";
-import { image } from "./image/Image";
+import { image } from "./image/image";
 
 interface BlockConfig {
   identifier: string,
