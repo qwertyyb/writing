@@ -1,7 +1,7 @@
 import { heading1, heading2, heading3, heading4, heading5, heading6 } from "./heading";
 import TextBlock from "./TextBlock";
 import ListBlocks from './list/list';
-import linkBlock from "./link/LinkBlock";
+import link from "./link/link"
 import blockQuote from "./block-quote/block-quote";
 import divider from "./divider/divider";
 import codeBlock from "./code/code";
@@ -28,7 +28,7 @@ const commands: BlockConfig[] = [
   heading4,
   heading5,
   heading6,
-  linkBlock,
+  link,
   ...ListBlocks,
   image,
   blockQuote,

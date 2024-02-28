@@ -13,6 +13,7 @@
     <base-image :model-value="data.cover"
       v-else
       @remove="$emit('remove')"
+      @add="$emit('add', $event)"
       @update:model-value="update({ cover: $event })"
     >
       <template v-slot:menu-item-list>

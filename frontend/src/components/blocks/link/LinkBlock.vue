@@ -13,6 +13,7 @@
       <template #reference>
         <text-block
           :model-value="data.text"
+          @add="$emit('add')"
           @update:modelValue="update({ text: $event })"
           :index="0"></text-block>
       </template>
@@ -53,7 +54,7 @@ const data = ref<LinkData>({
 })
 
 const update = (newData: Partial<LinkData>) => {
-  if (newData.text?.type !== 'text') {
+  if (newData.text && newData.text?.type !== 'text') {
     return emits('add', { type: newData.text!.type })
   }
   data.value = {

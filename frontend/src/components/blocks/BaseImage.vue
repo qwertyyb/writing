@@ -17,6 +17,7 @@
       <text-block
         :model-value="data.title"
         :index="0"
+        @add="$emit('add', $event)"
         @update:modelValue="update({ 'title': $event })"
       ></text-block>
     </figcaption>
@@ -107,6 +108,7 @@ import FocusableControl from '@/components/FocusableControl.vue';
 import { ImageAlign } from '@/components/schema';
 import { useMode } from '@/hooks/mode';
 import type { ImageData } from '@/components/schema';
+import type { BlockOptions } from '@/models/block';
 
 const data = defineModel<ImageData>({ required: true })
 
@@ -114,7 +116,7 @@ const { readonly, canEdit } = useMode()
 
 const emits = defineEmits<{
   remove: [],
-  add: []
+  add: [options?: Partial<BlockOptions>]
 }>()
 
 const imageEl = ref<InstanceType<typeof FocusableControl>>()

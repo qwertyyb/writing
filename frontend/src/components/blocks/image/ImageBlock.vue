@@ -17,7 +17,11 @@
         回车或点击上传图片
       </span>
     </focusable-control>
-    <base-image :model-value="data" @update:model-value="update">
+    <base-image :model-value="data"
+      @update:model-value="update"
+      @remove="$emit('remove')"
+      @add="$emit('add', $event)"
+      v-else>
       <template v-slot:menu-item-list>
         <span class="material-symbols-outlined settings-icon upload-icon"
           title="更换图片"
@@ -31,7 +35,7 @@
 
 <script lang="ts" setup>
 import { ref, watch } from 'vue';
-import { createBlock, type BlockModel } from '@/models/block';
+import { createBlock, type BlockModel, type BlockOptions } from '@/models/block';
 import BaseImage from '../BaseImage.vue';
 import FocusableControl from '@/components/FocusableControl.vue';
 import { ImageAlign } from '@/components/schema';
@@ -46,7 +50,7 @@ const { readonly } = useMode()
 
 defineEmits<{
   remove: [],
-  add: []
+  add: [options?: Partial<BlockOptions>]
 }>()
 
 const data = ref<ImageData>({
