@@ -59,6 +59,7 @@ export const useDocumentStore = defineStore('document', {
       const updates: { id: number, path: string, nextId: number | null }[] = []
       if (position === 'after') {
         [target.nextId, source.nextId] = [source.id, target.nextId]
+        source.path = target.path
         updates.push({ id: target.id, path: target.path, nextId: target.nextId })
       } else if (position === 'before') {
         const prev = this.documents.find(item => item.nextId === target.id)
@@ -66,6 +67,7 @@ export const useDocumentStore = defineStore('document', {
           prev.nextId = source.id
           updates.push({ id: prev.id, path: prev.path, nextId: prev.nextId })
         }
+        source.path = target.path
         source.nextId = target.id
       } else if (position === 'inside') {
         source.path = `${target.path}/${target.id}`
@@ -74,6 +76,8 @@ export const useDocumentStore = defineStore('document', {
           last.nextId = source.id
           source.nextId = null
           updates.push({ id: last.id, path: last.path, nextId: last.nextId })
+        } else {
+          source.nextId = null
         }
       }
       updates.push({ id: source.id, path: source.path, nextId: source.nextId })
@@ -86,7 +90,6 @@ export const useDocumentStore = defineStore('document', {
         position: 'inside' | 'before' | 'after'
       }
     ) {
-      logger.i('move', sourceId, sourceIndexPath, toId, toIndexPath, position)
       const updates: { id: number, path: string, nextId: number | null }[] = []
 
       const source = this.documents.find(item => item.id === sourceId)
@@ -95,7 +98,7 @@ export const useDocumentStore = defineStore('document', {
       const target = this.documents.find(item => item.id === toId)
       if (!target) return
 
-      logger.i('move', { ...source }, {...target })
+      logger.i('move', position, { ...source }, {...target })
       if (!source) return
 
       // 把原位置的元素删除，即把前一个元素的下一个节点指向原位置的下一节点
@@ -106,8 +109,9 @@ export const useDocumentStore = defineStore('document', {
 
       updates.push(...this.moveToTarget(source, target, position))
 
+      logger.i('move', updates)
       // 调用接口更新
-      await moveDocument(updates)
+      // await moveDocument(updates)
     },
     async add(current: DocumentItem, position: 'before' | 'after' | 'inside'): Promise<void> {
       logger.i('add', {...current}, position)

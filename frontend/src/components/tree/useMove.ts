@@ -25,6 +25,7 @@ export const useMove = () => {
   }
 
   const pointerdownHandler = (event: PointerEvent) => {
+    if (event.buttons !== 1) return
     dragStartTimeout = setTimeout(() => {
       const treeNodeEl = getTreeNodeEl(event)
       if (!treeNodeEl) return
