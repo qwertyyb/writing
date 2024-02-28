@@ -128,7 +128,7 @@ export const useDocumentStore = defineStore('document', {
       logger.i('move updates', updates)
       updates.length && await moveDocument(updates)
     },
-    async removeDocument(node: DocumentItem) {
+    async remove(node: DocumentItem) {
       if (node.children.length) {
         await ElMessageBox.confirm(
           '删除此文档也将删除其子文档，是否确认删除？',
@@ -150,9 +150,13 @@ export const useDocumentStore = defineStore('document', {
           }
         )
       }
-      logger.i('remove document', node)
+      const prev = this.documents.find(item => item.nextId === node.id)
+      logger.i('remove document', {...node}, {...prev})
+      if (prev) {
+        prev.nextId = node.nextId
+      }
       const path = `${node.path}/${node.id}`
-      await removeDocument({ path })
+      await removeDocument({ id: node.id })
       this.documents = this.documents.filter(item => {
         // 移除当前节点或者其子孙节点
         return item.id !== node.id && !item.path.startsWith(path)

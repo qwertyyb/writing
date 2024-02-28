@@ -68,22 +68,24 @@ router
   })
   .del('/remove', async (ctx) => {
     let id = Number(ctx.query.id)
-    let path = ctx.query.path as string
-    if (!id && !path) {
-      ctx.body = createRes(null, 400, '未传入id或path')
+    if (!id) {
+      ctx.body = createRes(null, 400, '未传入id')
       return
     }
     // 删除需要把子文档也删除
-    if (!path) {
-      const node = await prisma.document.findUnique({ where: { id } })
-      path = `${node.path}/${node.id}`
-    } else if(!id) {
-      id = Number(path.split('/').pop())
-    }
-    const result = await prisma.document.updateMany({
-      where: { OR: [{ path }, { id }] },
-      data: { deleted: true, deletedAt: new Date() },
-    })
+    const node = await prisma.document.findUnique({ where: { id } })
+    const path = `${node.path}/${node.id}`
+
+    const result = await prisma.$transaction([
+      prisma.document.updateMany({
+        where: { OR: [{ path: { startsWith: path } }, { id }] },
+        data: { deleted: true, deletedAt: new Date(), nextId: null },
+      }),
+      prisma.document.updateMany({
+        where: { nextId: id },
+        data: { nextId: node.nextId }
+      })
+    ])
     ctx.body = createRes(result)
   })
   .post('/add', async (ctx, next) => {

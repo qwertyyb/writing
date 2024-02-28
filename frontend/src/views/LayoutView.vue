@@ -8,7 +8,7 @@
         @add="documentStore.add"
         @select="selectHandler"
         @toggleExpand="documentStore.toggleExpand"
-        @remove="documentStore.removeDocument"
+        @remove="documentStore.remove"
         :selectedId="documentStore.editing?.id"
         :expandedIdMap="documentStore.expandedIdMap"
       ></document-tree>
