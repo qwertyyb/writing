@@ -1,6 +1,6 @@
 <template>
   <section class="layout-view">
-    <aside class="layout-aside">
+    <aside class="layout-aside" :style="{ width: runtimeStore.settings.layout.siderWidth + '%' }">
       <document-tree
         v-if="documentStore.tree"
         :tree="documentStore.tree"
@@ -13,7 +13,10 @@
         :expandedIdMap="documentStore.expandedIdMap"
       ></document-tree>
     </aside>
-    <div class="layout-spliter"></div>
+    <div class="layout-spliter"
+      @pointerdown="pointerdownHandler"
+      @pointermove="pointermoveHandler"
+      @pointerup="pointerupHandler"></div>
     <main class="layout-main">
       <slot>
         <router-view></router-view>
@@ -29,11 +32,15 @@ import type { TreeNodeModel } from '@/components/tree/types';
 import { useDocumentStore } from '@/stores/document';
 import { createLogger } from '@/utils/logger';
 import router from '@/router';
+import { ref } from 'vue';
+import { useRuntime } from '@/stores/runtime';
 
 const logger = createLogger('layout-view')
 
+const runtimeStore = useRuntime()
 const documentStore = useDocumentStore()
 
+runtimeStore.refresh()
 documentStore.getList()
 
 const selectHandler = async (node: TreeNodeModel) => {
@@ -42,6 +49,26 @@ const selectHandler = async (node: TreeNodeModel) => {
     name: 'document',
     params: { id: node.id }
   })
+}
+
+let dragging = false
+const pointerdownHandler = (event: PointerEvent) => {
+  (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
+  dragging = true
+}
+
+const pointermoveHandler = (event: PointerEvent) => {
+  if (!dragging) return;
+  const { width } = document.documentElement.getBoundingClientRect()
+  runtimeStore.updateSettings('layout', {
+    ...runtimeStore.settings.layout,
+    siderWidth: event.clientX / width * 100
+  })
+}
+
+const pointerupHandler = (event: PointerEvent) => {
+  dragging = false;
+  (event.target as HTMLElement).releasePointerCapture(event.pointerId)
 }
 
 </script>
@@ -53,7 +80,6 @@ const selectHandler = async (node: TreeNodeModel) => {
   overflow: auto;
   display: flex;
   .layout-aside {
-    width: 300px;
     height: 100%;
   }
   .layout-spliter {
