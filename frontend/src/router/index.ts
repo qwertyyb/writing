@@ -21,7 +21,7 @@ const router = createRouter({
               name: 'document',
               component: DocumentViewVue,
               props: true,
-            }
+            },
           ]
         },
       ]
