@@ -14,10 +14,9 @@
 </template>
 
 <script lang="ts" setup>
-import { nextTick, ref, watchEffect } from 'vue';
-import { getCaretPosition, getCaretOffset, moveCaret } from '@/models/caret';
+import { ref, watchEffect } from 'vue';
+import { getCaretPosition, getCaretOffset } from '@/models/caret';
 import { createLogger } from '@/utils/logger';
-import { focusAfter, focusBefore } from '@/hooks/focus';
 
 const logger = createLogger('text-editor')
 
@@ -89,7 +88,6 @@ const keydownHandler = (event: KeyboardEvent) => {
     // 根据当前状态，判断是否要关闭命令选择
     escapeKeyHandler(event)
   } else if (event.code === KeyCodes.Backspace) {
-    event.preventDefault()
     backspaceKeyHandler(event)
   } else if (event.key === TRIGGER_KEY) {
     // 打开命令选择
@@ -108,18 +106,16 @@ const keydownHandler = (event: KeyboardEvent) => {
 
 const backspaceKeyHandler = (event: KeyboardEvent) => {
   const target = event.target as HTMLDivElement
-  if (!target.contentEditable) return false
+  if (!target.contentEditable) {
+    event.preventDefault()
+    return false
+  }
   const offset = getCaretOffset(el.value!)
   logger.i('offset', offset)
   if (offset > 0 && offset <= getValue().length) {
-    const arr = Array.from(getValue())
-    arr.splice(offset - 1, 1)
-    model.value = arr.join('')
-    nextTick(() => {
-      moveCaret(el.value!, offset - 1)
-    })
     return
   }
+  event.preventDefault()
   emits('backspace', offset)
 }
 
