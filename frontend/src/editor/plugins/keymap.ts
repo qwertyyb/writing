@@ -4,7 +4,7 @@ import {
   joinUp, joinDown, lift, selectParentNode
 } from "prosemirror-commands"
 import { wrapInList, splitListItem, liftListItem, sinkListItem } from "prosemirror-schema-list"
-import { undo, redo } from "prosemirror-history"
+import { redo } from 'prosemirror-history'
 import { undoInputRule } from "prosemirror-inputrules"
 import { Schema } from "prosemirror-model"
 import type { Command } from "prosemirror-state"
@@ -50,8 +50,6 @@ export function buildKeymap(schema: Schema, mapKeys?: { [key: string]: false | s
     keys[key] = cmd
   }
 
-  bind("Mod-z", undo)
-  bind("Shift-Mod-z", redo)
   bind("Backspace", undoInputRule)
   if (!mac) bind("Mod-y", redo)
 

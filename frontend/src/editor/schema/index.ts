@@ -1,11 +1,13 @@
 import {Schema, type NodeSpec, type MarkSpec, } from "prosemirror-model"
+import { createImageNode } from "../nodes/ImageNode"
+import { listNodes } from "./list"
 
 /// [Specs](#model.NodeSpec) for the nodes defined in this schema.
-export const nodes = {
+export const nodes: Record<string, NodeSpec> = {
   /// NodeSpec The top level document node.
   doc: {
     content: "block+"
-  } as NodeSpec,
+  },
 
   /// A plain paragraph textblock. Represented in the DOM
   /// as a `<p>` element.
@@ -14,7 +16,7 @@ export const nodes = {
     group: "block",
     parseDOM: [{tag: "p"}],
     toDOM() { return ['p', 0] }
-  } as NodeSpec,
+  },
 
   /// A blockquote (`<blockquote>`) wrapping one or more blocks.
   blockquote: {
@@ -23,14 +25,14 @@ export const nodes = {
     defining: true,
     parseDOM: [{tag: "blockquote"}],
     toDOM() { return ['blockquote', 0] }
-  } as NodeSpec,
+  },
 
   /// A horizontal rule (`<hr>`).
   divider: {
     group: "block",
     parseDOM: [{tag: "hr"}],
     toDOM() { return ['hr'] }
-  } as NodeSpec,
+  },
 
   /// A heading textblock, with a `level` attribute that
   /// should hold the number 1 to 6. Parsed and serialized as `<h1>` to
@@ -47,7 +49,7 @@ export const nodes = {
                {tag: "h5", attrs: {level: 5}},
                {tag: "h6", attrs: {level: 6}}],
     toDOM(node) { return ["h" + node.attrs.level, 0] }
-  } as NodeSpec,
+  },
 
   /// A code listing. Disallows marks or non-text inline
   /// nodes by default. Represented as a `<pre>` element with a
@@ -60,38 +62,42 @@ export const nodes = {
     defining: true,
     parseDOM: [{tag: "pre", preserveWhitespace: "full"}],
     toDOM() { return ["pre", ["code", 0]] }
-  } as NodeSpec,
+  },
 
   /// The text node.
   text: {
     group: "inline"
-  } as NodeSpec,
+  },
 
   /// An inline image (`<img>`) node. Supports `src`,
   /// `alt`, and `href` attributes. The latter two default to the empty
   /// string.
   image: {
-    inline: true,
     attrs: {
       src: {},
       alt: {default: null},
-      title: {default: null}
+      title: {default: null},
+      size: { default: 50 },
+      align: { default: 'Center' },
     },
-    group: "inline",
+    group: "block",
     draggable: true,
-    parseDOM: [{tag: "img[src]", getAttrs(dom: HTMLElement) {
+    parseDOM: [{tag: "img[src]", getAttrs(dom) {
+      if (typeof dom === 'string') return false
       return {
         src: dom.getAttribute("src"),
         title: dom.getAttribute("title"),
         alt: dom.getAttribute("alt")
       }
     }}],
-    toDOM(node) { const {src, alt, title} = node.attrs; return ["img", {src, alt, title}] }
-  } as NodeSpec,
+    toDOM: createImageNode
+  },
+
+  ...listNodes
 }
 
 /// [Specs](#model.MarkSpec) for the marks in the schema.
-export const marks = {
+export const marks: Record<string, MarkSpec> = {
   /// A link. Has `href` and `title` attributes. `title`
   /// defaults to the empty string. Rendered and parsed as an `<a>`
   /// element.
@@ -101,11 +107,11 @@ export const marks = {
       title: {default: null}
     },
     inclusive: false,
-    parseDOM: [{tag: "a[href]", getAttrs(dom: HTMLElement) {
-      return {href: dom.getAttribute("href"), title: dom.getAttribute("title")}
+    parseDOM: [{tag: "a[href]", getAttrs(dom) {
+      return {href: (dom as HTMLElement).getAttribute("href"), title: (dom as HTMLElement).getAttribute("title")}
     }}],
     toDOM(node) { const {href, title} = node.attrs; return ["a", {href, title}, 0] }
-  } as MarkSpec,
+  },
 
   /// An emphasis mark. Rendered as an `<em>` element. Has parse rules
   /// that also match `<i>` and `font-style: italic`.
@@ -116,7 +122,7 @@ export const marks = {
       {style: "font-style=normal", clearMark: m => m.type.name == "em"}
     ],
     toDOM() { return ["em", 0] }
-  } as MarkSpec,
+  },
 
   /// A strong mark. Rendered as `<strong>`, parse rules also match
   /// `<b>` and `font-weight: bold`.
@@ -126,18 +132,30 @@ export const marks = {
       // This works around a Google Docs misbehavior where
       // pasted content will be inexplicably wrapped in `<b>`
       // tags with a font-weight normal.
-      {tag: "b", getAttrs: (node: HTMLElement) => node.style.fontWeight != "normal" && null},
+      {tag: "b", getAttrs: (node) => (node as HTMLElement).style.fontWeight != "normal" && null},
       {style: "font-weight=400", clearMark: m => m.type.name == "strong"},
-      {style: "font-weight", getAttrs: (value: string) => /^(bold(er)?|[5-9]\d{2,})$/.test(value) && null},
+      {style: "font-weight", getAttrs: (value) => /^(bold(er)?|[5-9]\d{2,})$/.test(value as string) && null},
     ],
     toDOM() { return ["strong", 0] }
-  } as MarkSpec,
+  },
 
   /// Code font mark. Represented as a `<code>` element.
   icode: {
     parseDOM: [{tag: "code"}],
     toDOM() { return ["code", 0] }
-  } as MarkSpec
+  },
+
+  icon: {
+    parseDOM: [{tag: 'img.icon'}],
+    toDOM(node) { const {src, alt, title} = node.attrs; return ["img", {class: 'icon', src, alt, title}] }
+  },
+
+  del: {
+    parseDOM: [
+      { tag: 'del' },
+      { style: 'text-decoration: line-through' },
+    ],
+  }
 }
 
 /// This schema roughly corresponds to the document schema used by
