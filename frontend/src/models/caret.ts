@@ -47,60 +47,6 @@ export const isInTailing = (element: Node) => {
   return range.toString().length === 0
 }
 
-// /**
-//  * 光标到结尾的文字
-//  * @param element 
-//  */
-// export const afterText = (element: HTMLElement) => {
-//   if (!element.firstChild && !element.lastChild) return ''
-//   const selection = window.getSelection()!
-//   if (selection.rangeCount < 1) return ''
-
-//   const srange = selection.getRangeAt(0)
-//   const { startContainer, startOffset } = srange
-//   let endContainer: Node | null = element
-  
-//   while(endContainer && endContainer.nodeType !== 3) {
-//     endContainer = endContainer.lastChild
-//   }
-
-//   const range = document.createRange()
-//   range.setStart(startContainer, startOffset)
-//   range.setEndAfter(endContainer ?? startContainer)
-  
-//   const div = document.createElement('div')
-//   div.appendChild(range.cloneContents())
-//   return div.innerHTML
-// }
-
-// /**
-//  * 光标到结尾的文字
-//  * @param element 
-//  */
-// export const beforeText = (element: HTMLElement) => {
-//   if (!element.firstChild && !element.lastChild) return ''
-
-//   const selection = window.getSelection()!
-//   if (selection.rangeCount < 1) return ''
-
-//   const srange = selection.getRangeAt(0)
-//   const { endContainer, endOffset } = srange
-//   let startContainer: Node | null = element
-  
-//   while(startContainer && startContainer.nodeType !== 3) {
-//     startContainer = startContainer.lastChild
-//   }
-
-//   const range = document.createRange()
-//   range.setStartBefore(startContainer ?? endContainer)
-//   range.setEnd(endContainer, endOffset)
-  
-//   const div = document.createElement('div')
-//   div.appendChild(range.cloneContents())
-
-//   return div.innerHTML
-// }
-
 export const splitWithCaret = (element: HTMLElement) => {
   logger.i('splitWithCaret', element)
   const selection = window.getSelection()
@@ -186,3 +132,81 @@ export const getCaretOffset = (element: HTMLElement) => {
   return offset
 }
 
+const getPath = (ancestor: HTMLElement, node: Node) => {
+  const path = []
+  let cur: Node | null = node
+  while(cur && ancestor !== cur) {
+    const parent: Node = cur.parentNode!
+    const index = Array.from(parent!.childNodes).findIndex(node => node === cur)
+    path.unshift(index)
+    cur = parent
+  }
+  return path
+}
+
+const getNode = (anchor: HTMLElement, path: number[]) => {
+  let cur = path.shift()
+  let curNode: Node = anchor
+  logger.i('getNode', anchor, path)
+  while(cur !== undefined) {
+    curNode = curNode.childNodes[cur]
+    cur = path.shift()
+  }
+  logger.i('getNode return', curNode)
+  return curNode
+}
+
+interface CursorPosition {
+  path: number[],
+  offset: number
+}
+
+export interface SelectionPosition {
+  from: CursorPosition,
+  to: CursorPosition
+}
+
+export const eq = (left: SelectionPosition, right: SelectionPosition) => {
+  return JSON.stringify(left) === JSON.stringify(right)
+}
+
+export const getSelectionPosition = (element: HTMLElement) => {
+  const selection = window.getSelection()
+  logger.i('getSelectionPosition', selection)
+  if (!selection) return null
+  if (selection.rangeCount <= 0) return null
+  const range = selection.getRangeAt(0)
+  if (!range) return null
+  const { startContainer, startOffset, endContainer, endOffset } = range
+  if (element !== startContainer && !element.contains(startContainer)) return null
+  
+  const fromPath = getPath(element, startContainer)
+  const toPath = getPath(element, endContainer)
+  logger.i('getSelectionPosition path', range, getPath(element, startContainer), getPath(element, endContainer))
+  return {
+    from: {
+      path: fromPath,
+      offset: startOffset
+    },
+    to: {
+      path: toPath,
+      offset: endOffset
+    }
+  }
+}
+
+export const setSelectionPosition = (anchor: HTMLElement, pos: SelectionPosition) => {
+  const start = getNode(anchor, [...pos.from.path])
+  const end = getNode(anchor, [...pos.to.path])
+
+  logger.i('setSelectionPosition', start, end)
+  
+  const range = document.createRange()
+  range.setStart(start, pos.from.offset)
+  range.setEnd(end, pos.to.offset)
+  window.getSelection()?.removeAllRanges()
+  window.getSelection()?.addRange(range)
+}
+
+// @ts-ignore
+window.setSelectionPosition = setSelectionPosition

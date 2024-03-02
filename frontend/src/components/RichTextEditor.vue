@@ -1,12 +1,21 @@
 <template>
   <div class="rich-text-editor" ref="el">
     <div class="block-tool"
-      v-if="mode === Mode.Edit"
-      :style="{left: toolPos.left + 'px', top: toolPos.top + 'px'}">
+      v-if="mode === Mode.Edit && blockToolState.visible"
+      :style="{left: blockToolState.left + 'px', top: blockToolState.top + 'px'}">
       <span class="material-symbols-outlined block-tool-icon"> drag_indicator </span>
     </div>
-    <div class="rich-text-editor-wrapper" :contenteditable="mode === Mode.Readonly ? undefined : 'plaintext-only'">
-      <block-editor v-model="model" :index="0" :path="[0]" :key="model.id" @pointermove="pointerMoveHandler"></block-editor>
+    <div class="rich-text-editor-wrapper"
+      ref="editorEl"
+      @keydown.capture="keydownHandler"
+      tabindex="0"
+      :contenteditable="mode === Mode.Readonly ? undefined : 'plaintext-only'">
+      <block-editor v-model="model"
+        @update:model-value="pushLatest"
+        :index="0"
+        :path="[0]"
+        :key="model.id"
+        @pointermove="pointermoveHandler"></block-editor>
     </div>
   </div>
 </template>
@@ -17,6 +26,9 @@ import BlockEditor from './BlockEditor.vue';
 import { useFocusEvent } from '@/hooks/focus';
 import { provide, type PropType, computed, ref } from 'vue';
 import { Mode } from './schema';
+import { useHistory } from '@/hooks/history';
+import { useBlockTool } from '@/hooks/use-block-tool';
+import { useSelection } from '@/hooks/selection';
 
 const model = defineModel<ReturnType<typeof createBlock>>({
   required: true
@@ -32,11 +44,12 @@ const props = defineProps({
   }
 })
 
-const el = ref<HTMLDivElement>()
-const toolPos = ref({
-  top: 0,
-  left: -28
-})
+const emits = defineEmits<{
+  'update:modelValue': [BlockModel]
+}>()
+
+const el = ref<HTMLElement>()
+const editorEl = ref<HTMLDivElement>()
 
 const mode = computed(() => props.mode)
 const spellcheck = computed(() => props.spellcheck)
@@ -46,30 +59,39 @@ provide('spellcheck', spellcheck)
 provide('root', model)
 provide('blockInstances', new Map())
 
-const emits = defineEmits<{
-  change: [BlockModel],
-  'update:modelValue': [BlockModel]
-}>()
-
 useFocusEvent()
 
-const pointerMoveHandler = (event: PointerEvent) => {
-  if (mode.value === Mode.Readonly) return
-  const blockEl = (event.target as HTMLElement).closest('[data-block-id]')
-  if (!blockEl) return
-  const blockContentEl = blockEl.querySelector<HTMLDivElement>('.block-content')
-  if (!blockContentEl) return
-  const { left } = blockEl.getBoundingClientRect()
-  const { top, height } = blockContentEl.getBoundingClientRect()
-  const { top: pTop, left: pLeft } = el.value!.getBoundingClientRect()
-  const tTop = top - pTop + (height - 24) / 2
-  const tLeft = left - pLeft - 28
-  toolPos.value = {
-    top: tTop, left: tLeft
-  }
+const { state: blockToolState, pointermoveHandler: blockToolTrigger } = useBlockTool({
+  el, mode
+})
+
+const { undo, redo, pushLatest } = useHistory(el, model)
+
+const { pointermoveHandler: selectionTrigger } = useSelection({ el })
+
+const pointermoveHandler = (event: PointerEvent) => {
+  selectionTrigger(event)
+  blockToolTrigger(event)
 }
 
-// useFocus()
+const keydownHandler = (event: KeyboardEvent) => {
+  // 仅用来处理多选和历史
+  // const selection = getSelectionPosition(el.value!)
+  // resetContenteditable()
+  // selection && setSelectionPosition(el.value!, selection)
+  // 处理历史 undo/redo
+  if (event.metaKey && event.key === 'z' && event.shiftKey) {
+    event.preventDefault()
+    event.stopImmediatePropagation()
+    event.stopPropagation()
+    redo()
+  } else if (event.metaKey && event.key === 'z') {
+    event.preventDefault()
+    event.stopImmediatePropagation()
+    event.stopPropagation()
+    undo()
+  }
+}
 </script>
 
 <style lang="less" scoped>

@@ -18,13 +18,13 @@
 <script lang="ts" setup>
 import { createBlock, type BlockModel } from '@/models/block';
 import BlockEditor from './BlockEditor.vue';
-import type { PropType } from 'vue';
+import { type PropType } from 'vue';
 
 const children = defineModel<ReturnType<typeof createBlock>[]>({
   required: true
 })
 
-defineProps({
+const props = defineProps({
   index: {
     type: Number,
     default: 0

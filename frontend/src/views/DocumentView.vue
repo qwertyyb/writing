@@ -15,8 +15,8 @@
     <div class="document-editor-wrapper">
       <document-editor
         v-if="documentStore.editing"
-        :model-value="documentStore.editing?.content"
-        @change="updateHandler"
+        v-model="documentStore.editing.content"
+        @update:model-value="updateHandler"
       ></document-editor>
     </div>
   </div>
@@ -29,6 +29,7 @@ import { Setting } from '@element-plus/icons-vue';
 import { ref, watchEffect } from 'vue';
 import DocumentAttribute from '@/components/DocumentAttribute.vue';
 import DocumentEditor from '@/components/DocumentEditor.vue';
+import { debounce } from '@/utils/utils';
 
 const props = defineProps<{
   id: number | string
@@ -36,9 +37,9 @@ const props = defineProps<{
 
 const documentStore = useDocumentStore()
 
-const updateHandler = async (content: BlockModel) => {
+const updateHandler = debounce(async (content: BlockModel) => {
   documentStore.updateEditingContent(content)
-}
+})
 
 const settingDialogVisible = ref(false)
 

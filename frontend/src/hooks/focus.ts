@@ -1,4 +1,4 @@
-import { getCaretOffset, moveCaret, moveCaretToEnd, moveCaretToStart } from '@/models/caret'
+import { getCaretOffset, getCaretPosition, getSelectionPosition, moveCaret, moveCaretToEnd, moveCaretToStart } from '@/models/caret'
 import { createLogger } from '@/utils/logger'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
@@ -55,6 +55,12 @@ export const useFocusControl = () => {
   return { el, keydownHandler }
 }
 
+const getActivedClosestBlockEl = (): HTMLElement | null => {
+  if (!document.activeElement) return null
+  const el = document.activeElement.closest<HTMLElement>('.rich-text-editor-wrapper')
+  return el
+}
+
 export const useFocus = () => {
   let selectionInfo = { id: '', offset: 0 }
   let caretOffset = 0
@@ -63,11 +69,15 @@ export const useFocus = () => {
   const selectionChangeHandler = () => {
     // if (mode.value === Mode.Readonly) return
     const selection = window.getSelection()
+    const pos = getSelectionPosition(document.querySelector('.rich-text-editor-wrapper')!)
+    if (pos) {
+      // history.push({ selection: pos })
+    }
+    logger.i('selection', selection, getSelectionPosition(getActivedClosestBlockEl()!))
     if (!selection) return
     if (selection.rangeCount < 1) return
     const range = selection.getRangeAt(0)
     if (!range) return
-    logger.i('selection changed', selection, range)
     const { startContainer } = range
     const closestBlockEl = (startContainer as HTMLElement)?.dataset?.blockId ? startContainer as HTMLElement : startContainer.parentElement?.closest<HTMLElement>('[data-block-id]')
     if (!closestBlockEl) return
@@ -106,7 +116,7 @@ export const useFocus = () => {
   }
 
   const keydownHandler = (event: KeyboardEvent) => {
-    logger.i('isInFirstLine: ', isInFirstLine(), 'isInLastLine: ', isInFirstLine())
+    logger.i('caret', getCaretPosition())
     if (event.code === 'ArrowUp' && isInFirstLine()) {
       isMovingCaret = true
       event.preventDefault()
@@ -130,13 +140,13 @@ export const useFocus = () => {
   
   onMounted(() => {
     document.addEventListener('selectionchange', selectionChangeHandler)
-    document.addEventListener('keydown', keydownHandler)
-    document.addEventListener('pointerdown', pointerdownHandler)
+    document.addEventListener('keydown', keydownHandler, true)
+    // document.addEventListener('pointerdown', pointerdownHandler)
   })
   
   onBeforeUnmount(() => {
     document.removeEventListener('selectionchange', selectionChangeHandler)
-    document.removeEventListener('keydown', keydownHandler)
-    document.removeEventListener('pointerdown', pointerdownHandler)
+    document.removeEventListener('keydown', keydownHandler, true)
+    // document.removeEventListener('pointerdown', pointerdownHandler)
   })
 }

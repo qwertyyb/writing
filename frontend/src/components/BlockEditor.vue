@@ -29,14 +29,21 @@
 
 <script lang="ts" setup>
 import { type BlockModel } from '@/models/block';
-import { computed, inject, onBeforeUnmount, onMounted } from 'vue';
+import { computed, inject, onBeforeUnmount, onMounted, watch } from 'vue';
 import BlockRenderer from './blocks/BlockRenderer.vue';
 import BlockListEditor from './BlockListEditor.vue';
 import useBlockOperate, { useMergeBlock, useMoveBlock } from './block-operate';
 import { getBlockConfig } from './blocks';
 import { focusBefore, focusAfter } from '@/hooks/focus';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('BlockEditor')
 
 const block = defineModel<BlockModel>({ required: true })
+
+watch(block, () => {
+  logger.i('block changed', JSON.parse(JSON.stringify(block.value)))
+}, { deep: true })
 
 const props = defineProps<{
   index: number,
@@ -64,7 +71,7 @@ const {
   addBlock,
   updateBlock,
   removeBlock,
-} = useBlockOperate(block, emits)
+} = useBlockOperate(block, props.path, emits)
 
 onMounted(() => {
   inject<Map<string, Omit<ReturnType<typeof useBlockOperate>, 'el'>>>('blockInstances')?.set(block.value.id, { addBlock, updateBlock, removeBlock })

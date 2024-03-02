@@ -37,7 +37,7 @@ export const focusBlock = (el: HTMLElement | undefined | null, id: string, pos: 
   })
 }
 
-const useBlockOperate = (parent: Ref<BlockModel>, emits: Emits) => {
+const useBlockOperate = (parent: Ref<BlockModel>, path: number[], emits: Emits) => {
   const el = ref<HTMLElement>()
 
   const emitUpdate = () => {
@@ -52,6 +52,18 @@ const useBlockOperate = (parent: Ref<BlockModel>, emits: Emits) => {
     index: number,
     block: BlockModel | null = null,
   ) => {
+    const blockData = {
+      type: 'text',
+      id: Math.random().toString(16).substring(2),
+      ...data,
+      children: block?.children ?? [],
+    }
+
+    const blockPath = [...path, index]
+
+    const patch = { op: 'add', path: blockPath, blockData }
+    logger.i('addBlock patch', path, patch)
+
     const newBlock = addChildAfter(parent.value, {
       type: 'text',
       id: Math.random().toString(16).substring(2),
