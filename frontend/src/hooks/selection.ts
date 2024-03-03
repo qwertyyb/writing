@@ -118,16 +118,42 @@ export const useSelection = ({ el, root }: {
       end = insertAll(end.length, repeat(-1, startPath.length - endPath.length), end)
     }
 
-    logger.i('blocksBetween', start, end)
+    let pathLen = start.length
 
-    for(let i = commonPath.length - 1; i < end.length; i += 1) {
-      for (let j = start[i]; j <= end[i]; j += 1) {
-        logger.i(i, j, start[i], end[j])
-        walkTree(commonPath, ancestor.children![j], (path, block) => {
+    let index: number = last(start.slice(0, pathLen))! - 1
+    logger.i('pppp', index, last(end.slice(0, pathLen))!, JSON.parse(JSON.stringify(getBlockByPath(root.value!, startPath))))
+    while (index <= last(end.slice(0, pathLen))! && pathLen >= commonPath.length) {
+      const parent = getBlockByPath(root.value!, take(pathLen - 1, start))
+
+      index += 1
+      logger.i('pppp outer', index, parent.children?.length ?? 0)
+      while(index < (parent.children?.length ?? 0) && index <= last(end.slice(0, pathLen))!) {
+        logger.i('pppp inner', index, JSON.parse(JSON.stringify(parent.children![index])))
+        walkTree(start.slice(0, pathLen - 1), parent.children![index], (path, block) => {
           logger.w('walkTree callback', [...path], { ...block })
         })
+        index += 1
       }
+      pathLen -= 1
+      index = last(start.slice(0, pathLen))!
+      logger.i('pppp outer', index, last(end.slice(0, pathLen))!)
     }
+    
+
+    // curPath = take(curPath.length - 1, curPath)
+
+    // index = last(curPath)
+    // if (index !== undefined) {
+    //   parent = getBlockByPath(root.value!, take(curPath.length -1, curPath))
+    //   index += 1
+    //   while(index < (parent.children?.length ?? 0)) {
+    //     walkTree(curPath, parent.children![index], (path, block) => {
+    //       logger.w('walkTree callback', [...path], { ...block })
+    //     })
+    //     index += 1
+    //   }
+    // }
+
     
     // walkTree(
     //   [...commonPath],
