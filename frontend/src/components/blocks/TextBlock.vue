@@ -1,13 +1,14 @@
 <template>
   <div class="text-renderer">
-    <text-editor :modelValue="data.html"
+    <text-editor :modelValue="data.ops || data.html"
+      data-block-prop="data,html"
       :readonly="readonly"
       :spellcheck="spellcheck"
       @update:modelValue="updateModelValue"
       @keyEnter="enterKeyHandler"
       @keyEsc="escapeKeyHandler"
-      @keyTab="tabKeyHandler"
-      @keyShiftTab="shiftTabKeyHandler"
+      @keyTab="$emit('moveLower')"
+      @keyShiftTab="$emit('moveUpper')"
       @backspace="backspaceKeyHandler"
       @openTool="openToolHandler"
       @upload="uploadHandler"
@@ -43,8 +44,10 @@ import { getBlockByPath } from '@/hooks/move';
 import { createLogger } from '@/utils/logger';
 import { upload } from '@/services/upload';
 import { getImageRatio } from './image/utils';
+import { type DeltaOperation } from 'quill'
+import { isEmpty, split, toText } from '@/models/delta';
 
-const logger = createLogger('text-block')
+const logger = createLogger('TextBlock')
 
 const block = defineModel<BlockModel<TextData | any>>({ required: true })
 
@@ -61,6 +64,8 @@ const emits = defineEmits<{
   update: [options: Partial<BlockOptions>]
   remove: [],
   move: [newPath: number[]],
+  moveUpper: [],
+  moveLower: [],
   merge: [mergePath: number[]],
 
   change: [block: BlockModel],
@@ -71,13 +76,19 @@ const emits = defineEmits<{
 const { readonly } = useMode()
 const spellcheck = useSpellcheck()
 
-const data = ref<TextData>({ html: block.value.data?.html ?? '' })
-const updateModelValue = (html: string) => {
-  data.value.html = html
-  block.value = { ...block.value, data: { html } }
+const data = ref<TextData>({ ...block.value.data, ops: block.value.data?.ops ?? [] })
+
+const updateModelValue = (ops: DeltaOperation[]) => {
+  logger.i('updateModelValue after', ops)
+  block.value = { ...block.value, data: { ops } }
+  data.value = { ops }
+
+  logger.i('updateModelValue after', data.value)
 }
-watchEffect(() => {
-  data.value.html = block.value.data?.html ?? ''
+watch(block, () => {
+  if (JSON.stringify(data.value.ops) !== JSON.stringify(block.value?.data?.ops)) {
+    data.value.ops = block.value.data?.ops ?? ''
+  }
 })
 
 const textEditorEl = ref<InstanceType<typeof TextEditor>>()
@@ -92,6 +103,7 @@ watch(commandToolVisible, () => commandToolKeyword.value = '')
 const onCommand = (command: any) => {
   textEditorEl.value?.removeTriggerKey()
   commandToolVisible.value = false
+  logger.i('onCommand', JSON.parse(JSON.stringify({ ...block.value, type: command.identifier, data: toRaw(data.value) })))
   block.value = { ...block.value, type: command.identifier, data: toRaw(data.value) }
 }
 
@@ -104,19 +116,20 @@ const onExitTool = (options?: { autofocus: boolean }) => {
 }
 
 const enterKeyHandler = async (offset: number) => {
-  if (!data.value.html.length) {
+  if (isEmpty(data.value.ops)) {
     // 没有输入字符时，回车，往上级移动
     const handled = moveUpper()
     if (handled) return
   }
   // 把当前内容截断
-  const after = data.value.html.substring(offset)
-  updateModelValue(data.value.html.substring(0, offset))
+  const { before, after } = split(data.value.ops, offset)
+  updateModelValue(before as any)
+  // await nextTick()
   logger.i('add text node', after)
   emits('add', {
     type: 'text',
     data: {
-      html: after
+      ops: after
     }
   })
 }
@@ -125,22 +138,8 @@ const root = inject<ModelRef<BlockModel>>('root')
 
 const moveUpper = () => {
   if (!props.path || props.path.length <= 2) return false
-  const newPath = [...props.path.slice(0, props.path.length - 1)]
-  logger.i('newPath', newPath)
-  emits('move', newPath)
+  emits('moveUpper')
   return true
-}
-
-const tabKeyHandler = () => {
-  if (props.index <= 0 || !root?.value || !props.path || props.path.length < 2) return
-  const newParentPath = [...props.path.slice(0, props.path.length - 1), props.index - 1]
-  const parentBlock = getBlockByPath(root.value, newParentPath)
-  const newPath = [...newParentPath, parentBlock.children?.length ?? 0]
-  emits('move', newPath)
-}
-
-const shiftTabKeyHandler = () => {
-  moveUpper()
 }
 
 const getPrevMergablePath = () => {
@@ -179,7 +178,7 @@ const getPrevMergablePath = () => {
 }
 
 const backspaceKeyHandler = (offset: number) => {
-  if (data.value.html && offset === 0) {
+  if (!isEmpty(data.value.ops) && offset === 0) {
     if (!moveUpper()) {
       // 无法向上级移动了，需要和上一个合并？
       const prevPath = getPrevMergablePath()
@@ -189,7 +188,7 @@ const backspaceKeyHandler = (offset: number) => {
       }
     }
     return
-  } else if (!data.value.html) {
+  } else if (isEmpty(data.value.ops)) {
     // 前面没有字符可删除时，删除此block, 把光标移动到上一个block
     emits('remove')
   }
@@ -201,8 +200,9 @@ const escapeKeyHandler = () => {
 
 const keydownHandler = (event: KeyboardEvent, offset: number) => {
   if (event.code !== 'Space') return
-  const trigger = data.value.html?.substring(0, offset)
-  const content = data.value.html?.substring(offset)
+  const { before, after: content } = split(data.value.ops, offset)
+  const trigger = toText(before)
+  logger.i('keydownHandler', trigger, content)
   const newBlock = transformBlock(trigger, block.value, content)
   if (newBlock) {
     event.preventDefault()

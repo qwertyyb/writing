@@ -3,6 +3,7 @@ import PublicView from '@/views/PublicView.vue'
 import AuthViewVue from '@/views/AuthView.vue'
 import LayoutViewVue from '@/views/LayoutView.vue'
 import DocumentViewVue from '@/views/DocumentView.vue'
+import TestImmerViewVue from '@/views/TestImmerView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -21,6 +22,11 @@ const router = createRouter({
               name: 'document',
               component: DocumentViewVue,
               props: true,
+            },
+            {
+              path: 'test',
+              name: 'test',
+              component: TestImmerViewVue,
             }
           ]
         },

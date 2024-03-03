@@ -124,11 +124,23 @@ export const getCaretOffset = (element: HTMLElement) => {
   
   let offset = 0
   while(iterator.nextNode() !== selection.anchorNode) {
-    console.log(iterator)
     offset += (iterator.referenceNode.nodeValue?.length ?? 0)
   }
   offset += selection.anchorOffset
   logger.i('getCaretPosition offset', offset)
+  return offset
+}
+
+export const getSelectionOffset = (element: HTMLElement, node: Node) => {
+  if (!element.contains(node) || node?.nodeType !== Node.TEXT_NODE) return 0
+
+  const iterator = document.createNodeIterator(element, NodeFilter.SHOW_TEXT)
+  
+  let offset = 0
+  while(iterator.nextNode() !== node) {
+    offset += (iterator.referenceNode.nodeValue?.length ?? 0)
+  }
+  logger.i('getSelectionPosition offset', offset)
   return offset
 }
 
@@ -147,12 +159,10 @@ const getPath = (ancestor: HTMLElement, node: Node) => {
 const getNode = (anchor: HTMLElement, path: number[]) => {
   let cur = path.shift()
   let curNode: Node = anchor
-  logger.i('getNode', anchor, path)
   while(cur !== undefined) {
     curNode = curNode.childNodes[cur]
     cur = path.shift()
   }
-  logger.i('getNode return', curNode)
   return curNode
 }
 
@@ -172,7 +182,6 @@ export const eq = (left: SelectionPosition, right: SelectionPosition) => {
 
 export const getSelectionPosition = (element: HTMLElement) => {
   const selection = window.getSelection()
-  logger.i('getSelectionPosition', selection)
   if (!selection) return null
   if (selection.rangeCount <= 0) return null
   const range = selection.getRangeAt(0)
@@ -182,7 +191,6 @@ export const getSelectionPosition = (element: HTMLElement) => {
   
   const fromPath = getPath(element, startContainer)
   const toPath = getPath(element, endContainer)
-  logger.i('getSelectionPosition path', range, getPath(element, startContainer), getPath(element, endContainer))
   return {
     from: {
       path: fromPath,
@@ -199,8 +207,6 @@ export const setSelectionPosition = (anchor: HTMLElement, pos: SelectionPosition
   const start = getNode(anchor, [...pos.from.path])
   const end = getNode(anchor, [...pos.to.path])
 
-  logger.i('setSelectionPosition', start, end)
-  
   const range = document.createRange()
   range.setStart(start, pos.from.offset)
   range.setEnd(end, pos.to.offset)

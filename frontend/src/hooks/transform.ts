@@ -1,15 +1,17 @@
 import { createBlock, type BlockModel } from '@/models/block';
+import { toText } from '@/models/delta';
 import { createLogger } from '@/utils/logger';
+import type { Op } from 'quill-delta';
 
 const logger = createLogger('transform')
 
-export const transformBlock = (trigger: string, origin: BlockModel, content: string) => {
+export const transformBlock = (trigger: string, origin: BlockModel, content: Op[]) => {
   logger.i('transform', trigger, origin)
   if (/^#{1,6}/.test(trigger)) {
     return {
       id: origin.id,
       type: 'heading' + trigger.length,
-      data: { html: content } 
+      data: { op: content } 
     }
   }
   if (/^1\./.test(trigger)) {
@@ -20,7 +22,7 @@ export const transformBlock = (trigger: string, origin: BlockModel, content: str
         createBlock({
           type: 'text',
           data: {
-            html: content
+            op: content
           }
         })
       ]
@@ -34,7 +36,7 @@ export const transformBlock = (trigger: string, origin: BlockModel, content: str
         createBlock({
           type: 'text',
           data: {
-            html: content
+            op: content
           }
         })
       ]
@@ -48,7 +50,7 @@ export const transformBlock = (trigger: string, origin: BlockModel, content: str
         createBlock({
           type: 'text',
           data: {
-            html: content
+            op: content
           }
         })
       ]
@@ -71,13 +73,13 @@ export const transformBlock = (trigger: string, origin: BlockModel, content: str
         createBlock({
           type: 'text',
           data: {
-            html: content
+            op: content
           }
         })
       ]
     }
   }
-  if (['***', '---', '___'].includes(origin.data.html)) {
+  if (['***', '---', '___'].includes(toText(origin.data.ops))) {
     return { id: origin.id, type: 'divider' }
   }
   return null

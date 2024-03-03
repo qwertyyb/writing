@@ -1,7 +1,8 @@
+import type { DeltaOperation } from "quill";
 import TextBlock from "./TextBlock.vue";
 
 export interface TextData {
-  html: string
+  ops: DeltaOperation[]
 }
 
 export default {

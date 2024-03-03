@@ -73,7 +73,7 @@ export const updateChild = (block: BlockModel, index: number, options: Partial<B
     ...child,
     ...options
   }
-  logger.i('after update child', block)
+  logger.i('after update child', JSON.parse(JSON.stringify(block)))
   return block.children![index]
 }
 
@@ -139,6 +139,64 @@ export const createEditingDocument = (parentPath: string): Pick<EditingDocument,
     }
   }
 }
+
+export const getBlockByPath = (root: BlockModel, path: number[]) => {
+  // 路径上的第一个值恒为0，指root本身
+  const [first, ...restPath] = path
+  if (first !== 0) throw new Error('路径的第一个元素为根节点，应该恒为0')
+  let node = root
+  while(restPath.length) {
+    const curIndex = restPath.shift()!
+    if (node.children?.[curIndex]) {
+      node = node.children[curIndex]
+    } else {
+      throw new Error(`路径${JSON.stringify(path)}不正确`)
+    }
+  }
+  return node
+}
+
+
+export const getPrevPath = (
+  root: BlockModel,
+  path: number[],
+  check: (block: BlockModel) => boolean = (() => true)
+) => {
+  if (!path || !root) return null
+
+  const getMergablePathLast = (root: BlockModel, path: number[]): number[] | null => {
+    const block = getBlockByPath(root, path)
+
+    for(let i = (block.children?.length ?? 0) - 1; i >= 0; i -= 1) {
+      const mergablePath = getMergablePathLast(root, [...path, i])
+      if (mergablePath) return mergablePath
+    }
+
+    if (check(block)) {
+      return path
+    }
+    return null
+  }
+
+  const prevPath = [...path]
+  while(prevPath.length) {
+    let prevPathIndex = prevPath.pop()! - 1
+    while(prevPathIndex >= 0) {
+      const prevBlock = getBlockByPath(root, [...prevPath, prevPathIndex])
+      if (!prevBlock) break
+
+      const mergablePath = getMergablePathLast(root, [...prevPath, prevPathIndex])
+      if (mergablePath) {
+        return mergablePath
+      }
+
+      prevPathIndex -= 1
+    }
+  }
+  return null
+}
+
+export const getPrevMergablePath = (root: BlockModel, path: number[]) => getPrevPath(root, path, block => block.type === 'text')
 
 
 

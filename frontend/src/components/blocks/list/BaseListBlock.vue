@@ -3,6 +3,7 @@
     <li v-for="(child, index) in block.children"
       :key="child.id + child.type"
       :data-block-id="child.id"
+      :data-block-path="[...path, index].join(',')"
       class="list-item">
       <block-editor
         class="list-item-content"

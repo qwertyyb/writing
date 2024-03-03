@@ -1,26 +1,24 @@
 <template>
   <div class="text-editor">
     <div class="text-editor-content"
-      :contenteditable="!readonly"
+      tabindex="0"
       :spellcheck="spellcheck"
-      data-focusable
-      @keydown="keydownHandler($event)"
-      @input="inputHandler"
+      @keydown.capture="keydownHandler($event)"
       @paste="pasteHandler"
-      v-html="value"
+      @format="formatText"
       placeholder="Type something..."
       ref="el"></div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, watchEffect } from 'vue';
-import { getCaretPosition, getCaretOffset } from '@/models/caret';
+import { markRaw, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { createLogger } from '@/utils/logger';
+import Quill, { type DeltaOperation } from 'quill'
 
 const logger = createLogger('text-editor')
 
-const model = defineModel<string>({ required: true })
+const model = defineModel<string | DeltaOperation[]>({ required: true })
 
 defineProps({
   readonly: {
@@ -51,19 +49,50 @@ const emits = defineEmits<{
   focusAfter: [offset: number],
 }>()
 
-const value = ref(model.value ?? '')
-
 const el = ref<HTMLDivElement>()
-let triggerRange: Range | undefined | null = null
 
 const getValue = () => el.value?.textContent ?? ''
 
-watchEffect(() => {
-  if (getValue() !== (model.value ?? '')) {
-    value.value = model.value ?? ''
-    if (!el.value) return
-    el.value.innerHTML = value.value
+let editor: Quill | null
+
+const setValue = () => {
+  let values: DeltaOperation[] = model.value as DeltaOperation[]
+  if (typeof model.value === 'string') {
+    values = [{ insert: model.value }]
   }
+  editor?.setContents(values as any)
+}
+
+watch(model, () => {
+  logger.i('watch callback')
+  if (!editor) return
+  if (JSON.stringify(model.value) !== JSON.stringify(editor.getContents().ops)) {
+    logger.i(model.value)
+    setValue()
+  }
+})
+
+onMounted(() => {
+  editor = new Quill(el.value!, {
+    modules: {
+      toolbar: false,
+      clipboard: true
+    },
+    formats: ['background', 'bold', 'color', 'font', 'code', 'italic', 'link', 'size', 'stike', 'script', 'underline'],
+    placeholder: 'Type someting'
+  })
+  setValue()
+  editor.on('text-change', () => {
+    const { ops } = editor!.getContents()
+    model.value = markRaw(ops as DeltaOperation[])
+  })
+  el.value!.querySelector<HTMLElement>('.ql-editor')!.dataset.focusable = 'true'
+  // @ts-ignore
+  el.value!.querySelector<HTMLElement>('.ql-editor')!.editor = editor
+})
+
+onBeforeUnmount(() => {
+  editor = null
 })
 
 const TRIGGER_KEY = '/'
@@ -79,39 +108,44 @@ enum KeyCodes {
 }
 const keydownHandler = (event: KeyboardEvent) => {
   if (event.isComposing) return
-  const offset = getCaretOffset(el.value!)
+  const { index: offset } = editor!.getSelection(true)
   if (event.code === KeyCodes.Enter) {
     event.preventDefault()
+    event.stopImmediatePropagation()
+    event.stopPropagation()
     emits('keyEnter', offset)
   } else if (event.code === KeyCodes.Escape) {
     event.preventDefault()
+    event.stopImmediatePropagation()
+    event.stopPropagation()
     // 根据当前状态，判断是否要关闭命令选择
     escapeKeyHandler(event)
   } else if (event.code === KeyCodes.Backspace) {
-    backspaceKeyHandler(event)
+    backspaceKeyHandler(event, offset)
   } else if (event.key === TRIGGER_KEY) {
     // 打开命令选择
     triggerKeyHandler(event)
   } else if (event.code === KeyCodes.Tab && event.shiftKey) {
     event.preventDefault()
+    event.stopImmediatePropagation()
+    event.stopPropagation()
     emits('keyShiftTab', event)
   } else if (event.code === KeyCodes.Tab) {
     event.preventDefault()
+    event.stopImmediatePropagation()
+    event.stopPropagation()
     emits('keyTab', event)
   } else {
-    const offset = getCaretOffset(el.value!)
     emits('keydown', event, offset)
   }
 }
 
-const backspaceKeyHandler = (event: KeyboardEvent) => {
+const backspaceKeyHandler = (event: KeyboardEvent, offset: number) => {
   const target = event.target as HTMLDivElement
   if (!target.contentEditable) {
     event.preventDefault()
     return false
   }
-  const offset = getCaretOffset(el.value!)
-  logger.i('offset', offset)
   if (offset > 0 && offset <= getValue().length) {
     return
   }
@@ -127,27 +161,16 @@ const escapeKeyHandler = (event: KeyboardEvent) => {
 const triggerKeyHandler = (event: KeyboardEvent) => {
   // 待输入字符上屏之后再获取位置信息
   setTimeout(() => {
-    const { x, y, height } = getCaretPosition() || { x: 0, y: 0, height: 24 }
-
-    const curRange = window.getSelection()?.getRangeAt(0).cloneRange()
-    if (curRange?.startOffset ?? 0 > 0) {
-      curRange?.setStart(curRange!.startContainer, curRange!.startOffset - 1)
-      triggerRange = curRange
-    }
-    emits('openTool', { x: x, y: y + height })
+    const { index } = editor!.getSelection(true)
+    const { top, left, height } = editor!.getBounds(index) || { x: 0, y: 0, height: 24 }
+    const pRect = el.value!.getBoundingClientRect()
+    emits('openTool', { x: left + pRect.left, y: top + pRect.top + height })
   })
 }
 
 const removeTriggerKey = () => {
-  if (triggerRange) {
-    triggerRange.deleteContents()
-    triggerRange = null
-    inputHandler()
-  }
-}
-
-const inputHandler = () => {
-  model.value = getValue()
+  const { index } = editor!.getSelection(true)
+  editor!.deleteText(index, 1)
 }
 
 const pasteHandler = (event: ClipboardEvent) => {
@@ -163,8 +186,13 @@ const pasteHandler = (event: ClipboardEvent) => {
   document.execCommand('insertText', false, plainText)
 }
 
+const formatText = (event: CustomEvent<{ range: { index: number, length: number }, formats: Record<string, any> }>) => {
+  const { range, formats } = event.detail
+  logger.i('formatText', range)
+  editor?.formatText(range.index, range.length, formats)
+}
+
 defineExpose({
-  getValue,
   removeTriggerKey
 })
 </script>
@@ -181,6 +209,18 @@ defineExpose({
       content: attr(placeholder);
       color: rgba(0, 0, 0, .3);
       position: absolute;
+    }
+    &:deep(.ql-editor) {
+      outline: none;
+      p {
+        margin: 0;
+        padding: 0;
+      }
+    }
+    &:deep(.ql-clipboard) {
+      width: 0;
+      height: 0;
+      overflow: hidden;
     }
   }
 }

@@ -5,13 +5,16 @@
       :style="{left: blockToolState.left + 'px', top: blockToolState.top + 'px'}">
       <span class="material-symbols-outlined block-tool-icon"> drag_indicator </span>
     </div>
+    <editor-toolbar
+      :root="model"
+      :selection="selection"></editor-toolbar>
     <div class="rich-text-editor-wrapper"
       ref="editorEl"
       @keydown.capture="keydownHandler"
       tabindex="0"
       :contenteditable="mode === Mode.Readonly ? undefined : 'plaintext-only'">
       <block-editor v-model="model"
-        @update:model-value="pushLatest"
+        @update:model-value="updateHandler"
         :index="0"
         :path="[0]"
         :key="model.id"
@@ -29,6 +32,10 @@ import { Mode } from './schema';
 import { useHistory } from '@/hooks/history';
 import { useBlockTool } from '@/hooks/use-block-tool';
 import { useSelection } from '@/hooks/selection';
+import EditorToolbar from './tool/EditorToolbar.vue';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('RichTextEditor')
 
 const model = defineModel<ReturnType<typeof createBlock>>({
   required: true
@@ -44,7 +51,7 @@ const props = defineProps({
   }
 })
 
-const emits = defineEmits<{
+defineEmits<{
   'update:modelValue': [BlockModel]
 }>()
 
@@ -67,7 +74,7 @@ const { state: blockToolState, pointermoveHandler: blockToolTrigger } = useBlock
 
 const { undo, redo, pushLatest } = useHistory(el, model)
 
-const { pointermoveHandler: selectionTrigger } = useSelection({ el })
+const { selection, pointermoveHandler: selectionTrigger } = useSelection({ el, root: model })
 
 const pointermoveHandler = (event: PointerEvent) => {
   selectionTrigger(event)
@@ -91,6 +98,11 @@ const keydownHandler = (event: KeyboardEvent) => {
     event.stopPropagation()
     undo()
   }
+}
+
+const updateHandler = () => {
+  logger.i('updateHandler', JSON.parse(JSON.stringify(model.value)))
+  pushLatest()
 }
 </script>
 

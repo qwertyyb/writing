@@ -4,6 +4,7 @@
       <block-editor v-for="(child, index) in children"
         :key="child.id + child.type"
         :data-block-id="child.id"
+        :data-block-path="[...path, index].join(',')"
         :model-value="child"
         :index="index"
         :path="[...path, index]"
@@ -24,7 +25,7 @@ const children = defineModel<ReturnType<typeof createBlock>[]>({
   required: true
 })
 
-const props = defineProps({
+defineProps({
   index: {
     type: Number,
     default: 0
@@ -38,7 +39,7 @@ const props = defineProps({
 defineEmits<{
   add: [options: Partial<BlockModel>, index: number, child: BlockModel],
   remove: [index: number, path: number[]],
-  update: [index: number, options: Partial<BlockModel>, child: BlockModel]
+  update: [index: number, options: BlockModel, child: BlockModel]
 }>()
 
 </script>
