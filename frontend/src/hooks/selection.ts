@@ -1,9 +1,9 @@
 import { createLogger } from "@/utils/logger"
 import { type Ref, onMounted, onBeforeUnmount, inject, type ModelRef, ref } from "vue"
 import { getBlockByPath } from "./move"
-import type { BlockModel } from "@/models/block"
+import { walkTree, type BlockModel } from "@/models/block"
 import { getSelectionOffset } from "@/models/caret"
-import { append, insertAll, last, repeat, take } from "ramda"
+import { append, equals, insertAll, last, repeat, take } from "ramda"
 
 const logger = createLogger('selection')
 
@@ -83,23 +83,6 @@ export const useSelection = ({ el, root }: {
       })
   }
 
-  const walkTree = (
-    prefixPath: number[],
-    ancestor: BlockModel,
-    callback: (path: number[], block: BlockModel) => void
-  ) => {
-    logger.i('walkTree', ancestor)
-    for(let i = 0; i < (ancestor.children?.length ?? 0); i+= 1) {
-      logger.i('walkTree for', i)
-      walkTree(
-        [...prefixPath, i],
-        ancestor.children![i],
-        callback
-      )
-    }
-    callback(prefixPath, ancestor)
-  }
-
   const blocksBetween = (startPath: number[], endPath: number[]) => {
     let commonPath = startPath.length < endPath.length ? startPath.slice() : endPath.slice()
     for(let i = 0; i < Math.min(startPath.length, endPath.length); i+= 1) {
@@ -110,60 +93,29 @@ export const useSelection = ({ el, root }: {
     }
     logger.i('blocksBetween', startPath, endPath, commonPath)
     const ancestor = getBlockByPath(root.value!, commonPath)
-    let start = [...startPath]
-    let end = [...endPath]
-    if (startPath.length < endPath.length) {
-      start = insertAll(start.length, repeat(0, endPath.length - startPath.length), start)
-    } else if (endPath.length < startPath.length) {
-      end = insertAll(end.length, repeat(-1, startPath.length - endPath.length), end)
-    }
-
-    let pathLen = start.length
-
-    let index: number = last(start.slice(0, pathLen))! - 1
-    logger.i('pppp', index, last(end.slice(0, pathLen))!, JSON.parse(JSON.stringify(getBlockByPath(root.value!, startPath))))
-    while (index <= last(end.slice(0, pathLen))! && pathLen >= commonPath.length) {
-      const parent = getBlockByPath(root.value!, take(pathLen - 1, start))
-
-      index += 1
-      logger.i('pppp outer', index, parent.children?.length ?? 0)
-      while(index < (parent.children?.length ?? 0) && index <= last(end.slice(0, pathLen))!) {
-        logger.i('pppp inner', index, JSON.parse(JSON.stringify(parent.children![index])))
-        walkTree(start.slice(0, pathLen - 1), parent.children![index], (path, block) => {
-          logger.w('walkTree callback', [...path], { ...block })
-        })
-        index += 1
+    const blocks: BlockModel[] = []
+    let started = false
+    let ended = true
+    walkTree(commonPath, ancestor, (path, block) => {
+      logger.i('walk tree callback', [...path])
+      if (started && !ended && equals(endPath, path)) {
+        logger.i('walk tree callback end', [...path])
+        blocks.push(block)
+        ended = true
       }
-      pathLen -= 1
-      index = last(start.slice(0, pathLen))!
-      logger.i('pppp outer', index, last(end.slice(0, pathLen))!)
-    }
-    
+      if (started && !ended) {
+        logger.i('walk tree callback center', [...path])
+        blocks.push(block)
+      }
+      if (equals(startPath, path)) {
+        logger.i('walk tree callback start', [...path])
+        blocks.push(block)
+        started = true
+        ended = equals(endPath, path)
+      }
+    })
 
-    // curPath = take(curPath.length - 1, curPath)
-
-    // index = last(curPath)
-    // if (index !== undefined) {
-    //   parent = getBlockByPath(root.value!, take(curPath.length -1, curPath))
-    //   index += 1
-    //   while(index < (parent.children?.length ?? 0)) {
-    //     walkTree(curPath, parent.children![index], (path, block) => {
-    //       logger.w('walkTree callback', [...path], { ...block })
-    //     })
-    //     index += 1
-    //   }
-    // }
-
-    
-    // walkTree(
-    //   [...commonPath],
-    //   ancestor,
-    //   startPath.slice(commonPath.length),
-    //   endPath.slice(commonPath.length),
-    //   (path, block) => {
-    //     logger.w('walkTreeCallback', [...path], { ...block })
-    //   }
-    // )
+    logger.w('blocksBetween', JSON.parse(JSON.stringify(blocks)))
   }
 
   const rangeHandler = () => {

@@ -178,11 +178,11 @@ export const useDocumentStore = defineStore('document', {
         throw new Error('没有正在编辑的文档')
       }
       const title = content.data?.title ?? this.editing?.title
-      this.editing.title = title
-      const doc = this.documents.find(item => item.id === this.editing!.id)
-      if (doc) {
-        doc.title = title
-      }
+      // this.editing.title = title
+      // const doc = this.documents.find(item => item.id === this.editing!.id)
+      // if (doc) {
+      //   doc.title = title
+      // }
       await updateDocument({ id: this.editing.id, title, content: JSON.stringify(content) })
     },
     async updateEditingTitle(title: string): Promise<void> {

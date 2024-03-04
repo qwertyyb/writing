@@ -1,5 +1,6 @@
 import type { EditingDocument } from "@/stores/document";
 import { createLogger } from "@/utils/logger";
+import { equals } from "ramda";
 
 const logger = createLogger('models/logger');
 
@@ -198,5 +199,53 @@ export const getPrevPath = (
 
 export const getPrevMergablePath = (root: BlockModel, path: number[]) => getPrevPath(root, path, block => block.type === 'text')
 
+export const walkTree = (
+  prefixPath: number[],
+  ancestor: BlockModel,
+  callback: (path: number[], block: BlockModel) => void
+) => {
+  callback(prefixPath, ancestor)
+  for(let i = 0; i < (ancestor.children?.length ?? 0); i+= 1) {
+    walkTree(
+      [...prefixPath, i],
+      ancestor.children![i],
+      callback
+    )
+  }
+}
 
+export const getCommonAncestorPath = (start: number[], end: number[]) => {
+  let commonPath = start.length < end.length ? start.slice() : end.slice()
+  for(let i = 0; i < Math.min(start.length, end.length); i+= 1) {
+    if (start[i] !== end[i]) {
+      commonPath = start.slice(0, i)
+      break
+    }
+  }
+  return commonPath
+}
 
+export const walkTreeBetween = (
+  root: BlockModel,
+  start: number[], end: number[],
+  callback: (path: number[], block: BlockModel) => void
+) => {
+  const commonPath = getCommonAncestorPath(start, end)
+  const ancestor = getBlockByPath(root, commonPath)
+  let started = false
+  let ended = true
+  walkTree(commonPath, ancestor, (path, block) => {
+    if (started && !ended && equals(end, path)) {
+      callback(path, block)
+      ended = true
+    }
+    if (started && !ended) {
+      callback(path, block)
+    }
+    if (equals(start, path)) {
+      callback(path, block)
+      started = true
+      ended = equals(end, path)
+    }
+  })
+}

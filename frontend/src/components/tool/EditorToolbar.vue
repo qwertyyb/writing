@@ -1,30 +1,36 @@
 <template>
   <ul class="editor-toolbar" :style="style" v-show="style">
     <li class="toolbar-item"
-      :class="{ actived: state.bold }"
+      :class="{ actived: formats?.bold }"
       @pointerdown.capture="clickHandler('bold')">
       B
     </li>
     <li class="toolbar-item"
-      :class="{ actived: state.italic }">
+      :class="{ actived: formats?.italic }"
+      @pointerdown.capture="clickHandler('italic')">
       I
     </li>
     <li class="toolbar-item"
-      :class="{ actived: state.link }">
+      :class="{ actived: formats?.link }">
       Link
     </li>
     <li class="toolbar-item"
-      :class="{ actived: state.code }">
+      :class="{ actived: formats?.code }"
+      @pointerdown.capture="clickHandler('code')">
       Code
     </li>
   </ul>
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { computed, inject } from 'vue'
 import type { SelectionState } from '@/hooks/selection';
 import { createLogger } from '@/utils/logger';
-import { getBlockByPath, type BlockModel } from '@/models/block';
+import { getBlockByPath, type BlockModel, walkTreeBetween } from '@/models/block';
+import { equals, last, take } from 'ramda'
+import { getOps } from '@/models/delta'
+import Delta from 'quill-delta';
+import useBlockOperate from '../block-operate';
 
 const logger = createLogger('EditorToolbar')
 
@@ -33,11 +39,87 @@ const props = defineProps<{
   selection: SelectionState
 }>()
 
-const state = ref({
-  bold: false,
-  italic: false,
-  link: false,
-  code: false
+const blockInstances = inject<Map<string, Omit<ReturnType<typeof useBlockOperate>, 'el'>>>('blockInstances')
+
+const finalState = (origin: boolean | null, value: boolean) => {
+  if (origin === null) return value
+  return origin && value
+}
+
+const getFormats = () => {
+  if (!props.selection.selection) return {
+    bold: false, italic: false, link: false, code: false
+  }
+  const { selection } = props.selection
+  const textBlocks: { path: number[], block: BlockModel}[] = []
+  walkTreeBetween(
+    props.root,
+    selection.from.path,
+    selection.to.path,
+    (path, block) => {
+      if (block.type === 'text') {
+        textBlocks.push({ path, block })
+      }
+    }
+  )
+  const formats = textBlocks.reduce<Record<string, any>>((acc, cur) => {
+    const delta = new Delta(cur.block.data.ops)
+    const start = equals(cur.path, selection.from.path) ? selection.from.offset : 0
+    const end = equals(cur.path, selection.to.path) ? selection.to.offset : delta.length()
+    const ops = getOps(cur.block.data.ops, { index: start, length: end - start})
+    const bold = ops.every(op => op.attributes?.bold)
+    const italic = ops.every(op => op.attributes?.italic)
+    const link = ops.every(op => op.attributes?.link)
+    const code = ops.every(op => op.attributes?.code)
+    return {
+      bold: finalState(acc.bold, bold),
+      italic: finalState(acc.italic, italic),
+      link: finalState(acc.link, link),
+      code: finalState(acc.code, code)
+    }
+  }, {
+    bold: null, italic: null, link: null, code: null
+  })
+  logger.w('formats', formats)
+  return formats
+}
+
+const setFormats = (formats: Record<string, any>) => {
+  if (!props.selection.selection) return {
+    bold: false, italic: false, link: false, code: false
+  }
+  const { selection } = props.selection
+  walkTreeBetween(
+    props.root,
+    selection.from.path,
+    selection.to.path,
+    (path, block) => {
+      if (block.type === 'text') {
+        const delta = new Delta(block.data.ops)
+        const start = equals(path, selection.from.path) ? selection.from.offset : 0
+        const end = equals(path, selection.to.path) ? selection.to.offset : delta.length()
+
+        const ops = delta.compose(new Delta().retain(start).retain(end - start, formats)).ops
+
+        logger.w('setFormats', [...path], [...ops])
+        const index = last(path)!
+        const parentPath = take(path.length - 1, path)
+        blockInstances?.get(getBlockByPath(props.root, parentPath).id)?.updateBlock(index, {
+          data: {
+            ...block.data,
+            ops
+          }
+        }, block)
+
+        logger.w('setFormats after', JSON.parse(JSON.stringify(props.root)))
+      }
+    }
+  )
+}
+
+const formats = computed(() => {
+  if (!props.selection.selection) return {};
+  return getFormats()
 })
 
 const style = computed(() => {
@@ -55,17 +137,9 @@ const clickHandler = (format: string) => {
   const fromBlock = getBlockByPath(props.root, from.path)
   const toBlock = getBlockByPath(props.root, to.path)
   logger.i('clickHandler', fromBlock, toBlock)
-  if (fromBlock === toBlock) {
-    const el = document.querySelector(`[data-block-id=${JSON.stringify(fromBlock.id)}] [data-focusable]`)
-    logger.i('clickHandler', el)
-    el?.dispatchEvent(new CustomEvent('format', {
-      bubbles: true,
-      detail: {
-        range: { index: from.offset, length: to.offset - from.offset },
-        formats: { bold: true }
-      }
-    }))
-  }
+  setFormats({
+    [format]: !formats.value[format]
+  })
 }
 </script>
 
@@ -92,6 +166,9 @@ const clickHandler = (format: string) => {
     transition: background .2s;
     &:hover {
       background: #444;
+    }
+    &.actived {
+      background: #666;
     }
   }
 }

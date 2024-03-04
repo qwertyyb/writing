@@ -6,7 +6,6 @@ import { checkMove, getBlockByPath } from "@/hooks/move"
 import { createLogger } from "@/utils/logger"
 import { PatchGenerator } from "@/utils/patch"
 import { last } from 'ramda'
-import Delta from "quill-delta"
 import { concat } from "@/models/delta"
 
 const logger = createLogger('block-operate')
@@ -82,6 +81,7 @@ const useBlockOperate = (parent: Ref<BlockModel>, emits: Emits) => {
   }
 
   const updateBlock = (index: number, data: Partial<BlockModel>, block: BlockModel) => {
+    logger.i('updateBlock before', JSON.parse(JSON.stringify(root!.value)), JSON.parse(JSON.stringify(parent!.value)))
     const pg = new PatchGenerator()
     pg.replace(['children', index], data)
     const oldKey = block.id + block.type
@@ -91,7 +91,7 @@ const useBlockOperate = (parent: Ref<BlockModel>, emits: Emits) => {
     }
     emits('updated', { oldBlock: block, block: newBlock, index, parent: parent.value })
     emitUpdate(pg.patches)
-    logger.i('updateBlock', pg.patches)
+    logger.i('updateBlock after', pg.patches, JSON.parse(JSON.stringify(root!.value)))
   }
 
   const removeBlock = (

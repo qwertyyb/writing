@@ -37,3 +37,15 @@ export const isEmpty = (ops: Op[]) => {
   const text = toText(ops)
   return text === '' || text === '\n'
 }
+
+export const setAttributes = (ops: Op[], range: { index: number, length: number }, attrs: Record<string, any> = {}): Op[] => {
+  return new Delta(ops).compose(new Delta().retain(range.index).retain(range.length, attrs)).ops
+}
+
+export const getOps = (ops: Op[], range: { index: number, length: number }): Op[] => {
+  const results: Op[] = []
+  new Delta(ops).slice(range.index, range.index + range.length).eachLine(line => {
+    results.push(...line.ops)
+  })
+  return results
+}

@@ -100,8 +100,8 @@ const keydownHandler = (event: KeyboardEvent) => {
   }
 }
 
-const updateHandler = () => {
-  logger.i('updateHandler', JSON.parse(JSON.stringify(model.value)))
+const updateHandler = (value: BlockModel) => {
+  logger.i('updateHandler', JSON.parse(JSON.stringify(value)))
   pushLatest()
 }
 </script>
