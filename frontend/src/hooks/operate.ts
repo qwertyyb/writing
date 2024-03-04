@@ -40,14 +40,14 @@ export const focusBlock = (el: HTMLElement | undefined | null, id: string, pos: 
   })
 }
 
-const useBlockOperate = (parent: Ref<BlockModel>, emits: Emits) => {
+const useBlockOperate = (parent: Ref<BlockModel>, parentPath: number[], emits: Emits) => {
   const el = ref<HTMLElement>()
   const root = inject<ModelRef<BlockModel>>('root')
   const blockInstances = inject<Map<string, Omit<ReturnType<typeof useBlockOperate>, 'el'>>>('blockInstances')
 
   const emitUpdate = (patches: any[]) => {
-    emits('change', parent.value, patches)
-    emits('update:modelValue', parent.value)
+    emits('change', getBlockByPath(root!.value, parentPath), patches)
+    emits('update:modelValue', getBlockByPath(root!.value, parentPath))
   }
 
   const addBlock = (
@@ -65,7 +65,7 @@ const useBlockOperate = (parent: Ref<BlockModel>, emits: Emits) => {
     }
 
     pg.add(['children', index + 1], { ...blockData })
-    const newBlock = addChildAfter(parent.value, blockData, index)
+    const newBlock = addChildAfter(getBlockByPath(root!.value, parentPath), blockData, index)
     if (from) {
       pg.replace(['children', index, 'children'], [])
       updateBlock(index, { children: [] }, from)
@@ -74,7 +74,7 @@ const useBlockOperate = (parent: Ref<BlockModel>, emits: Emits) => {
     emits('added', {
       block: newBlock,
       index: index + 1,
-      parent: parent.value
+      parent: getBlockByPath(root!.value, parentPath)
     })
     emitUpdate(pg.patches)
     logger.i('addBlock patch', pg.patches)
@@ -85,11 +85,11 @@ const useBlockOperate = (parent: Ref<BlockModel>, emits: Emits) => {
     const pg = new PatchGenerator()
     pg.replace(['children', index], data)
     const oldKey = block.id + block.type
-    const newBlock = updateChild(parent.value, index, data)
+    const newBlock = updateChild(getBlockByPath(root!.value, parentPath), index, data)
     if (oldKey !== newBlock.id + newBlock.type) {
       focusBlock(el.value, newBlock.id)
     }
-    emits('updated', { oldBlock: block, block: newBlock, index, parent: parent.value })
+    emits('updated', { oldBlock: block, block: newBlock, index, parent: getBlockByPath(root!.value, parentPath) })
     emitUpdate(pg.patches)
     logger.i('updateBlock after', pg.patches, JSON.parse(JSON.stringify(root!.value)))
   }
@@ -103,12 +103,12 @@ const useBlockOperate = (parent: Ref<BlockModel>, emits: Emits) => {
       // 不可删除文档的第一个节点
       return
     }
-    logger.i('removeBlock, path:', JSON.parse(JSON.stringify(path)), 'index:', index, JSON.parse(JSON.stringify(parent.value)))
+    logger.i('removeBlock, path:', JSON.parse(JSON.stringify(path)), 'index:', index, JSON.parse(JSON.stringify(getBlockByPath(root!.value, parentPath))))
     const pg = new PatchGenerator()
     pg.remove(['children', index])
 
-    const [removed] = remove(parent.value, index)
-    logger.i('removeBlock', parent.value, index, removed)
+    const [removed] = remove(getBlockByPath(root!.value, parentPath), index)
+    logger.i('removeBlock', getBlockByPath(root!.value, parentPath), index, removed)
 
     if (options.moveChildrenToPrev) {
       const prevPath = getPrevPath(root!.value, path)!
@@ -136,7 +136,7 @@ const useBlockOperate = (parent: Ref<BlockModel>, emits: Emits) => {
     emits('removed', {
       removed,
       index,
-      parent: parent.value
+      parent: getBlockByPath(root!.value, parentPath)
     })
     emitUpdate(pg.patches)
     logger.i('removeBlock', pg.patches)

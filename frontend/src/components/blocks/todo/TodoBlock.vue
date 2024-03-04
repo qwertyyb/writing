@@ -23,13 +23,13 @@
 
 <script lang="ts" setup>
 import { type BlockModel } from '@/models/block';
-import useBlockOperate from '@/components/block-operate';
+import useBlockOperate from '@/hooks/operate';
 import BlockEditor from '@/components/BlockEditor.vue';
 import { watch, ref } from 'vue';
 
 const block = defineModel<BlockModel>({ required: true })
 
-defineProps<{
+const props = defineProps<{
   index: number,
   parent?: BlockModel,
   path: number[],
@@ -48,11 +48,11 @@ const data = ref<{ checked: Record<string, boolean> }>({
   checked: block.value.data?.checked ?? {}
 })
 
-const { el, addBlock, updateBlock, removeBlock } = useBlockOperate(block, emits)
+const { el, addBlock, updateBlock, removeBlock } = useBlockOperate(block, props.path, emits)
 
 const removeHandler = (child: BlockModel, index: number) => {
   delete data.value.checked[child.id]
-  removeBlock(index)
+  removeBlock(index, props.path)
 }
 
 const toggleChecked = (child: BlockModel) => {
@@ -89,4 +89,4 @@ watch(() => block.value.children?.length ?? 0, (newVal, oldVal) => {
     cursor: text;
   }
 }
-</style>
+</style>@/models/block-operate

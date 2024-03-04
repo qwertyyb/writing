@@ -5,7 +5,6 @@
       :spellcheck="spellcheck"
       @keydown.capture="keydownHandler($event)"
       @paste="pasteHandler"
-      @format="formatText"
       placeholder="Type something..."
       ref="el"></div>
   </div>
@@ -78,7 +77,7 @@ onMounted(() => {
       toolbar: false,
       clipboard: true
     },
-    formats: ['background', 'bold', 'color', 'font', 'code', 'italic', 'link', 'size', 'stike', 'script', 'underline'],
+    formats: ['background', 'bold', 'color', 'font', 'code', 'italic', 'link', 'size', 'strike', 'script', 'underline'],
     placeholder: 'Type someting'
   })
   setValue()
@@ -186,12 +185,6 @@ const pasteHandler = (event: ClipboardEvent) => {
   document.execCommand('insertText', false, plainText)
 }
 
-const formatText = (event: CustomEvent<{ range: { index: number, length: number }, formats: Record<string, any> }>) => {
-  const { range, formats } = event.detail
-  logger.i('formatText', range)
-  editor?.formatText(range.index, range.length, formats)
-}
-
 defineExpose({
   removeTriggerKey
 })
@@ -215,6 +208,16 @@ defineExpose({
       p {
         margin: 0;
         padding: 0;
+        font-size: 14px;
+      }
+      code {
+        padding: 0.2em 0.4em;
+        margin: 0 0.2em;
+        font-size: 85%;
+        white-space: break-spaces;
+        background-color: var(--document-editor-inline-bg-color, rgba(175,184,193,0.2));
+        border-radius: 6px;
+        font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace;
       }
     }
     &:deep(.ql-clipboard) {

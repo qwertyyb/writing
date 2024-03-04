@@ -26,9 +26,9 @@ dependencies:
   element-plus:
     specifier: ^2.5.3
     version: 2.5.3(vue@3.4.21)
-  events:
-    specifier: ^3.3.0
-    version: 3.3.0
+  eventemitter3:
+    specifier: ^5.0.1
+    version: 5.0.1
   immer:
     specifier: ^10.0.3
     version: 10.0.3
@@ -2262,9 +2262,8 @@ packages:
     resolution: {integrity: sha512-jLN68Dx5kyFHaePoXWPsCGW5qdyZQtLYHkxkg02/Mz6g0kYpDx4FyP6XfArhQdlOC4b8Mv+EMxPo/8La7Tzghg==}
     dev: false
 
-  /events@3.3.0:
-    resolution: {integrity: sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==}
-    engines: {node: '>=0.8.x'}
+  /eventemitter3@5.0.1:
+    resolution: {integrity: sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==}
     dev: false
 
   /execa@8.0.1:

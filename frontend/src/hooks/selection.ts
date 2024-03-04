@@ -83,66 +83,17 @@ export const useSelection = ({ el, root }: {
       })
   }
 
-  const blocksBetween = (startPath: number[], endPath: number[]) => {
-    let commonPath = startPath.length < endPath.length ? startPath.slice() : endPath.slice()
-    for(let i = 0; i < Math.min(startPath.length, endPath.length); i+= 1) {
-      if (startPath[i] !== endPath[i]) {
-        commonPath = startPath.slice(0, i)
-        break
-      }
-    }
-    logger.i('blocksBetween', startPath, endPath, commonPath)
-    const ancestor = getBlockByPath(root.value!, commonPath)
-    const blocks: BlockModel[] = []
-    let started = false
-    let ended = true
-    walkTree(commonPath, ancestor, (path, block) => {
-      logger.i('walk tree callback', [...path])
-      if (started && !ended && equals(endPath, path)) {
-        logger.i('walk tree callback end', [...path])
-        blocks.push(block)
-        ended = true
-      }
-      if (started && !ended) {
-        logger.i('walk tree callback center', [...path])
-        blocks.push(block)
-      }
-      if (equals(startPath, path)) {
-        logger.i('walk tree callback start', [...path])
-        blocks.push(block)
-        started = true
-        ended = equals(endPath, path)
-      }
-    })
-
-    logger.w('blocksBetween', JSON.parse(JSON.stringify(blocks)))
-  }
-
   const rangeHandler = () => {
     const selection = window.getSelection()
     if (!selection || selection.rangeCount < 1) return
     const range = selection.getRangeAt(0)
     const startBlockEl = getBlockElFromNode(range.startContainer)
-    const startBlockId = startBlockEl?.dataset?.blockId
     const startBlockPath = startBlockEl?.dataset.blockPath?.split(',').map(i => Number(i))
     const startBlockProp = getBlockPropFromNode(range.startContainer)
-    const startBlock = getBlockByPath(root!.value, startBlockPath!)
 
     const endBlockEl = getBlockElFromNode(range.endContainer)
-    const endBlockId = endBlockEl?.dataset?.blockId
     const endBlockPath = endBlockEl?.dataset.blockPath?.split(',').map(i => Number(i))
     const endBlockProp = getBlockPropFromNode(range.endContainer)
-    const endBlock = getBlockByPath(root!.value, endBlockPath!)
-
-    // if (startBlock === endBlock) {
-
-    // }
-
-    blocksBetween(startBlockPath!, endBlockPath!)
-
-    logger.i('rangeHandler', {
-      startBlockId, startBlockPath, startBlockProp, endBlockId, endBlockPath, endBlockProp
-    }, startBlock, endBlock)
     
     const doc = range.cloneContents()
     logger.i('rangeHandler', doc)
@@ -172,6 +123,7 @@ export const useSelection = ({ el, root }: {
 
   const selectionchangeHandler = () => {
     const selection = window.getSelection()
+    logger.w('selectionchange', selection)
     if (!selection) return
     if (selection.anchorNode) {
       anchorNode = selection.anchorNode

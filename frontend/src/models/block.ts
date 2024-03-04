@@ -20,7 +20,7 @@ export enum BlockSaveType {
 export interface BlockModel<D extends any = any> {
   type: string;
   id: string;
-  children?: BlockModel[];
+  children: BlockModel[];
   data?: D;
 }
 
@@ -112,6 +112,7 @@ export const createBlock = (options: Partial<BlockOptions>): BlockModel => {
     ...options,
     type: options.type ?? 'text',
     id: options.id ?? createBlockId(),
+    children: options.children ?? []
   }
   return block
 }

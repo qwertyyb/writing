@@ -1,23 +1,52 @@
 <template>
-  <ul class="editor-toolbar" :style="style" v-show="style">
-    <li class="toolbar-item"
-      :class="{ actived: formats?.bold }"
-      @pointerdown.capture="clickHandler('bold')">
-      B
+  <ul class="editor-toolbar" :style="style" v-show="style"
+    @mousedown.prevent>
+    <li class="toolbar-item">
+      <span class="material-symbols-outlined">text_increase</span>
+    </li>
+    <li class="toolbar-item">
+      <span class="material-symbols-outlined">text_decrease</span>
     </li>
     <li class="toolbar-item"
+      :class="{ actived: formats?.bold }"
+      @click.capture="clickHandler('bold')">B</li>
+    <li class="toolbar-item"
       :class="{ actived: formats?.italic }"
-      @pointerdown.capture="clickHandler('italic')">
-      I
+      @pointerdown.capture.stop="clickHandler('italic')">I</li>
+    <li class="toolbar-item">
+      <span class="material-symbols-outlined">format_color_fill</span>
+    </li>
+    <li class="toolbar-item">
+      <span class="material-symbols-outlined">format_color_text</span>
+    </li>
+    <li class="toolbar-item"
+      :class="{ actived: formats?.underline }"
+      @pointerdown.capture.stop="clickHandler('underline')">
+      <span class="material-symbols-outlined">format_underlined</span>
+    </li>
+    <li class="toolbar-item"
+      :class="{ actived: formats?.strike }"
+      @pointerdown.capture.stop="clickHandler('strike')">
+      <span class="material-symbols-outlined">format_strikethrough</span>
     </li>
     <li class="toolbar-item"
       :class="{ actived: formats?.link }">
-      Link
+      <span class="material-symbols-outlined">add_link</span>
     </li>
     <li class="toolbar-item"
       :class="{ actived: formats?.code }"
-      @pointerdown.capture="clickHandler('code')">
-      Code
+      @pointerdown.capture.stop="clickHandler('code')">
+      <span class="material-symbols-outlined">code</span>
+    </li>
+    <li class="toolbar-item"
+      :class="{ actived: formats?.super }"
+      @pointerdown.capture.stop="clickHandler('super')">
+      <span class="material-symbols-outlined">superscript</span>
+    </li>
+    <li class="toolbar-item"
+      :class="{ actived: formats?.sub }"
+      @pointerdown.capture.stop="clickHandler('sub')">
+      <span class="material-symbols-outlined">subscript</span>
     </li>
   </ul>
 </template>
@@ -30,7 +59,7 @@ import { getBlockByPath, type BlockModel, walkTreeBetween } from '@/models/block
 import { equals, last, take } from 'ramda'
 import { getOps } from '@/models/delta'
 import Delta from 'quill-delta';
-import useBlockOperate from '../block-operate';
+import useBlockOperate from '@/hooks/operate';
 
 const logger = createLogger('EditorToolbar')
 
@@ -71,16 +100,23 @@ const getFormats = () => {
     const italic = ops.every(op => op.attributes?.italic)
     const link = ops.every(op => op.attributes?.link)
     const code = ops.every(op => op.attributes?.code)
+    const scriptSub = ops.every(op => op.attributes?.script === 'sub')
+    const scriptSuper = ops.every(op => op.attributes?.script === 'super')
+    const strike = ops.every(op => op.attributes?.strike)
+    const underline = ops.every(op => op.attributes?.underline)
     return {
       bold: finalState(acc.bold, bold),
       italic: finalState(acc.italic, italic),
       link: finalState(acc.link, link),
-      code: finalState(acc.code, code)
+      code: finalState(acc.code, code),
+      sub: finalState(acc.sub, scriptSub),
+      super: finalState(acc.super, scriptSuper),
+      strike: finalState(acc.strike, strike),
+      underline: finalState(acc.underline, underline)
     }
   }, {
-    bold: null, italic: null, link: null, code: null
+    bold: null, italic: null, link: null, code: null, sub: null, super: null, strike: null, underline: null, 
   })
-  logger.w('formats', formats)
   return formats
 }
 
@@ -94,25 +130,21 @@ const setFormats = (formats: Record<string, any>) => {
     selection.from.path,
     selection.to.path,
     (path, block) => {
-      if (block.type === 'text') {
-        const delta = new Delta(block.data.ops)
-        const start = equals(path, selection.from.path) ? selection.from.offset : 0
-        const end = equals(path, selection.to.path) ? selection.to.offset : delta.length()
+      if (block.type !== 'text') return
+      const delta = new Delta(block.data.ops)
+      const start = equals(path, selection.from.path) ? selection.from.offset : 0
+      const end = equals(path, selection.to.path) ? selection.to.offset : delta.length()
 
-        const ops = delta.compose(new Delta().retain(start).retain(end - start, formats)).ops
+      const ops = delta.compose(new Delta().retain(start).retain(end - start, formats)).ops
 
-        logger.w('setFormats', [...path], [...ops])
-        const index = last(path)!
-        const parentPath = take(path.length - 1, path)
-        blockInstances?.get(getBlockByPath(props.root, parentPath).id)?.updateBlock(index, {
-          data: {
-            ...block.data,
-            ops
-          }
-        }, block)
-
-        logger.w('setFormats after', JSON.parse(JSON.stringify(props.root)))
-      }
+      const index = last(path)!
+      const parentPath = take(path.length - 1, path)
+      blockInstances?.get(getBlockByPath(props.root, parentPath).id)?.updateBlock(index, {
+        data: {
+          ...block.data,
+          ops
+        }
+      }, block)
     }
   )
 }
@@ -133,12 +165,18 @@ const style = computed(() => {
 
 const clickHandler = (format: string) => {
   logger.i('clickHandler', JSON.parse(JSON.stringify(props.selection)))
-  const { from, to } = props.selection.selection!
-  const fromBlock = getBlockByPath(props.root, from.path)
-  const toBlock = getBlockByPath(props.root, to.path)
-  logger.i('clickHandler', fromBlock, toBlock)
+  logger.i('clickHandler', format)
+  let name = format
+  let value: string | boolean = !formats.value[name]
+  if (format === 'super') {
+    name = 'script'
+    value = formats.value[name] ? false : 'super'
+  } else if (format === 'sub') {
+    name = 'script'
+    value = formats.value[name] ? false : 'sub'
+  }
   setFormats({
-    [format]: !formats.value[format]
+    [name]: value
   })
 }
 </script>
@@ -146,9 +184,11 @@ const clickHandler = (format: string) => {
 <style lang="less" scoped>
 .editor-toolbar {
   display: flex;
-  color: #fff;
+  color: #444;
   font-size: 16px;
-  background: #000;
+  background: #eee;
+  border: 1px solid #bbb;
+  box-shadow: 4px 7px 7px #ccc;
   list-style: none;
   padding: 0;
   margin: 0;
@@ -157,7 +197,9 @@ const clickHandler = (format: string) => {
   // transform: translateX(-50%);
   .toolbar-item {
     height: 36px;
-    line-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     padding: 0 8px;
     box-sizing: border-box;
     min-width: 36px;
@@ -165,10 +207,13 @@ const clickHandler = (format: string) => {
     cursor: pointer;
     transition: background .2s;
     &:hover {
-      background: #444;
+      background: #dedede;
     }
     &.actived {
-      background: #666;
+      color: blue;
+    }
+    &:deep(.material-symbols-outlined) {
+      font-size: 20px;
     }
   }
 }

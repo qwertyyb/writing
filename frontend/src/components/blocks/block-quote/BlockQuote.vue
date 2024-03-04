@@ -19,13 +19,13 @@
 
 <script lang="ts" setup>
 import { type BlockModel } from '@/models/block';
-import useBlockOperate from '@/components/block-operate';
+import useBlockOperate from '@/hooks/operate';
 import BlockEditor from '@/components/BlockEditor.vue';
 import { watch } from 'vue';
 
 const block = defineModel<BlockModel>({ required: true })
 
-defineProps<{
+const props = defineProps<{
   index: number,
   parent?: BlockModel,
   path: number[],
@@ -40,7 +40,7 @@ const emits = defineEmits<{
   remove: [],
 }>()
 
-const { el, addBlock, updateBlock, removeBlock } = useBlockOperate(block, emits)
+const { el, addBlock, updateBlock, removeBlock } = useBlockOperate(block, props.path, emits)
 
 if (!block.value.children?.length) {
   addBlock({
@@ -64,4 +64,4 @@ blockquote.block-quote-block {
   border-left: 4px solid #dfe2e5;
   padding: 3px 0 3px 16px;
 }
-</style>
+</style>@/models/block-operate

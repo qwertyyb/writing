@@ -21,7 +21,7 @@
 
 <script lang="ts" setup>
 import { type BlockModel } from '@/models/block';
-import useBlockOperate from '@/components/block-operate';
+import useBlockOperate from '@/hooks/operate';
 import BlockEditor from '@/components/BlockEditor.vue';
 import { watch } from 'vue';
 
@@ -43,7 +43,7 @@ const emits = defineEmits<{
   remove: [],
 }>()
 
-const { el, addBlock, updateBlock, removeBlock } = useBlockOperate(block, emits)
+const { el, addBlock, updateBlock, removeBlock } = useBlockOperate(block, props.path, emits)
 
 if (!block.value.children?.length) {
   addBlock({
@@ -129,4 +129,4 @@ watch(() => block.value.children?.length ?? 0, (newVal, oldVal) => {
       }
   }
 }
-</style>
+</style>@/models/block-operate

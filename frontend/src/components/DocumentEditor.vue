@@ -26,5 +26,7 @@ const document = defineModel<BlockModel>({ required: true, })
   --document-editor-heading4-font-size: 22px;
   --document-editor-heading5-font-size: 18px;
   --document-editor-heading6-font-size: 16px;
+
+  --document-editor-inline-bg-color: rgba(175,184,193,0.2);
 }
 </style>

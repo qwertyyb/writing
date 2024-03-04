@@ -34,13 +34,13 @@ import { type BlockModel } from '@/models/block';
 import { computed, inject, onBeforeUnmount, onMounted } from 'vue';
 import BlockRenderer from './blocks/BlockRenderer.vue';
 import BlockListEditor from './BlockListEditor.vue';
-import useBlockOperate, { useMergeBlock, useMoveBlock } from './block-operate';
+import useBlockOperate, { useMergeBlock, useMoveBlock } from '@/hooks/operate';
 import { getBlockConfig } from './blocks';
 import { focusBefore, focusAfter } from '@/hooks/focus';
 
 const block = defineModel<BlockModel>({ required: true })
 
-defineProps<{
+const props = defineProps<{
   index: number,
   path: number[],
   parent?: BlockModel
@@ -66,7 +66,7 @@ const {
   addBlock,
   updateBlock,
   removeBlock,
-} = useBlockOperate(block, emits)
+} = useBlockOperate(block, props.path, emits)
 
 onMounted(() => {
   inject<Map<string, Omit<ReturnType<typeof useBlockOperate>, 'el'>>>('blockInstances')?.set(block.value.id, { addBlock, updateBlock, removeBlock })
@@ -101,4 +101,4 @@ const { merge } = useMergeBlock()
     flex: 1;
   }
 }
-</style>./blocks
+</style>./blocks../models/block-operate
