@@ -11,9 +11,9 @@
         :index="index"
         :parent="parent"
         :path="[...path, index]"
-        @update:modelValue="updateBlock(index, $event, child)"
-        @add="addBlock($event, index, child)"
-        @remove="removeBlock(index, [...path, index])"
+        @update:modelValue="updateBlock(index, $event)"
+        @add="addBlock(index, $event)"
+        @remove="removeBlock(index)"
       ></block-editor>
     </li>
   </component>
@@ -21,9 +21,9 @@
 
 <script lang="ts" setup>
 import { type BlockModel } from '@/models/block';
-import useBlockOperate from '@/hooks/operate';
 import BlockEditor from '@/components/BlockEditor.vue';
 import { watch } from 'vue';
+import { useOperator } from '@/hooks/operator';
 
 const block = defineModel<BlockModel>({ required: true })
 
@@ -43,13 +43,13 @@ const emits = defineEmits<{
   remove: [],
 }>()
 
-const { el, addBlock, updateBlock, removeBlock } = useBlockOperate(block, props.path, emits)
+const { addBlock, updateBlock, removeBlock } = useOperator(props)
 
 if (!block.value.children?.length) {
-  addBlock({
+  addBlock(0, {
     type: 'text',
     id: Math.random().toString(16).substring(2)
-  }, 0)
+  })
 }
 
 watch(() => block.value.children?.length ?? 0, (newVal, oldVal) => {

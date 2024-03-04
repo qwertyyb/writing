@@ -16,7 +16,7 @@
       <block-editor v-model="model"
         @update:model-value="updateHandler"
         :index="0"
-        :path="[0]"
+        :path="[]"
         :key="model.id"
         @pointermove="pointermoveHandler"></block-editor>
     </div>
@@ -27,13 +27,15 @@
 import { createBlock, type BlockModel } from '@/models/block';
 import BlockEditor from './BlockEditor.vue';
 import { useFocusEvent } from '@/hooks/focus';
-import { provide, type PropType, computed, ref } from 'vue';
+import { provide, type PropType, computed, ref, shallowRef, markRaw, toRaw } from 'vue';
 import { Mode } from './schema';
 import { useHistory } from '@/hooks/history';
 import { useBlockTool } from '@/hooks/use-block-tool';
 import { useSelection } from '@/hooks/selection';
 import EditorToolbar from './tool/EditorToolbar.vue';
 import { createLogger } from '@/utils/logger';
+import { BlockTree, rootSymbol } from '@/models/BlockTree';
+import { focusBlock } from '@/hooks/operate';
 
 const logger = createLogger('RichTextEditor')
 
@@ -57,6 +59,20 @@ defineEmits<{
 
 const el = ref<HTMLElement>()
 const editorEl = ref<HTMLDivElement>()
+const rootValue = shallowRef(toRaw(new BlockTree(model.value)))
+
+rootValue.value.on('change', (value, changes) => {
+  logger.i('change', value, changes)
+})
+
+rootValue.value.on('added', ({ block }) => {
+  focusBlock(block.id, 'start')
+})
+rootValue.value.on('updated', ({ oldBlock, block }) => {
+  if (oldBlock.type + oldBlock.id !== block.type + block.id) {
+    focusBlock(block.id)
+  }
+})
 
 const mode = computed(() => props.mode)
 const spellcheck = computed(() => props.spellcheck)
@@ -65,6 +81,7 @@ provide('mode', mode)
 provide('spellcheck', spellcheck)
 provide('root', model)
 provide('blockInstances', new Map())
+provide(rootSymbol, rootValue)
 
 useFocusEvent()
 

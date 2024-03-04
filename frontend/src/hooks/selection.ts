@@ -1,9 +1,7 @@
 import { createLogger } from "@/utils/logger"
-import { type Ref, onMounted, onBeforeUnmount, inject, type ModelRef, ref } from "vue"
-import { getBlockByPath } from "./move"
-import { walkTree, type BlockModel } from "@/models/block"
+import { type Ref, onMounted, onBeforeUnmount, type ModelRef, ref } from "vue"
+import { type BlockModel } from "@/models/block"
 import { getSelectionOffset } from "@/models/caret"
-import { append, equals, insertAll, last, repeat, take } from "ramda"
 
 const logger = createLogger('selection')
 

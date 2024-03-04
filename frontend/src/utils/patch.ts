@@ -54,6 +54,9 @@ export class PatchGenerator {
     this.patches.push({ op: 'copy', from, path })
     return this
   }
+  clear() {
+    this.patches = []
+  }
 }
 
 export const applyPatch = (doc: any, patches: JSONPatch[]) => {

@@ -9,7 +9,7 @@
         @update:modelValue="$emit('update:modelValue', $event)"
         @add="$emit('add', $event)"
         @remove="$emit('remove')"
-        @merge="merge(path, $event)"
+        @merge="merge(path)"
         @move="move(path, $event)"
         @moveUpper="moveUpper(path)"
         @moveLower="moveLower(path)"
@@ -34,9 +34,9 @@ import { type BlockModel } from '@/models/block';
 import { computed, inject, onBeforeUnmount, onMounted } from 'vue';
 import BlockRenderer from './blocks/BlockRenderer.vue';
 import BlockListEditor from './BlockListEditor.vue';
-import useBlockOperate, { useMergeBlock, useMoveBlock } from '@/hooks/operate';
 import { getBlockConfig } from './blocks';
 import { focusBefore, focusAfter } from '@/hooks/focus';
+import { useMerge, useMove, useOperator } from '@/hooks/operator';
 
 const block = defineModel<BlockModel>({ required: true })
 
@@ -62,23 +62,22 @@ const needRenderChildren = computed(() => {
 })
 
 const {
-  el,
   addBlock,
   updateBlock,
   removeBlock,
-} = useBlockOperate(block, props.path, emits)
+} = useOperator(props)
 
 onMounted(() => {
-  inject<Map<string, Omit<ReturnType<typeof useBlockOperate>, 'el'>>>('blockInstances')?.set(block.value.id, { addBlock, updateBlock, removeBlock })
+  inject<Map<string, Omit<ReturnType<typeof useOperator>, 'el'>>>('blockInstances')?.set(block.value.id, { addBlock, updateBlock, removeBlock })
 })
 
 onBeforeUnmount(() => {
-  inject<Map<string, Omit<ReturnType<typeof useBlockOperate>, 'el'>>>('blockInstances')?.delete(block.value.id)
+  inject<Map<string, Omit<ReturnType<typeof useOperator>, 'el'>>>('blockInstances')?.delete(block.value.id)
 })
 
-const { move, moveUpper, moveLower } = useMoveBlock()
+const { move, moveUpper, moveLower } = useMove()
 
-const { merge } = useMergeBlock()
+const { merge } = useMerge()
 
 </script>
 

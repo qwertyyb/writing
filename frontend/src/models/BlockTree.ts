@@ -1,113 +1,100 @@
 import { createLogger } from "@/utils/logger"
-import { equals } from "ramda"
+import * as R from "ramda"
 import EventEmitter from 'eventemitter3'
+import { createBlock, type BlockModel } from "./block"
+import { PatchGenerator } from "@/utils/patch"
 
 const logger = createLogger('BlockTree')
 
-interface BlockTreeData extends Event {
-  type: string
-  id: string
-  children: (BlockTreeData | BlockTree)[],
-  data: any
-}
-
-export const createId = (): string => Math.random().toString(16).substring(2)
-
-const createBlockTreeData = (data: Partial<BlockTreeData>) => {
-  const newData = { ...data }
-  if (!data.id) {
-    newData.id = createId()
-  }
-  if (!data.type) {
-    newData.type = 'text'
-  }
-  return {
-    id: createId(),
-    type: 'text',
-    children: [],
-    ...newData
-  }
-}
+export const rootSymbol = Symbol('root')
 
 export class BlockTree extends EventEmitter {
-  type: string
-  id: string
-  data: any
-  children: BlockTree[] = []
-  parent: BlockTree | null = null
-  constructor(options: Partial<BlockTreeData>) {
+  model: BlockModel
+  private pg: PatchGenerator = new PatchGenerator()
+  constructor(model: BlockModel) {
     super()
-    const value = createBlockTreeData(options)
-    this.type = value.type
-    this.id = value.id
-    this.data = value.data
-    this.children = value.children.map((item: any) => {
-      return BlockTree.fromJSON(item)
-    })
+    this.model = model
   }
 
-  update(data: Partial<BlockTreeData>) {
-    this.type = data.type ?? this.type
-    this.id = data.id ?? this.id
-    this.data = data.data ?? this.data
-    this.children = data.children?.map(item => BlockTree.fromJSON(item)) ?? this.children
+  private getParentFromPath(path: number[]) {
+    const parentPath = R.take(path.length - 1, path)
+    const parent = this.getByPath(parentPath)
+    return parent
   }
 
-  addChildAfter(options: Partial<BlockTreeData>, index: number) {
-    if (typeof index === 'undefined' || index === null) {
-      index = this.children.length
-    }
-    if (index < 0) {
-      throw new Error('index 不能为负数')
-    }
-    if (index > this.children.length) {
-      throw new Error('index 超出范围, length: ' + this.children.length)
-    }
-    const newBlockTree = BlockTree.fromJSON(options)
-    this.children.splice(index + 1, 0, newBlockTree)
-    this.emit('child-added', { index: index + 1, block: newBlockTree })
-    return newBlockTree
+  private emitChange() {
+    this.emit('change', this.model, this.pg.patches)
+    this.pg.clear()
   }
 
-  updateChild(index: number, options: Partial<BlockTreeData>) {
-    logger.i('update child', index, options)
-    const child = this.children?.[index]
+  update<T extends (...args: any) => any>(updater: T): ReturnType<T> {
+    const result = updater()
+    this.emitChange()
+    return result
+  }
+
+  addChildAfter(path: number[], data: Partial<BlockModel>) {
+    const index = R.last(path)!
+    const parent = this.getParentFromPath(path)
+
+    if (index > parent.children.length) {
+      logger.e('index out range', index, [...path], parent, this.model)
+      throw new Error('index 超出范围, length: ' + parent.children.length)
+    }
+
+    const newBlock = createBlock(data)
+    parent.children.splice(index + 1, 0, newBlock)
+    
+    const newPath = [...R.take(path.length - 1, path), index + 1]
+    this.pg.add(newPath, newBlock)
+
+    this.emit('added', { path: newPath, block: newBlock })
+    return newBlock
+  }
+
+  updateChild(path: number[], data: Partial<BlockModel>) {
+    const index = R.last(path)!
+    const parent = this.getParentFromPath(path)
+
+    logger.i('update child', index, data)
+    const child = parent.children[index]
     if (!child) {
-      logger.e('未找到子节点', this, index)
+      logger.e('未找到子节点', parent, index)
       throw new Error('未找到子节点')
     }
-    this.children![index].update(options)
-    logger.i('after update child', JSON.parse(JSON.stringify(this)))
-    this.emit('child-updated', { index, block: this.children![index] })
-    return this.children![index]
+    const oldBlock = { ...child }
+    parent.children[index] = {
+      ...child,
+      ...data
+    }
+
+    this.pg.replace(path, parent.children[index])
+
+    this.emit('updated', { path, oldBlock, block: parent.children[index] })
+    return parent.children[index]
   }
 
-  removeChild = (index: number) => {
-    if (!this.children.length) {
+  removeChild = (path: number[]) => {
+    const index = R.last(path)!
+    const parent = this.getParentFromPath(path)
+
+    if (!parent.children.length) {
       throw new Error(`删除失败，该节点没有子节点`)
     }
-    if (index < 0 || index > this.children.length - 1) {
+    if (index < 0 || index > parent.children.length - 1) {
       throw new Error(`未找到待删除节点: ${index}`)
     }
-    const [block] = this.children.splice(index, 1)
-    this.emit('child-removed', { index, block })
+
+    const [block] = parent.children.splice(index, 1)
+
+    this.pg.remove(path)
+  
+    this.emit('removed', { path, block })
     return block
   }
 
-  static fromJSON(model: any): BlockTree {
-    if (model instanceof BlockTree) return model
-    const children = model.children.map((item: any) => {
-      return BlockTree.fromJSON(item)
-    })
-    const instance = new BlockTree({
-      ...model,
-      children
-    })
-    return instance
-  }
-  static getByPath = (root: BlockTree, path: number[]) => {
-    // 路径上的第一个值恒为0，指root本身
-    let node: BlockTree = root
+  static getByPath = (root: BlockModel, path: number[]) => {
+    let node: BlockModel = root
     const restPath = [...path]
     while(restPath.length) {
       const curIndex = restPath.shift()!
@@ -122,8 +109,8 @@ export class BlockTree extends EventEmitter {
 
   static walkTree = (
     prefixPath: number[],
-    ancestor: BlockTree,
-    callback: (path: number[], block: BlockTree) => void
+    ancestor: BlockModel,
+    callback: (path: number[], block: BlockModel) => void
   ) => {
     callback(prefixPath, ancestor)
     for(let i = 0; i < (ancestor.children?.length ?? 0); i+= 1) {
@@ -147,41 +134,44 @@ export class BlockTree extends EventEmitter {
   }
 
   static walkTreeBetween = (
-    root: BlockTree,
+    root: BlockModel,
     start: number[], end: number[],
-    callback: (path: number[], block: BlockTree) => void
+    callback: (path: number[], block: BlockModel) => void
   ) => {
     const commonPath = BlockTree.getCommonAncestorPath(start, end)
     const ancestor = BlockTree.getByPath(root, commonPath)
     let started = false
     let ended = true
     BlockTree.walkTree(commonPath, ancestor, (path, block) => {
-      if (started && !ended && equals(end, path)) {
+      if (started && !ended && R.equals(end, path)) {
         callback(path, block)
         ended = true
       }
       if (started && !ended) {
         callback(path, block)
       }
-      if (equals(start, path)) {
+      if (R.equals(start, path)) {
         callback(path, block)
         started = true
-        ended = equals(end, path)
+        ended = R.equals(end, path)
       }
     })
   }
 
   getByPath = (path: number[]) => {
-    return BlockTree.getByPath(this, path)
+    return BlockTree.getByPath(this.model, path)
   }
 
-  walkPrevFromPath = (
+  getPrev = (
     path: number[],
-    predicate: (path: number[], block: BlockTree) => boolean = (() => true)
+    predicate: (path: number[], block: BlockModel) => boolean = (() => true)
   ) => {
     if (!path.length) return null
   
-    const getMergablePathLast = (root: BlockTree, path: number[]): number[] | null => {
+    const getMergablePathLast = (root: BlockModel, path: number[]): {
+      path: number[],
+      block: BlockModel
+    } | null => {
       const block = BlockTree.getByPath(root, path)
   
       for(let i = (block.children?.length ?? 0) - 1; i >= 0; i -= 1) {
@@ -190,7 +180,7 @@ export class BlockTree extends EventEmitter {
       }
   
       if (predicate(path, block)) {
-        return path
+        return { path, block }
       }
       return null
     }
@@ -202,23 +192,14 @@ export class BlockTree extends EventEmitter {
         const prevBlock = this.getByPath([...prevPath, prevPathIndex])
         if (!prevBlock) break
   
-        const mergablePath = getMergablePathLast(this, [...prevPath, prevPathIndex])
-        if (mergablePath) {
-          return mergablePath
+        const mergable = getMergablePathLast(this.model, [...prevPath, prevPathIndex])
+        if (mergable) {
+          return mergable
         }
   
         prevPathIndex -= 1
       }
     }
     return null
-  }
-
-  toJSON(): any {
-    return {
-      type: this.type,
-      id: this.id,
-      children: this.children.map(item => item.toJSON()),
-      data: this.data
-    }
   }
 }

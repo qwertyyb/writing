@@ -1,8 +1,8 @@
-import { remove, type BlockModel, updateChild, addChildAfter, getPrevPath } from "@/models/block"
+import { remove, type BlockModel, updateChild, addChildAfter, getPrevPath, getBlockByPath } from "@/models/block"
 import { moveCaret, moveCaretToEnd, moveCaretToStart } from "@/models/caret"
 import { inject, nextTick, ref, type ModelRef, type Ref } from "vue"
 import { focusBefore } from "@/hooks/focus"
-import { checkMove, getBlockByPath } from "@/hooks/move"
+import { checkMove } from "@/hooks/move"
 import { createLogger } from "@/utils/logger"
 import { PatchGenerator } from "@/utils/patch"
 import { last } from 'ramda'
@@ -25,17 +25,17 @@ type Emits = ((evt: "added", args_0: {
   parent?: BlockModel | undefined;
 }) => void) & ((evt: "change", args_0: BlockModel, changes: any[]) => void) & ((evt: "update:modelValue", args_0: BlockModel) => void)
 
-const focusBlockImmediate = (el: HTMLElement | undefined | null, id: string, pos: 'start' | 'end') => {
-  const input: HTMLDivElement | null | undefined = (el || document.body).querySelector<HTMLDivElement>(`[data-block-id=${JSON.stringify(id)}] [data-focusable]`)
+const focusBlockImmediate = (id: string, pos: 'start' | 'end') => {
+  const input: HTMLDivElement | null | undefined = document.body.querySelector<HTMLDivElement>(`[data-block-id=${JSON.stringify(id)}] [data-focusable]`)
   input?.focus()
   logger.i('focusBlock', input, id)
   input && (pos === 'end' && moveCaretToEnd(input) || pos === 'start' && moveCaretToStart(input))
 }
 
-export const focusBlock = (el: HTMLElement | undefined | null, id: string, pos: 'start' | 'end' = 'end') => {
+export const focusBlock = (id: string, pos: 'start' | 'end' = 'end') => {
   setTimeout(() => {
     nextTick(() => {
-      focusBlockImmediate(el, id, pos)
+      focusBlockImmediate(id, pos)
     })
   })
 }
@@ -87,7 +87,7 @@ const useBlockOperate = (parent: Ref<BlockModel>, parentPath: number[], emits: E
     const oldKey = block.id + block.type
     const newBlock = updateChild(getBlockByPath(root!.value, parentPath), index, data)
     if (oldKey !== newBlock.id + newBlock.type) {
-      focusBlock(el.value, newBlock.id)
+      focusBlock(newBlock.id)
     }
     emits('updated', { oldBlock: block, block: newBlock, index, parent: getBlockByPath(root!.value, parentPath) })
     emitUpdate(pg.patches)

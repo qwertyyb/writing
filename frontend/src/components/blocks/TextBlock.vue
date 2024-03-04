@@ -40,7 +40,6 @@ import type { TextData } from './TextBlock';
 import { useMode } from '@/hooks/mode';
 import { useSpellcheck } from '@/hooks/spellcheck';
 import { transformBlock } from '@/hooks/transform';
-import { getBlockByPath } from '@/hooks/move';
 import { createLogger } from '@/utils/logger';
 import { upload } from '@/services/upload';
 import { getImageRatio } from './image/utils';
@@ -66,7 +65,7 @@ const emits = defineEmits<{
   move: [newPath: number[]],
   moveUpper: [],
   moveLower: [],
-  merge: [mergePath: number[]],
+  merge: [],
 
   change: [block: BlockModel],
   focusBefore: [],
@@ -142,50 +141,11 @@ const moveUpper = () => {
   return true
 }
 
-const getPrevMergablePath = () => {
-  if (!props.path || !root?.value) return null
-
-  const getMergablePathLast = (root: BlockModel, path: number[]): number[] | null => {
-    const block = getBlockByPath(root, path)
-
-    for(let i = (block.children?.length ?? 0) - 1; i >= 0; i -= 1) {
-      const mergablePath = getMergablePathLast(root, [...path, i])
-      if (mergablePath) return mergablePath
-    }
-
-    if (block.type === 'text') {
-      return path
-    }
-    return null
-  }
-
-  let prevPath = [...props.path]
-  while(prevPath.length) {
-    let prevPathIndex = prevPath.pop()! - 1
-    while(prevPathIndex >= 0) {
-      const prevBlock = getBlockByPath(root.value, [...prevPath, prevPathIndex])
-      if (!prevBlock) break
-
-      const mergablePath = getMergablePathLast(root.value, [...prevPath, prevPathIndex])
-      if (mergablePath) {
-        return mergablePath
-      }
-
-      prevPathIndex -= 1
-    }
-  }
-  return null
-}
-
 const backspaceKeyHandler = (offset: number) => {
   if (!isEmpty(data.value.ops) && offset === 0) {
     if (!moveUpper()) {
       // 无法向上级移动了，需要和上一个合并？
-      const prevPath = getPrevMergablePath()
-      if (prevPath) {
-        logger.i('merge', prevPath)
-        emits('merge', prevPath)
-      }
+      emits('merge')
     }
     return
   } else if (isEmpty(data.value.ops)) {

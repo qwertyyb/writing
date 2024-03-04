@@ -1,20 +1,5 @@
+import { BlockTree } from "@/models/BlockTree";
 import { type BlockModel } from "@/models/block";
-
-export const getBlockByPath = (root: BlockModel, path: number[]) => {
-  // 路径上的第一个值恒为0，指root本身
-  const [first, ...restPath] = path
-  if (first !== 0) throw new Error('路径的第一个元素为根节点，应该恒为0')
-  let node = root
-  while(restPath.length) {
-    const curIndex = restPath.shift()!
-    if (node.children?.[curIndex]) {
-      node = node.children[curIndex]
-    } else {
-      throw new Error(`路径${JSON.stringify(path)}不正确`)
-    }
-  }
-  return node
-}
 
 export const checkMove = (root: BlockModel, oldPath: number[], newPath: number[]) => {
   // 1. 首先判断能否移动
@@ -28,7 +13,7 @@ export const checkMove = (root: BlockModel, oldPath: number[], newPath: number[]
   if (oldPath.length < 2) {
     throw new Error('旧路径不合法，无法移动')
   }
-  const oldPathParentNode = getBlockByPath(root, oldPath.slice(0, oldPath.length - 1))
+  const oldPathParentNode = BlockTree.getByPath(root, oldPath.slice(0, oldPath.length - 1))
   const oldIndex = oldPath[oldPath.length - 1]
   if (!oldPathParentNode.children?.[oldIndex]) {
     throw new Error('待移动的节点不存在')
@@ -40,7 +25,7 @@ export const checkMove = (root: BlockModel, oldPath: number[], newPath: number[]
   if (newPath.length < 2) {
     throw new Error('新路径不合法，无法移动')
   }
-  const newPathParentNode = getBlockByPath(root, newPath.slice(0, newPath.length - 1))
+  const newPathParentNode = BlockTree.getByPath(root, newPath.slice(0, newPath.length - 1))
   const newIndex = newPath[newPath.length - 1]
   if (newIndex < 0 || newIndex > (newPathParentNode.children?.length ?? 0)) {
     throw new Error('新路径不存在')
