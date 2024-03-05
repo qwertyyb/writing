@@ -52,7 +52,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, inject, type ShallowRef } from 'vue'
+import { computed, inject, toRaw, type ShallowRef } from 'vue'
 import type { SelectionState } from '@/hooks/selection';
 import { createLogger } from '@/utils/logger';
 import { type BlockModel } from '@/models/block';
@@ -64,6 +64,8 @@ import { BlockTree, rootSymbol } from '@/models/BlockTree';
 const logger = createLogger('EditorToolbar')
 
 const rootValue = inject<ShallowRef<BlockTree>>(rootSymbol)
+
+const TextBlockTypes = ['text', 'heading1', 'heading2', 'heading3', 'heading4', 'heading5', 'heading6']
 
 const props = defineProps<{
   root: BlockModel,
@@ -85,7 +87,7 @@ const getFormats = () => {
     selection.from.path,
     selection.to.path,
     (path, block) => {
-      if (block.type === 'text') {
+      if (TextBlockTypes.includes(block.type)) {
         textBlocks.push({ path, block })
       }
     }
@@ -128,7 +130,7 @@ const setFormats = (formats: Record<string, any>) => {
     selection.from.path,
     selection.to.path,
     (path, block) => {
-      if (block.type !== 'text') return
+      if (!TextBlockTypes.includes(block.type)) return
       const delta = new Delta(block.data.ops)
       const start = R.equals(path, selection.from.path) ? selection.from.offset : 0
       const end = R.equals(path, selection.to.path) ? selection.to.offset : delta.length()
@@ -160,8 +162,7 @@ const style = computed(() => {
 })
 
 const clickHandler = (format: string) => {
-  logger.i('clickHandler', JSON.parse(JSON.stringify(props.selection)))
-  logger.i('clickHandler', format)
+  logger.i('clickHandler', format, toRaw(props.selection))
   let name = format
   let value: string | boolean = !formats.value[name]
   if (format === 'super') {

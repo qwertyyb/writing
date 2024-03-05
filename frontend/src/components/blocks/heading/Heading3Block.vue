@@ -11,6 +11,8 @@ import TextBlock from '../TextBlock.vue';
 <style lang="less" scoped>
 .block-heading3 {
   margin: var(--document-editor-heading3-margin, var(--document-editor-heading-margin, 0.5em 0));
-  font-size: var(--document-editor-heading3-font-size);
+  &:deep(.text-block) .ql-editor p {
+    font-size: var(--document-editor-heading3-font-size);
+  }
 }
 </style>

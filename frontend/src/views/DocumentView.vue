@@ -1,5 +1,5 @@
 <template>
-  <div class="document-view">
+  <div class="document-view" :key="id">
     <div class="document-view-header" v-if="documentStore.editing">
       <el-icon :size="20" class="setting-icon" @click="settingDialogVisible = true"><Setting /></el-icon>
     </div>
@@ -10,7 +10,7 @@
         v-if="documentStore.editing"
         :doc-id="documentStore.editing?.id"
         :attributes="documentStore.editing?.attributes"
-        @change="documentStore.updateAttributes"></document-attribute>
+        @change="documentStore.updateAttributes(documentStore.editing!.id, $event)"></document-attribute>
     </el-dialog>
     <div class="document-editor-wrapper">
       <document-editor

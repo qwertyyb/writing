@@ -25,9 +25,6 @@ const commands: BlockConfig[] = [
   heading1,
   heading2,
   heading3,
-  heading4,
-  heading5,
-  heading6,
   link,
   ...ListBlocks,
   image,
@@ -36,7 +33,10 @@ const commands: BlockConfig[] = [
   codeBlock,
   documentBlock,
   todo,
-  excalidraw
+  excalidraw,
+  heading4,
+  heading5,
+  heading6,
 ]
 
 export default commands

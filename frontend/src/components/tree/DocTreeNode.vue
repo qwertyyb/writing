@@ -15,11 +15,16 @@
         chevron_right
         </span>
       </div>
-      <div class="tree-label-wrapper">
-        <div class="tree-label">
+      <div class="tree-node-label-wrapper">
+        <div class="tree-node-label">
           <slot name="node">
             {{ node.title }}
           </slot>
+        </div>
+        <div class="tree-node-state">
+          <span class="material-symbols-outlined share-icon" v-if="shared">
+          share
+          </span>
         </div>
       </div>
       <div class="tree-action">
@@ -74,6 +79,7 @@ const treeSelectedId = inject<ComputedRef<number | string>>('treeSelectedId')
 
 const selected = computed(() => treeSelectedId?.value === props.node.id)
 const expanded = computed(() => treeExpandedState?.value[props.node.id])
+const shared = computed(() => props.node.attributes.some(item => item.key === 'share' && item.value))
 
 const toggleExpand = () => {
   treeEmits?.('toggleExpand', props.node)
@@ -153,10 +159,10 @@ const setHeight = (el: Element) => {
       }
     }
     &.movable-selected {
-      &.movable-insert-before .tree-label-wrapper::before {
+      &.movable-insert-before .tree-node-label-wrapper::before {
         opacity: 1;
       }
-      &.movable-insert-after .tree-label-wrapper::after {
+      &.movable-insert-after .tree-node-label-wrapper::after {
         opacity: 1;
       }
       &.movable-insert-children {
@@ -166,10 +172,12 @@ const setHeight = (el: Element) => {
     .tree-node-offset {
       height: 1px;
     }
-    .tree-label-wrapper {
+    .tree-node-label-wrapper {
       width: 0;
       position: relative;
       flex: 1;
+      display: flex;
+      align-items: center;
       &::before, &::after {
         content: " ";
         position: absolute;
@@ -186,11 +194,18 @@ const setHeight = (el: Element) => {
         bottom: -1.5px;
       }
     }
-    .tree-label {
+    .tree-node-label {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       padding: 3px;
+    }
+    .tree-node-state {
+      display: flex;
+      align-items: center;
+      .share-icon {
+        font-size: 20px;
+      }
     }
     .tree-node-expand-icon-wrapper {
       height: 24px;

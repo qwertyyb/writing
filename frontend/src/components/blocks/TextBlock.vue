@@ -1,5 +1,5 @@
 <template>
-  <div class="text-renderer">
+  <div class="text-block">
     <text-editor :modelValue="data.ops"
       data-block-prop="data,html"
       :readonly="readonly"

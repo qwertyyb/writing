@@ -14,7 +14,7 @@ router
       prisma.document.count({ where }),
       prisma.document.findMany({
         where: { deleted: false, ...where },
-        select: { id: true, path: true, title: true, updatedAt: true, createdAt: true, deleted: true, deletedAt: true, nextId: true }
+        select: { id: true, path: true, title: true, updatedAt: true, createdAt: true, deleted: true, deletedAt: true, nextId: true, attributes: true },
       })
     ])
     ctx.body = createRes({ total, list })

@@ -7,13 +7,13 @@ import { defineStore } from "pinia";
 
 const logger = createLogger('document-store')
 
-type ListItem = Omit<Document, 'content' | 'attributes'>
+type ListItem = Omit<Document, 'content'>
 
 export interface DocumentItem extends ListItem {
   children: DocumentItem[]
 }
 
-export interface EditingDocument extends Omit<Document, 'content'> {
+export interface EditingDocument extends ListItem {
   content: BlockModel
 }
 
@@ -215,10 +215,11 @@ export const useDocumentStore = defineStore('document', {
       }
       await updateDocument({ id: this.editing.id, title, content: JSON.stringify(this.editing.content) })
     },
-    async updateAttributes(attributes: Attribute[]) {
-      if (!this.editing) return
-      const { data } = await setAttributes(this.editing.id, attributes)
-      const newAttributes = this.editing.attributes.map(item => {
+    async updateAttributes(id: number, attributes: Attribute[]) {
+      const { data } = await setAttributes(id, attributes)
+      const target = this.documents.find(item => item.id === id)
+      if (!target) return
+      const newAttributes = target.attributes.map(item => {
         const row = data.find(item => item.key === item.key)
         return row ?? item
       })
@@ -227,10 +228,11 @@ export const useDocumentStore = defineStore('document', {
           newAttributes.push(row)
         }
       })
-      this.editing.attributes = newAttributes
-    },
-    async updateEditingPath() {
-      // @todo 
+      target.attributes = newAttributes
+      const isEditing = this.editing && (this.editing.id === id)
+      if (isEditing) {
+        this.editing!.attributes = newAttributes
+      }
     },
     expandAll() {
       this.expandedIdMap = this.documents.reduce<Record<number, boolean>>((acc, doc) => {
