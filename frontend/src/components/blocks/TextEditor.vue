@@ -53,8 +53,6 @@ const emits = defineEmits<{
 
 const el = ref<HTMLDivElement>()
 
-const getValue = () => el.value?.textContent ?? ''
-
 let editor: Quill | null
 
 const setValue = () => {
@@ -75,31 +73,52 @@ watch(model, () => {
 const trigger = {
   code: /`([^`]+)`$/,
   bold: /\*\*([^*]+)\*\*$/,
-  italic: /\*([^*]+)\*$/,
+  italic: /(?<!\*)\*([^*]+)\*$/,
   strike: /~~([^~]+)~~$/
 }
-
-const findCount = (text: string, target: string) => {
-  const count = R.count(item => item === target, Array.from(text as string))
-  return count
+const formatLen: Record<string, number> = {
+  code: 2,
+  bold: 4,
+  italic: 2,
+  strike: 4,
 }
 
 const transform = (delta: Delta, origin: Delta) => {
   if (delta.ops.length > 2) return
 
-  // @ts-ignore
-  window.Delta = Delta
-
-  logger.i('delta', delta, 'origin', origin)
   let first = delta.ops[0]
   let last = R.last(delta.ops)
   if (delta.ops.length === 1) {
     first = { retain: 0 }
   }
-  if (!first.retain || !last?.insert) return
+  if (!first.retain || !last || (!last?.insert && !last.delete)) return
+  if (last.delete) {
+    let before = origin.slice(0, first.retain as number)
+    let after = origin.slice(first.retain as number)
+    const op = R.last(before.ops)
+    if (!op || !op.attributes) return
+    const isInBetween = op?.attributes?.code && R.head(after.ops)?.attributes?.code
+    logger.i(isInBetween, before, after)
+    if (isInBetween) return
+    const format = Object.keys(op.attributes).find(name => op.attributes![name])
+    if (!format) return
+    if (op.attributes[format]) {
+      const len = op.insert!.length as number
+      const result = origin.compose(new Delta([
+        { retain: (first.retain as number) - len },
+        { delete: len + 1 },
+        { insert: `\`${op.insert}\``, attributes: { ...op.attributes, [format]: false } },
+      ]))
+      logger.w('expect', result)
+      editor?.setContents(result as any)
+      nextTick(() => {
+        editor?.setSelection((first.retain as number) + formatLen[format], 0)
+      })
+    }
+    return
+  }
 
-  let before = origin.slice(0, first.retain as number).insert(last.insert)
-  logger.i('before', before)
+  let before = origin.slice(0, first.retain as number).insert(last.insert as string)
   let text = toText(before.ops)
 
   const key = Object.keys(trigger).find(key => text.match(trigger[key as keyof typeof trigger])) as keyof typeof trigger
@@ -107,19 +126,22 @@ const transform = (delta: Delta, origin: Delta) => {
   const match = text.match(trigger[key])!
   const triggerLength = (match[0].length - match[1].length) / 2
   const changes = new Delta([
-    { retain: match.index },
+    ...(match.index ? [{ retain: match.index }] : []),
     { delete: triggerLength },
     { retain: match[1].length, attributes: { [key]: true } },
     { delete: triggerLength },
     { insert: ' ' }
   ])
-  logger.i('changes', match, before, changes, before.compose(changes))
   const result = before
     .compose(changes)
     .compose(new Delta([
       { retain: before.length() - triggerLength * 2 + 1 },
       ...origin.slice(first.retain as number).ops
     ]))
+  logger.i('changes', before, changes, before.compose(changes), [
+      { retain: before.length() - triggerLength * 2 + 1 },
+      ...origin.slice(first.retain as number).ops
+    ], result)
   logger.w('result', result)
   editor?.setContents(result as any)
   nextTick(() => {
@@ -205,7 +227,7 @@ const backspaceKeyHandler = (event: KeyboardEvent, offset: number) => {
     event.preventDefault()
     return false
   }
-  if (offset > 0 && offset <= getValue().length) {
+  if (offset > 0) {
     return
   }
   event.preventDefault()
@@ -271,7 +293,6 @@ defineExpose({
   p {
     margin: 0;
     padding: 0;
-    font-size: 14px;
   }
   code {
     padding: 0.2em 0.4em;
