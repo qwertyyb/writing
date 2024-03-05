@@ -31,7 +31,7 @@
 
 <script lang="ts" setup>
 import { type BlockModel } from '@/models/block';
-import { computed, inject, onBeforeUnmount, onMounted } from 'vue';
+import { computed } from 'vue';
 import BlockRenderer from './blocks/BlockRenderer.vue';
 import BlockListEditor from './BlockListEditor.vue';
 import { getBlockConfig } from './blocks';
@@ -66,14 +66,6 @@ const {
   updateBlock,
   removeBlock,
 } = useOperator(props)
-
-onMounted(() => {
-  inject<Map<string, Omit<ReturnType<typeof useOperator>, 'el'>>>('blockInstances')?.set(block.value.id, { addBlock, updateBlock, removeBlock })
-})
-
-onBeforeUnmount(() => {
-  inject<Map<string, Omit<ReturnType<typeof useOperator>, 'el'>>>('blockInstances')?.delete(block.value.id)
-})
 
 const { move, moveUpper, moveLower } = useMove()
 

@@ -1,6 +1,7 @@
 <template>
-  <section class="layout-view">
-    <aside class="layout-aside" :style="{ width: runtimeStore.settings.layout.siderWidth + '%' }">
+  <column-container class="layout-view" v-model="runtimeStore.settings.layout.siderWidth"
+    @change="runtimeStore.updateSettings('layout', { ...runtimeStore.settings.layout, siderWidth: $event })">
+    <template v-slot:side>
       <document-tree
         v-if="documentStore.tree"
         :tree="documentStore.tree"
@@ -12,17 +13,9 @@
         :selectedId="documentStore.editing?.id"
         :expandedIdMap="documentStore.expandedIdMap"
       ></document-tree>
-    </aside>
-    <div class="layout-spliter"
-      @pointerdown="pointerdownHandler"
-      @pointermove="pointermoveHandler"
-      @pointerup="pointerupHandler"></div>
-    <main class="layout-main">
-      <slot>
-        <router-view></router-view>
-      </slot>
-    </main>
-  </section>
+    </template>
+    <router-view></router-view>
+  </column-container>
 </template>
 
 <script lang="ts" setup>
@@ -32,8 +25,8 @@ import type { TreeNodeModel } from '@/components/tree/types';
 import { useDocumentStore } from '@/stores/document';
 import { createLogger } from '@/utils/logger';
 import router from '@/router';
-import { ref } from 'vue';
 import { useRuntime } from '@/stores/runtime';
+import ColumnContainer from '@/components/ColumnContainer.vue';
 
 const logger = createLogger('layout-view')
 
@@ -49,26 +42,6 @@ const selectHandler = async (node: TreeNodeModel) => {
     name: 'document',
     params: { id: node.id }
   })
-}
-
-let dragging = false
-const pointerdownHandler = (event: PointerEvent) => {
-  (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
-  dragging = true
-}
-
-const pointermoveHandler = (event: PointerEvent) => {
-  if (!dragging) return;
-  const { width } = document.documentElement.getBoundingClientRect()
-  runtimeStore.updateSettings('layout', {
-    ...runtimeStore.settings.layout,
-    siderWidth: event.clientX / width * 100
-  })
-}
-
-const pointerupHandler = (event: PointerEvent) => {
-  dragging = false;
-  (event.target as HTMLElement).releasePointerCapture(event.pointerId)
 }
 
 </script>

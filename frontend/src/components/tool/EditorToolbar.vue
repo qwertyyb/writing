@@ -52,23 +52,23 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, inject } from 'vue'
+import { computed, inject, type ShallowRef } from 'vue'
 import type { SelectionState } from '@/hooks/selection';
 import { createLogger } from '@/utils/logger';
-import { getBlockByPath, type BlockModel, walkTreeBetween } from '@/models/block';
-import { equals, last, take } from 'ramda'
+import { type BlockModel } from '@/models/block';
+import * as R from 'ramda'
 import { getOps } from '@/models/delta'
 import Delta from 'quill-delta';
-import useBlockOperate from '@/hooks/operate';
+import { BlockTree, rootSymbol } from '@/models/BlockTree';
 
 const logger = createLogger('EditorToolbar')
+
+const rootValue = inject<ShallowRef<BlockTree>>(rootSymbol)
 
 const props = defineProps<{
   root: BlockModel,
   selection: SelectionState
 }>()
-
-const blockInstances = inject<Map<string, Omit<ReturnType<typeof useBlockOperate>, 'el'>>>('blockInstances')
 
 const finalState = (origin: boolean | null, value: boolean) => {
   if (origin === null) return value
@@ -81,8 +81,7 @@ const getFormats = () => {
   }
   const { selection } = props.selection
   const textBlocks: { path: number[], block: BlockModel}[] = []
-  walkTreeBetween(
-    props.root,
+  rootValue?.value.walkTreeBetween(
     selection.from.path,
     selection.to.path,
     (path, block) => {
@@ -93,8 +92,8 @@ const getFormats = () => {
   )
   const formats = textBlocks.reduce<Record<string, any>>((acc, cur) => {
     const delta = new Delta(cur.block.data.ops)
-    const start = equals(cur.path, selection.from.path) ? selection.from.offset : 0
-    const end = equals(cur.path, selection.to.path) ? selection.to.offset : delta.length()
+    const start = R.equals(cur.path, selection.from.path) ? selection.from.offset : 0
+    const end = R.equals(cur.path, selection.to.path) ? selection.to.offset : delta.length()
     const ops = getOps(cur.block.data.ops, { index: start, length: end - start})
     const bold = ops.every(op => op.attributes?.bold)
     const italic = ops.every(op => op.attributes?.italic)
@@ -125,26 +124,23 @@ const setFormats = (formats: Record<string, any>) => {
     bold: false, italic: false, link: false, code: false
   }
   const { selection } = props.selection
-  walkTreeBetween(
-    props.root,
+  rootValue?.value.walkTreeBetween(
     selection.from.path,
     selection.to.path,
     (path, block) => {
       if (block.type !== 'text') return
       const delta = new Delta(block.data.ops)
-      const start = equals(path, selection.from.path) ? selection.from.offset : 0
-      const end = equals(path, selection.to.path) ? selection.to.offset : delta.length()
+      const start = R.equals(path, selection.from.path) ? selection.from.offset : 0
+      const end = R.equals(path, selection.to.path) ? selection.to.offset : delta.length()
 
       const ops = delta.compose(new Delta().retain(start).retain(end - start, formats)).ops
 
-      const index = last(path)!
-      const parentPath = take(path.length - 1, path)
-      blockInstances?.get(getBlockByPath(props.root, parentPath).id)?.updateBlock(index, {
+      rootValue?.value.update(path, {
         data: {
           ...block.data,
           ops
         }
-      }, block)
+      })
     }
   )
 }

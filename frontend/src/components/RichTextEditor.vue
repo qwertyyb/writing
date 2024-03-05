@@ -13,8 +13,7 @@
       @keydown.capture="keydownHandler"
       tabindex="0"
       :contenteditable="mode === Mode.Readonly ? undefined : 'plaintext-only'">
-      <block-editor v-model="model"
-        @update:model-value="updateHandler"
+      <block-editor :model-value="model"
         :index="0"
         :path="[]"
         :key="model.id"
@@ -26,8 +25,8 @@
 <script lang="ts" setup>
 import { createBlock, type BlockModel } from '@/models/block';
 import BlockEditor from './BlockEditor.vue';
-import { useFocusEvent } from '@/hooks/focus';
-import { provide, type PropType, computed, ref, shallowRef, markRaw, toRaw } from 'vue';
+import { focusBlock } from '@/hooks/focus';
+import { provide, type PropType, computed, ref, shallowRef, toRaw, watch } from 'vue';
 import { Mode } from './schema';
 import { useHistory } from '@/hooks/history';
 import { useBlockTool } from '@/hooks/use-block-tool';
@@ -35,7 +34,6 @@ import { useSelection } from '@/hooks/selection';
 import EditorToolbar from './tool/EditorToolbar.vue';
 import { createLogger } from '@/utils/logger';
 import { BlockTree, rootSymbol } from '@/models/BlockTree';
-import { focusBlock } from '@/hooks/operate';
 
 const logger = createLogger('RichTextEditor')
 
@@ -59,10 +57,27 @@ defineEmits<{
 
 const el = ref<HTMLElement>()
 const editorEl = ref<HTMLDivElement>()
-const rootValue = shallowRef(toRaw(new BlockTree(model.value)))
+const rootValue = shallowRef(new BlockTree(model.value))
+
+const mode = computed(() => props.mode)
+const spellcheck = computed(() => props.spellcheck)
+
+provide('mode', mode)
+provide('spellcheck', spellcheck)
+provide(rootSymbol, rootValue)
+
+const { selection, pointermoveHandler: selectionTrigger } = useSelection({ el: editorEl })
+
+const { state: blockToolState, pointermoveHandler: blockToolTrigger } = useBlockTool({
+  el, mode
+})
+
+const { undo, redo, pushLatest } = useHistory(el, model)
 
 rootValue.value.on('change', (value, changes) => {
   logger.i('change', value, changes)
+  model.value = value
+  pushLatest()
 })
 
 rootValue.value.on('added', ({ block }) => {
@@ -74,24 +89,9 @@ rootValue.value.on('updated', ({ oldBlock, block }) => {
   }
 })
 
-const mode = computed(() => props.mode)
-const spellcheck = computed(() => props.spellcheck)
-
-provide('mode', mode)
-provide('spellcheck', spellcheck)
-provide('root', model)
-provide('blockInstances', new Map())
-provide(rootSymbol, rootValue)
-
-useFocusEvent()
-
-const { state: blockToolState, pointermoveHandler: blockToolTrigger } = useBlockTool({
-  el, mode
+watch(model, (value) => {
+  rootValue.value.updateModel(value)
 })
-
-const { undo, redo, pushLatest } = useHistory(el, model)
-
-const { selection, pointermoveHandler: selectionTrigger } = useSelection({ el, root: model })
 
 const pointermoveHandler = (event: PointerEvent) => {
   selectionTrigger(event)
@@ -115,11 +115,6 @@ const keydownHandler = (event: KeyboardEvent) => {
     event.stopPropagation()
     undo()
   }
-}
-
-const updateHandler = (value: BlockModel) => {
-  logger.i('updateHandler', JSON.parse(JSON.stringify(value)))
-  pushLatest()
 }
 </script>
 

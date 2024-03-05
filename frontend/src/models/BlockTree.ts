@@ -3,17 +3,21 @@ import * as R from "ramda"
 import EventEmitter from 'eventemitter3'
 import { createBlock, type BlockModel } from "./block"
 import { PatchGenerator } from "@/utils/patch"
+import { toRaw } from "vue"
 
 const logger = createLogger('BlockTree')
 
 export const rootSymbol = Symbol('root')
 
 export class BlockTree extends EventEmitter {
-  model: BlockModel
+  private _model: BlockModel
+  get model(): BlockModel {
+    return this._model
+  }
   private pg: PatchGenerator = new PatchGenerator()
   constructor(model: BlockModel) {
     super()
-    this.model = model
+    this._model = model
   }
 
   private getParentFromPath(path: number[]) {
@@ -27,13 +31,17 @@ export class BlockTree extends EventEmitter {
     this.pg.clear()
   }
 
-  update<T extends (...args: any) => any>(updater: T): ReturnType<T> {
+  updateModel(model: BlockModel) {
+    this._model = model
+  }
+
+  startTransaction<T extends (...args: any) => any>(updater: T): ReturnType<T> {
     const result = updater()
     this.emitChange()
     return result
   }
 
-  addChildAfter(path: number[], data: Partial<BlockModel>) {
+  addAfter(path: number[], data: Partial<BlockModel>) {
     const index = R.last(path)!
     const parent = this.getParentFromPath(path)
 
@@ -52,14 +60,14 @@ export class BlockTree extends EventEmitter {
     return newBlock
   }
 
-  updateChild(path: number[], data: Partial<BlockModel>) {
+  update(path: number[], data: Partial<BlockModel>) {
     const index = R.last(path)!
     const parent = this.getParentFromPath(path)
 
     logger.i('update child', index, data)
     const child = parent.children[index]
     if (!child) {
-      logger.e('未找到子节点', parent, index)
+      logger.e('未找到子节点', toRaw(parent), [...path])
       throw new Error('未找到子节点')
     }
     const oldBlock = { ...child }
@@ -74,7 +82,7 @@ export class BlockTree extends EventEmitter {
     return parent.children[index]
   }
 
-  removeChild = (path: number[]) => {
+  remove = (path: number[]) => {
     const index = R.last(path)!
     const parent = this.getParentFromPath(path)
 
@@ -160,6 +168,10 @@ export class BlockTree extends EventEmitter {
 
   getByPath = (path: number[]) => {
     return BlockTree.getByPath(this.model, path)
+  }
+
+  walkTreeBetween = (from: number[], to: number[], callback: (path: number[], block: BlockModel) => void) => {
+    return BlockTree.walkTreeBetween(this.model, from, to, callback)
   }
 
   getPrev = (

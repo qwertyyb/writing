@@ -33,6 +33,25 @@ const buildTree = (list: ListItem[], path: string, id: number | null): DocumentI
   ]
 }
 
+const transformContent = (model: BlockModel): BlockModel => {
+  const children = (model.children ?? []).map(item => transformContent(item))
+  if (model.type === 'text' && !model.data?.ops && model.data?.html) {
+    const ops = [{ insert: model.data.html }]
+    return {
+      ...model,
+      data: {
+        ...model.data,
+        ops
+      },
+      children
+    }
+  }
+  return { 
+    ...model,
+    children
+  }
+}
+
 export const useDocumentStore = defineStore('document', {
   state: () => ({
     documents: [] as ListItem[],
@@ -83,7 +102,7 @@ export const useDocumentStore = defineStore('document', {
       updates.push({ id: source.id, path: source.path, nextId: source.nextId })
       return updates
     },
-    async move({ sourceId, sourceIndexPath, toIndexPath, toId, position }
+    async move({ sourceId, toId, position }
       : {
         sourceIndexPath: number[], sourceId: number,
         toIndexPath: number[], toId: number,
@@ -170,7 +189,7 @@ export const useDocumentStore = defineStore('document', {
       const { data: document } = await getDocument({ id })
       this.editing = {
         ...document,
-        content: JSON.parse(document.content) as BlockModel
+        content: transformContent(JSON.parse(document.content) as BlockModel)
       }
     },
     async updateEditingContent(content: BlockModel): Promise<void> {
@@ -178,11 +197,11 @@ export const useDocumentStore = defineStore('document', {
         throw new Error('没有正在编辑的文档')
       }
       const title = content.data?.title ?? this.editing?.title
-      // this.editing.title = title
-      // const doc = this.documents.find(item => item.id === this.editing!.id)
-      // if (doc) {
-      //   doc.title = title
-      // }
+      this.editing.title = title
+      const doc = this.documents.find(item => item.id === this.editing!.id)
+      if (doc) {
+        doc.title = title
+      }
       await updateDocument({ id: this.editing.id, title, content: JSON.stringify(content) })
     },
     async updateEditingTitle(title: string): Promise<void> {

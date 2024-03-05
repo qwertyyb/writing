@@ -46,7 +46,7 @@ watch(keyword, () => selectedIndex.value = 0)
 
 watch(selectedIndex, async () => {
   await nextTick()
-  el.value.querySelector<HTMLElement>('.command-tool-item.selected')?.scrollIntoView({
+  el.value?.querySelector<HTMLElement>('.command-tool-item.selected')?.scrollIntoView({
     block: 'nearest'
   })
 })

@@ -63,10 +63,8 @@ const setValue = () => {
 }
 
 watch(model, () => {
-  logger.i('watch callback')
   if (!editor) return
   if (JSON.stringify(model.value) !== JSON.stringify(editor.getContents().ops)) {
-    logger.i(model.value)
     setValue()
   }
 })

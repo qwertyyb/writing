@@ -1,6 +1,5 @@
 import { createLogger } from "@/utils/logger"
-import { type Ref, onMounted, onBeforeUnmount, type ModelRef, ref } from "vue"
-import { type BlockModel } from "@/models/block"
+import { type Ref, onMounted, onBeforeUnmount, ref } from "vue"
 import { getSelectionOffset } from "@/models/caret"
 
 const logger = createLogger('selection')
@@ -22,8 +21,7 @@ export interface SelectionState {
   } | null
 }
 
-export const useSelection = ({ el, root }: {
-  root: ModelRef<BlockModel>,
+export const useSelection = ({ el }: {
   el: Ref<HTMLElement | undefined>
 }) => {
   const state = ref<SelectionState>({
@@ -67,11 +65,6 @@ export const useSelection = ({ el, root }: {
     return blockEl?.dataset.blockId ?? null
   }
 
-  const getBlockPathFromNode = (node: Node): number[] | null => {
-    const blockEl = getBlockElFromNode(node)
-    return blockEl?.dataset.blockPath?.split(',').map(i => Number(i)) ?? null
-  }
-
   const resetContenteditable = () => {
     isMultiSelect = false
     el.value!.querySelectorAll<HTMLElement>('[data-origin-contenteditable]')
@@ -79,6 +72,10 @@ export const useSelection = ({ el, root }: {
         dom.contentEditable = dom.dataset.originContenteditable as string
         delete dom.dataset.originContenteditable
       })
+  }
+
+  const selectionInEditor = (selection: Selection) => {
+    return el.value!.contains(selection.anchorNode) && el.value!.contains(selection.focusNode)
   }
 
   const rangeHandler = () => {
@@ -93,9 +90,6 @@ export const useSelection = ({ el, root }: {
     const endBlockPath = endBlockEl?.dataset.blockPath?.split(',').map(i => Number(i))
     const endBlockProp = getBlockPropFromNode(range.endContainer)
     
-    const doc = range.cloneContents()
-    logger.i('rangeHandler', doc)
-
     state.value.selection = {
       from: {
         path: startBlockPath!,
@@ -110,7 +104,6 @@ export const useSelection = ({ el, root }: {
     }
     const rect = range.getBoundingClientRect()
     const pRect = el.value!.getBoundingClientRect()
-    logger.i(rect, pRect, state.value)
     state.value.rect = {
       width: rect.width,
       height: rect.height,
@@ -121,8 +114,9 @@ export const useSelection = ({ el, root }: {
 
   const selectionchangeHandler = () => {
     const selection = window.getSelection()
-    logger.w('selectionchange', selection)
-    if (!selection) return
+    if (!selection || !selectionInEditor(selection)) return resetContenteditable()
+
+    logger.i('selectionchange', selection)
     if (selection.anchorNode) {
       anchorNode = selection.anchorNode
       anchorOffset = selection.anchorOffset
@@ -162,8 +156,9 @@ export const useSelection = ({ el, root }: {
           })
         const sel = window.getSelection()
         if (!sel) return
-  
-        sel.setBaseAndExtent(anchorNode!, anchorOffset, focusNode!, focusOffset)
+        if (anchorNode && focusNode) {
+          sel.setBaseAndExtent(anchorNode!, anchorOffset, focusNode!, focusOffset)
+        }
         logger.i('pointermove', window.getSelection(), anchorNode, focusNode)
         return
       }

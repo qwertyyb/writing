@@ -1,6 +1,6 @@
 <template>
   <div class="text-renderer">
-    <text-editor :modelValue="data.ops || data.html"
+    <text-editor :modelValue="data.ops"
       data-block-prop="data,html"
       :readonly="readonly"
       :spellcheck="spellcheck"
@@ -31,7 +31,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, watch, toRaw, watchEffect, inject, type ModelRef, nextTick } from 'vue';
+import { ref, reactive, watch, toRaw } from 'vue';
 import BlockTool from '../tool/BlockTool.vue';
 import TextEditor from '@/components/blocks/TextEditor.vue';
 import { moveCaretToEnd } from '@/models/caret';
@@ -48,7 +48,7 @@ import { isEmpty, split, toText } from '@/models/delta';
 
 const logger = createLogger('TextBlock')
 
-const block = defineModel<BlockModel<TextData | any>>({ required: true })
+const block = defineModel<BlockModel<TextData>>({ required: true })
 
 const props = defineProps<{
   index: number,
@@ -78,15 +78,12 @@ const spellcheck = useSpellcheck()
 const data = ref<TextData>({ ...block.value.data, ops: block.value.data?.ops ?? [] })
 
 const updateModelValue = (ops: DeltaOperation[]) => {
-  logger.i('updateModelValue after', ops)
   block.value = { ...block.value, data: { ops } }
   data.value = { ops }
-
-  logger.i('updateModelValue after', data.value)
 }
 watch(block, () => {
   if (JSON.stringify(data.value.ops) !== JSON.stringify(block.value?.data?.ops)) {
-    data.value.ops = block.value.data?.ops ?? ''
+    data.value.ops = block.value.data?.ops ?? []
   }
 })
 
@@ -123,7 +120,6 @@ const enterKeyHandler = async (offset: number) => {
   // 把当前内容截断
   const { before, after } = split(data.value.ops, offset)
   updateModelValue(before as any)
-  // await nextTick()
   logger.i('add text node', after)
   emits('add', {
     type: 'text',
@@ -132,8 +128,6 @@ const enterKeyHandler = async (offset: number) => {
     }
   })
 }
-
-const root = inject<ModelRef<BlockModel>>('root')
 
 const moveUpper = () => {
   if (!props.path || props.path.length <= 2) return false
@@ -166,7 +160,7 @@ const keydownHandler = (event: KeyboardEvent, offset: number) => {
   const newBlock = transformBlock(trigger, block.value, content)
   if (newBlock) {
     event.preventDefault()
-    block.value = newBlock
+    block.value = newBlock as any
   }
 }
 

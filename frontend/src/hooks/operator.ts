@@ -3,7 +3,6 @@ import type { BlockModel } from "@/models/block"
 import { type ShallowRef, inject } from "vue"
 import * as R from 'ramda'
 import { createLogger } from "@/utils/logger"
-import { checkMove } from "./move"
 import { concat } from "@/models/delta"
 import { moveCaret } from "@/models/caret"
 
@@ -15,10 +14,10 @@ export const useOperator = (props: { path: number[] }) => {
   const addBlock = (index: number, data: Partial<BlockModel>) => {
     const prevPath = [...props.path, index]
     const prev = rootValue?.value.getByPath(prevPath)
-    return rootValue?.value.update(() => {
+    return rootValue?.value.startTransaction(() => {
       const children = data.children ?? prev?.children ?? []
-      rootValue?.value.addChildAfter([...props.path, index], { ...data, children })
-      rootValue?.value.updateChild(
+      rootValue?.value.addAfter([...props.path, index], { ...data, children })
+      rootValue?.value.update(
         prevPath,
         { children: [] }
       )
@@ -26,14 +25,14 @@ export const useOperator = (props: { path: number[] }) => {
   }
 
   const updateBlock = (index: number, data: Partial<BlockModel>) => {
-    return rootValue?.value.update(() => rootValue?.value.updateChild([...props.path, index], data))
+    return rootValue?.value.startTransaction(() => rootValue?.value.update([...props.path, index], data))
   }
 
   const removeBlock = (index: number) => {
-    return rootValue?.value.update(() => {
-      const removed = rootValue?.value.removeChild([...props.path, index])
+    return rootValue?.value.startTransaction(() => {
+      const removed = rootValue?.value.remove([...props.path, index])
       const { path: prevPath, block: prev } = rootValue!.value.getPrev([...props.path, index])!
-      rootValue!.value.updateChild(
+      rootValue!.value.update(
         prevPath,
         { children: [ ...prev.children, ... removed.children ] }
       )
@@ -43,16 +42,50 @@ export const useOperator = (props: { path: number[] }) => {
   return { addBlock, updateBlock, removeBlock }
 }
 
+export type OperateActions = ReturnType<typeof useOperator>
+
 export const useMove = () => {
   const rootValue = inject<ShallowRef<BlockTree>>(rootSymbol)
 
+  const canMove = (oldPath: number[], newPath: number[]) => {
+    // 1. 首先判断能否移动
+    /**
+     * 能否移动的判断标准为:
+     * a. 旧路径上该节点存在
+     * b. 能到达新路径
+     */
+    // 判断旧路径该节点存在，即通过旧路径能拿到该节点
+    // 不能移动root节点，所以oldPath的长度至少为2
+    if (oldPath.length < 2) {
+      throw new Error('旧路径不合法，无法移动')
+    }
+    const oldPathParentNode = rootValue?.value.getByPath(oldPath.slice(0, oldPath.length - 1))
+    const oldIndex = oldPath[oldPath.length - 1]
+    if (!oldPathParentNode?.children?.[oldIndex]) {
+      throw new Error('待移动的节点不存在')
+    }
+  
+    // 新路径合法性的判断，首先需要判断其路径的父节点存在，因为最后的子节点是待移入的，所以是有可能不存在的
+    // 其次需要判断待移入的节点在父节点的合法性，比如不能超出当前子节点的数量，不能为负数等
+    // 所以新路径的最短长度为2，即移动为root节点的直接子节点
+    if (newPath.length < 2) {
+      throw new Error('新路径不合法，无法移动')
+    }
+    const newPathParentNode = rootValue?.value.getByPath(newPath.slice(0, newPath.length - 1))
+    const newIndex = newPath[newPath.length - 1]
+    if (newIndex < 0 || newIndex > (newPathParentNode?.children?.length ?? 0)) {
+      throw new Error('新路径不存在')
+    }
+    return true
+  }
+
   const move = (oldPath: number[], newPath: number[]) => {
-    const { oldPathParent, newPathParent, } = checkMove(rootValue!.value.model, oldPath, newPath)
-    logger.i('move, path:', { oldPath, oldPathParent }, { newPath, newPathParent })
-    rootValue?.value.update(() => {
-      const removed = rootValue!.value.removeChild(oldPath)
+    canMove(oldPath, newPath)
+    logger.i('move, from:', [...oldPath], [...newPath])
+    rootValue?.value.startTransaction(() => {
+      const removed = rootValue!.value.remove(oldPath)
       logger.i('move, removed: ', JSON.parse(JSON.stringify(removed)))
-      rootValue!.value.addChildAfter(newPath, removed)
+      rootValue!.value.addAfter(newPath, removed)
     })
   }
 
@@ -66,11 +99,11 @@ export const useMove = () => {
     const afterChildren = oldParent.children!.slice(oldIndex + 1)
     logger.i('moveUpper', oldParent, oldIndex, newPosParent)
 
-    rootValue?.value.update(() => {
-      rootValue!.value.updateChild(path.slice(0, path.length - 1), {
+    rootValue?.value.startTransaction(() => {
+      rootValue!.value.update(path.slice(0, path.length - 1), {
         children: oldParent.children?.slice(0, oldIndex) || []
       })
-      rootValue!.value.addChildAfter(path.slice(0, path.length - 1), {
+      rootValue!.value.addAfter(path.slice(0, path.length - 1), {
         ...oldBlock,
         children: [
           ...oldBlock.children || [],
@@ -101,8 +134,8 @@ export const useMerge = () => {
     const origin = rootValue!.value.getByPath(originPath)
     
     const { ops, originLength: offset } = concat(mergeBlock.data.ops, origin.data.ops)
-    rootValue?.value.update(() => {
-      rootValue!.value.updateChild(mergePath, {
+    rootValue?.value.startTransaction(() => {
+      rootValue!.value.update(mergePath, {
         data: {
           ...mergeBlock.data,
           ops
@@ -112,7 +145,7 @@ export const useMerge = () => {
           ...(origin.children || [])
         ]
       })
-      rootValue!.value.removeChild(originPath)
+      rootValue!.value.remove(originPath)
     })
     setTimeout(() => {
       moveCaret(document.body.querySelector<HTMLDivElement>(`[data-block-id=${JSON.stringify(mergeBlock.id)}] [data-focusable]`)!, offset)
