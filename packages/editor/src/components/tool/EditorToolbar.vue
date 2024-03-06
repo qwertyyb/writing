@@ -14,10 +14,50 @@
       :class="{ actived: formats?.italic }"
       @pointerdown.capture.stop="clickHandler('italic')">I</li>
     <li class="toolbar-item">
-      <span class="material-symbols-outlined">format_color_fill</span>
+      <span class="material-symbols-outlined" :style="{color: formats.background || ''}">format_color_fill</span>
+      <el-color-picker v-model="formats.background"
+        show-alpha
+        @change="formatText('background', $event)"
+        class="editor-color-picker"
+        :predefine="[
+        '#ff4500',
+        '#ff8c00',
+        '#ffd700',
+        '#90ee90',
+        '#00ced1',
+        '#1e90ff',
+        '#c71585',
+        'rgba(255, 69, 0, 0.68)',
+        'rgb(255, 120, 0)',
+        'hsv(51, 100, 98)',
+        'hsva(120, 40, 94, 0.5)',
+        'hsl(181, 100%, 37%)',
+        'hsla(209, 100%, 56%, 0.73)',
+        '#c7158577',
+      ]" />
     </li>
     <li class="toolbar-item">
-      <span class="material-symbols-outlined">format_color_text</span>
+      <el-color-picker v-model="formats.color"
+        show-alpha
+        class="editor-color-picker"
+        @change="formatText('color', $event)"
+        :predefine="[
+        '#ff4500',
+        '#ff8c00',
+        '#ffd700',
+        '#90ee90',
+        '#00ced1',
+        '#1e90ff',
+        '#c71585',
+        'rgba(255, 69, 0, 0.68)',
+        'rgb(255, 120, 0)',
+        'hsv(51, 100, 98)',
+        'hsva(120, 40, 94, 0.5)',
+        'hsl(181, 100%, 37%)',
+        'hsla(209, 100%, 56%, 0.73)',
+        '#c7158577',
+      ]" />
+      <span class="material-symbols-outlined" :style="{color: formats.color || ''}">format_color_text</span>
     </li>
     <li class="toolbar-item"
       :class="{ actived: formats?.underline }"
@@ -52,7 +92,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, inject, toRaw, type ShallowRef } from 'vue'
+import { computed, inject, toRaw, type ShallowRef, ref } from 'vue'
 import type { SelectionState } from '../../hooks/selection';
 import { createLogger } from '@writing/utils/logger';
 import { type BlockModel } from '../../models/block';
@@ -60,6 +100,7 @@ import * as R from 'ramda'
 import { getOps } from '../../models/delta'
 import Delta from 'quill-delta';
 import { BlockTree, rootSymbol } from '../../models/BlockTree';
+import { ElColorPicker } from 'element-plus'
 
 const logger = createLogger('EditorToolbar')
 
@@ -105,7 +146,37 @@ const getFormats = () => {
     const scriptSuper = ops.every(op => op.attributes?.script === 'super')
     const strike = ops.every(op => op.attributes?.strike)
     const underline = ops.every(op => op.attributes?.underline)
+    if (acc.color === null || typeof acc.color === 'string') {
+      const allColors = ops.map(op => {
+        if (op.insert) {
+          return op.attributes?.color
+        }
+        return null
+      })
+      const colors = new Set(allColors)
+      if (colors.size === 1) {
+        acc.color = acc.color === null ? allColors[0] : acc.color === allColors[0] ? acc.color : false
+      } else if (colors.size > 1) {
+        acc.color = false
+      }
+    }
+    if (acc.background === null || typeof acc.background === 'string') {
+      const allBackgrounds = ops.map(op => {
+        if (op.insert) {
+          return op.attributes?.background
+        }
+        return null
+      })
+      const backgrounds = new Set(allBackgrounds)
+      if (backgrounds.size === 1) {
+        acc.background = acc.background === null ? allBackgrounds[0] : acc.background === allBackgrounds[0] ? acc.background : false
+      } else if (backgrounds.size > 1) {
+        acc.background = false
+      }
+      logger.w('acc.background', acc.background)
+    }
     return {
+      ...acc,
       bold: finalState(acc.bold, bold),
       italic: finalState(acc.italic, italic),
       link: finalState(acc.link, link),
@@ -116,8 +187,10 @@ const getFormats = () => {
       underline: finalState(acc.underline, underline)
     }
   }, {
-    bold: null, italic: null, link: null, code: null, sub: null, super: null, strike: null, underline: null, 
+    bold: null, italic: null, link: null, code: null, sub: null, super: null, strike: null, underline: null,
+    background: null, color: null
   })
+  logger.i('formats', formats.background, formats.color)
   return formats
 }
 
@@ -176,6 +249,13 @@ const clickHandler = (format: string) => {
     [name]: value
   })
 }
+
+const formatText = (name: string, value: boolean | string) => {
+  setFormats({
+    [name]: value
+  })
+}
+
 </script>
 
 <style lang="less" scoped>
@@ -203,6 +283,7 @@ const clickHandler = (format: string) => {
     text-align: center;
     cursor: pointer;
     transition: background .2s;
+    position: relative;
     &:hover {
       background: #dedede;
     }
@@ -211,6 +292,11 @@ const clickHandler = (format: string) => {
     }
     &:deep(.material-symbols-outlined) {
       font-size: 20px;
+    }
+    &:deep(.el-color-picker) {
+      inset: 0;
+      position: absolute;
+      opacity: 0;
     }
   }
 }
