@@ -311,7 +311,7 @@ const pointerupHandler = (event: PointerEvent) => {
       margin-right: 6px;
       pointer-events: none;
     }
-    &::v-deep .settings-icon {
+    &:deep(.settings-icon) {
       background: rgba(0, 0, 0, .2);
       font-size: 28px;
       width: 28px;

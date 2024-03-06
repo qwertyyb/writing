@@ -15,7 +15,7 @@
       @pointerdown.capture.stop="clickHandler('italic')">I</li>
     <li class="toolbar-item">
       <span class="material-symbols-outlined" :style="{color: formats.background || ''}">format_color_fill</span>
-      <el-color-picker v-model="formats.background"
+      <el-color-picker :model-value="formats.background"
         show-alpha
         @change="formatText('background', $event)"
         class="editor-color-picker"
@@ -37,7 +37,7 @@
       ]" />
     </li>
     <li class="toolbar-item">
-      <el-color-picker v-model="formats.color"
+      <el-color-picker :model-value="formats.color || ''"
         show-alpha
         class="editor-color-picker"
         @change="formatText('color', $event)"
@@ -173,7 +173,6 @@ const getFormats = () => {
       } else if (backgrounds.size > 1) {
         acc.background = false
       }
-      logger.w('acc.background', acc.background)
     }
     return {
       ...acc,

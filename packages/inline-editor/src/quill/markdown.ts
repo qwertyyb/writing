@@ -11,18 +11,22 @@ export class Markdown {
     code: {
       rule: /`([^`]+)`$/,
       len: 2,
+      trigger: '`'
     },
     bold: {
       rule: /\*\*([^*]+)\*\*$/,
       len: 4,
+      trigger: '**'
     },
     italic: {
       rule: /(?<!\*)\*([^*]+)\*$/,
       len: 2,
+      trigger: '*'
     },
     strike: {
       rule: /~~([^~]+)~~$/,
-      len: 4
+      len: 4,
+      trigger: '~~'
     }
   }
 
@@ -79,15 +83,16 @@ export class Markdown {
     if (!format || !op.attributes[format]) return
 
     const len = op.insert!.length as number
+    const { len: increaseLen, trigger } = this.rules[format]
     const result = origin.compose(new Delta([
       { retain: index - len },
       { delete: len + 1 },
-      { insert: `\`${op.insert}\``, attributes: { ...op.attributes, [format]: null } },
+      { insert: `${trigger}${op.insert}${trigger}`, attributes: { ...op.attributes, [format]: null } },
     ]))
     logger.w('expect', result)
     this.quill.setContents(result as any)
     setTimeout(() => {
-      this.quill.setSelection(index + this.rules[format].len, 0)
+      this.quill.setSelection(index + increaseLen, 0)
     })
   }
 

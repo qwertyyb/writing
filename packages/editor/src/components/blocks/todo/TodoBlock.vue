@@ -3,6 +3,7 @@
     <div v-for="(child, index) in block.children"
       :key="child.id + child.type"
       :data-block-id="child.id"
+      :data-block-path="[...path, index].join(',')"
       class="todo-item">
       <input type="checkbox"
         :checked="data.checked[child.id]"
