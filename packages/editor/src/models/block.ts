@@ -1,5 +1,4 @@
-import type { EditingDocument } from "@/stores/document";
-import { createLogger } from "@/utils/logger";
+import { createLogger } from "@writing/utils/logger";
 import { equals } from "ramda";
 
 const logger = createLogger('models/logger');
@@ -116,31 +115,6 @@ export const createBlock = (options: Partial<BlockOptions>): BlockModel => {
     children: options.children ?? []
   }
   return block
-}
-
-export const createEditingDocument = (parentPath: string): Pick<EditingDocument, 'title' | 'path' | 'content'> & Partial<EditingDocument> => {
-  return {
-    title: '新文档',
-    path: parentPath,
-    nextId: null,
-    content: {
-      id: createBlockId(),
-      type: 'doc',
-      data: {
-        title: '新文档',
-      },
-      children: [
-        {
-          id: createBlockId(),
-          type: 'text',
-          data: {
-            html: '',
-          },
-          children: []
-        }
-      ]
-    }
-  }
 }
 
 export const getBlockByPath = (root: BlockModel, path: number[]) => {

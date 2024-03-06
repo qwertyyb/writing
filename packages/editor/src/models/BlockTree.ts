@@ -1,8 +1,8 @@
-import { createLogger } from "@/utils/logger"
+import { createLogger } from "@writing/utils/logger"
 import * as R from "ramda"
 import EventEmitter from 'eventemitter3'
 import { createBlock, type BlockModel } from "./block"
-import { PatchGenerator } from "@/utils/patch"
+import { PatchGenerator } from "@writing/utils/patch"
 import { toRaw } from "vue"
 
 const logger = createLogger('BlockTree')

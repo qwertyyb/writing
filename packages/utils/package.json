@@ -1,0 +1,20 @@
+{
+  "name": "@writing/utils",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/logger.ts",
+  "exports": {
+    "./logger": "./src/logger.ts",
+    "./patch": "./src/patch.ts",
+    "./delta": "./src/delta.ts"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "quill-delta": "~5.1.0"
+  }
+}

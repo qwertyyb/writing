@@ -1,0 +1,23 @@
+{
+  "name": "@writing/inline-editor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/TextEditor.vue",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@writing/utils": "workspace:^",
+    "quill": "~1.3.7",
+    "quill-delta": "~5.1.0",
+    "ramda": "^0.29.1",
+    "vue": "^3.4.21"
+  },
+  "devDependencies": {
+    "@types/quill": "^2.0.14",
+    "@types/ramda": "^0.29.11"
+  }
+}

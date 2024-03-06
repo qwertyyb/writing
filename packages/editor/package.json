@@ -1,0 +1,27 @@
+{
+  "name": "@writing/editor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/DocumentEditor.vue",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@codemirror/state": "^6.4.1",
+    "@writing/inline-editor": "workspace:^",
+    "@writing/utils": "workspace:^",
+    "codemirror": "^6.0.1",
+    "element-plus": "^2.6.0",
+    "eventemitter3": "^5.0.1",
+    "quill-delta": "~5.1.0",
+    "ramda": "^0.29.1",
+    "vue": "^3.4.21"
+  },
+  "devDependencies": {
+    "@types/quill": "^2.0.14",
+    "@types/ramda": "^0.29.11"
+  }
+}

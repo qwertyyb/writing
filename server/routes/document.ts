@@ -36,19 +36,19 @@ router
   })
   .patch('/update', async (ctx, next) => {
     const id = Number(ctx.request.body.id)
-    const { path, title, content } = ctx.request.body
+    const { title, content } = ctx.request.body
     if (!id) {
       ctx.body = createRes(null, 400, '未传入参数id')
       return
     }
-    if (!path && !title && !content) {
+    if (!title && !content) {
       ctx.body = createRes(null, 400, 'path、title、content不能全为空')
       return
     }
     const data = await prisma.document.update({
       where: { id },
       data: {
-        title, path, content
+        title, content
       },
       select: {
         id: true, title: true, path: true
