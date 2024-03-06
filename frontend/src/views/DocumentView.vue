@@ -17,6 +17,7 @@
         v-if="documentStore.editing"
         v-model="documentStore.editing.content"
         @update:model-value="updateHandler"
+        :upload="uploadHandler"
       ></document-editor>
     </div>
   </div>
@@ -30,6 +31,7 @@ import { ref, watchEffect } from 'vue';
 import DocumentAttribute from '@/components/DocumentAttribute.vue';
 import DocumentEditor from '@writing/editor';
 import { debounce } from '@/utils/utils';
+import { upload } from '@/services/upload';
 
 const props = defineProps<{
   id: number | string
@@ -46,6 +48,12 @@ const settingDialogVisible = ref(false)
 watchEffect(() => {
   return documentStore.activeEditing(Number(props.id))
 })
+
+const uploadHandler = async (file: Blob | File) => {
+  const { data } = await upload(file)
+  if (data.url) return data.url
+  throw new Error('上传失败')
+}
 </script>
 
 <style lang="less" scoped>
