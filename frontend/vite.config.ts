@@ -6,6 +6,9 @@ import vueJsx from '@vitejs/plugin-vue-jsx'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  optimizeDeps: {
+    exclude: ['@writing/editor', '@writing/inline-editor'],
+  },
   plugins: [
     vue(),
     vueJsx(),

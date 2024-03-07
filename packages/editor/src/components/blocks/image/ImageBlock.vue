@@ -2,10 +2,10 @@
   <div class="image-block">
     <focusable-control
       class="upload-tip"
-      @click="upload"
+      @click="uploadFile"
       v-if="!data.src"
       :disabled="readonly"
-      @keydown.enter="upload"
+      @keydown.enter="uploadFile"
       @keydown.delete.prevent="$emit('remove')">
       <span class="material-symbols-outlined upload-icon">
       image
@@ -25,7 +25,7 @@
       <template v-slot:menu-item-list>
         <span class="material-symbols-outlined settings-icon upload-icon"
           title="更换图片"
-          @click="upload">
+          @click="uploadFile">
           image
         </span>
       </template>
@@ -34,26 +34,26 @@
 </template>
 
 <script lang="ts" setup>
-import { inject, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 import { createBlock, type BlockModel, type BlockOptions } from '../../../models/block';
 import BaseImage from '../BaseImage.vue';
 import FocusableControl from '../../FocusableControl.vue';
 import { ImageAlign } from '../../schema';
-import { getImageRatio } from './utils';
 import { useMode } from '../../../hooks/mode';
 import type { ImageData } from '../../schema';
-import { uploadSymbol } from '../../../utils/upload';
+import { useUpload } from '../../../hooks/upload';
+import { logger } from '@writing/utils/logger';
 
 const block = defineModel<BlockModel>({ required: true })
 
 const { readonly } = useMode()
 
-const uploader = inject<(file: Blob | File) => Promise<string>>(uploadSymbol)
-
 defineEmits<{
   remove: [],
   add: [options?: Partial<BlockOptions>]
 }>()
+
+const { state: uploadState, uploadImageFile } = useUpload()
 
 const data = ref<ImageData>({
   src: block.value.data?.src ?? '',
@@ -84,40 +84,11 @@ const update = (newData: Partial<ImageData>) => {
   }
 }
 
-const uploadState = ref({
-  loading: false,
-  text: '',
-  tempUrl: '',
-  tempRatio: 1,
-})
-
-const upload = () => {
-  const input = document.createElement('input')
-  input.type = 'file'
-  input.accept = 'image/*'
-  input.addEventListener('change', async () => {
-    const files = input.files
-    if (!files?.length) return
-
-    const url = URL.createObjectURL(files[0])
-    const { ratio } = await getImageRatio(url)
-    uploadState.value.tempUrl = url
-    uploadState.value.tempRatio = ratio
-
-    uploadState.value.loading = true
-    uploadState.value.text = ''
-    let result = ''
-    try {
-      result = await uploader(files[0])
-    } catch (err) {
-      uploadState.value.text = err.message || '上传失败'
-      throw err
-    }
-    update(await getImageRatio(url))
-    uploadState.value.loading = false
-  })
-  input.click()
+const uploadFile = async () => {
+  const { url, ratio } = await uploadImageFile()
+  update({ src: url, ratio })
 }
+
 </script>
 
 <style lang="less" scoped>

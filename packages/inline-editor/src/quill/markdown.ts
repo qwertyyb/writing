@@ -7,28 +7,14 @@ import { toText } from '@writing/utils/delta';
 const logger = createLogger('markdown')
 
 export class Markdown {
-  rules = {
-    code: {
-      rule: /`([^`]+)`$/,
-      len: 2,
-      trigger: '`'
-    },
-    bold: {
-      rule: /\*\*([^*]+)\*\*$/,
-      len: 4,
-      trigger: '**'
-    },
-    italic: {
-      rule: /(?<!\*)\*([^*]+)\*$/,
-      len: 2,
-      trigger: '*'
-    },
-    strike: {
-      rule: /~~([^~]+)~~$/,
-      len: 4,
-      trigger: '~~'
-    }
-  }
+  rules = [
+    { name: 'code', rule: /`([^`]+)`$/, source: '\`$1\`' },
+    { name: 'bold', rule: /\*\*([^*]+)\*\*$/, source: `**$1**`},
+    { name: 'italic', rule: /(?<!\*)\*([^*]+)\*$/, source: `*$1*` },
+    { name: 'strike', rule: /~~([^~]+)~~$/, source: `~~$1~~` },
+    { name: 'link', rule: /\[([^\[\]]+)\]\((?<attr>[^()]+)\)$/, source: `[$1]($<attr)` },
+    { name: 'link', rule: /<(?<attr>[^<>]+)>$/, source: `<$1>` }
+  ]
 
   constructor(private quill: Quill, private options = {}) {
     logger.i('markdown module init')
@@ -39,33 +25,30 @@ export class Markdown {
     let before = origin.slice(0, index)
       .insert(insert)
     let text = toText(before.ops)
-    logger.i(this, this.rules)
-    const [key] = Object.entries(this.rules)
-      .find(([key, value]) => text.match(value.rule)) ?? []
-    if (!key) return
-    const match = text.match(this.rules[key].rule)!
-    const triggerLength = (match[0].length - match[1].length) / 2
+    const target = this.rules
+      .find((item) => item.rule.test(text))
+
+    if (!target) return
+    const { name, rule } = target
+    const match = text.match(rule)!
+    let attr: string | boolean = match.groups?.attr ?? true
+    if (!attr) return
     const changes = new Delta([
       ...(match.index ? [{ retain: match.index }] : []),
-      { delete: triggerLength },
-      { retain: match[1].length, attributes: { [key]: true } },
-      { delete: triggerLength },
-      { insert: ' ' }
-    ])
+      { delete: match[0].length },
+      { insert: match[1], attributes: { [name]: attr } },
+    ]).insert(' ')
     const result = before
       .compose(changes)
       .compose(new Delta([
-        { retain: before.length() - triggerLength * 2 + 1 },
+        { retain: before.length() - match[0].length + match[1].length + 1 },
         ...origin.slice(index).ops
       ]))
-    logger.i('changes', before, changes, before.compose(changes), [
-        { retain: before.length() - triggerLength * 2 + 1 },
-        ...origin.slice(index).ops
-      ], result)
+
     logger.w('result', result)
     this.quill.setContents(result as any)
     setTimeout(() => {
-      this.quill.setSelection(before.length() - triggerLength * 2 + 1, 0)
+      this.quill.setSelection(before.length() - match[0].length + match[1].length + 1, 0)
     })
   }
 
@@ -76,23 +59,35 @@ export class Markdown {
     const op = R.last(before.ops)
     if (!op || !op.attributes) return
 
-    const isInBetween = op?.attributes?.code && R.head(after.ops)?.attributes?.code
+    const target = this.rules.find(item => op.attributes[item.name])
+    if (!target) return
+    const { name, rule, source } = target
+    const attr = op.attributes[name]
+    if (!attr) return
+
+    const isInBetween = op?.attributes?.[name] && R.head(after.ops)?.attributes?.[name]
     if (isInBetween) return
 
-    const format = Object.keys(op.attributes).find(name => op.attributes![name])
-    if (!format || !op.attributes[format]) return
+    let newValue = source.replace('$1', op.insert as string)
+    if (typeof attr === 'string') {
+      if (attr === op.insert && name === 'link') {
+        newValue = `<${op.insert}>`
+      } else {
+        newValue = source.replace('$1', op.insert as string).replace('$<attr', attr)
+      }
+    }
+    if (!newValue) return
 
-    const len = op.insert!.length as number
-    const { len: increaseLen, trigger } = this.rules[format]
+    const originLen = op.insert!.length as number
     const result = origin.compose(new Delta([
-      { retain: index - len },
-      { delete: len + 1 },
-      { insert: `${trigger}${op.insert}${trigger}`, attributes: { ...op.attributes, [format]: null } },
+      ... ((index - originLen) ? [{ retain: index - originLen }] : []),
+      { delete: originLen + 1 },
+      { insert: newValue, attributes: { ...op.attributes, [name]: null } },
     ]))
     logger.w('expect', result)
     this.quill.setContents(result as any)
     setTimeout(() => {
-      this.quill.setSelection(index + increaseLen, 0)
+      this.quill.setSelection(index - originLen + newValue.length, 0)
     })
   }
 

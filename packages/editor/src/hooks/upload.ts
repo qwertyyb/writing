@@ -1,5 +1,6 @@
 import { inject, ref } from "vue"
 import { uploadSymbol } from "../utils/upload"
+import { logger } from "@writing/utils/logger"
 
 const getImageRatio = (url: string): Promise<{src: string, ratio: number}> => {
   return new Promise((resolve) => {
@@ -21,7 +22,7 @@ export const useUpload = () => {
     tempRatio: 1,
   })
 
-  const uploadImageFile = () => {
+  const uploadImageFile = (): Promise<{ url: string, ratio: number }> => {
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = 'image/*'
@@ -47,7 +48,7 @@ export const useUpload = () => {
         }
 
         uploadState.value.loading = false
-        return { url: result, ratio }
+        return resolve({ url: result, ratio })
       })
       input.click()
     })
