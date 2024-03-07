@@ -1,4 +1,4 @@
-interface JSONPatch {
+export interface JSONPatch {
   op: 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test',
   path: (string | number)[],
   value?: any,

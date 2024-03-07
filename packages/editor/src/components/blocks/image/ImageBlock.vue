@@ -35,14 +35,13 @@
 
 <script lang="ts" setup>
 import { ref, watch } from 'vue';
-import { createBlock, type BlockModel, type BlockOptions } from '../../../models/block';
+import { createBlock, type BlockModel } from '../../../models/block';
 import BaseImage from '../BaseImage.vue';
 import FocusableControl from '../../FocusableControl.vue';
 import { ImageAlign } from '../../schema';
 import { useMode } from '../../../hooks/mode';
 import type { ImageData } from '../../schema';
 import { useUpload } from '../../../hooks/upload';
-import { logger } from '@writing/utils/logger';
 
 const block = defineModel<BlockModel>({ required: true })
 
@@ -50,7 +49,7 @@ const { readonly } = useMode()
 
 defineEmits<{
   remove: [],
-  add: [options?: Partial<BlockOptions>]
+  add: [options?: Partial<BlockModel>]
 }>()
 
 const { state: uploadState, uploadImageFile } = useUpload()

@@ -2,14 +2,21 @@ import { createLogger } from "@writing/utils/logger"
 import * as R from "ramda"
 import EventEmitter from 'eventemitter3'
 import { createBlock, type BlockModel } from "./block"
-import { PatchGenerator } from "@writing/utils/patch"
+import { JSONPatch, PatchGenerator } from "@writing/utils/patch"
 import { toRaw } from "vue"
 
 const logger = createLogger('BlockTree')
 
 export const rootSymbol = Symbol('root')
 
-export class BlockTree extends EventEmitter {
+interface BlockTreeEventTypes {
+  added: [{ path: number[], block: BlockModel }],
+  updated: [{ path: number[], block: BlockModel, oldBlock: BlockModel }],
+  removed: [{ path: number[], block: BlockModel }],
+  change: [root: BlockModel, patches: JSONPatch[]]
+}
+
+export class BlockTree extends EventEmitter<BlockTreeEventTypes> {
   private _model: BlockModel
   get model(): BlockModel {
     return this._model
