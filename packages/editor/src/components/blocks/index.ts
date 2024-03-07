@@ -12,6 +12,7 @@ import todo from "./todo/todo";
 import { excalidraw } from "./excalidraw/excalidraw";
 import { image } from "./image/image";
 import { details } from "./details/details";
+import { toc } from "./toc/toc";
 
 interface BlockConfig {
   identifier: string,
@@ -39,6 +40,7 @@ const commands: BlockConfig[] = [
   heading4,
   heading5,
   heading6,
+  toc
 ]
 
 export default commands

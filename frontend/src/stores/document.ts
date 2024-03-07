@@ -130,7 +130,7 @@ export const useDocumentStore = defineStore('document', {
 
       logger.i('move', updates)
       // 调用接口更新
-      // await moveDocument(updates)
+      await moveDocument(updates)
     },
     async add(current: DocumentItem, position: 'before' | 'after' | 'inside'): Promise<void> {
       logger.i('add', {...current}, position)
@@ -141,14 +141,13 @@ export const useDocumentStore = defineStore('document', {
         ...newDoc,
         content: JSON.stringify(newDoc.content)
       })
-      const updates = this.moveToTarget(data, cur, position)
       this.editing = {
         ...data,
         ...newDoc,
         attributes: []
       }
-      this.documents.push(data)
-      logger.i('move updates', updates)
+      const updates = this.moveToTarget(this.editing, cur, position)
+      this.documents.push(this.editing)
       updates.length && await moveDocument(updates)
     },
     async remove(node: DocumentItem) {

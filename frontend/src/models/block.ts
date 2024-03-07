@@ -31,6 +31,7 @@ export const createEditingDocument = (parentPath: string): Pick<EditingDocument,
     title: '新文档',
     path: parentPath,
     nextId: null,
+    attributes: [],
     content: {
       id: createBlockId(),
       type: 'doc',

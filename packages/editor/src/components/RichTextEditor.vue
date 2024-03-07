@@ -17,6 +17,7 @@
         :index="0"
         :path="[]"
         :key="model.id"
+        @update:model-value="rootValue.updateModel($event)"
         @pointermove="pointermoveHandler"></block-editor>
     </div>
   </div>

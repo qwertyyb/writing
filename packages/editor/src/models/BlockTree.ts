@@ -39,7 +39,10 @@ export class BlockTree extends EventEmitter<BlockTreeEventTypes> {
   }
 
   updateModel(model: BlockModel) {
+    const oldBlock = { ...model }
     this._model = model
+    this.emit('updated', { path: [], oldBlock, block: model })
+    this.emit('change', this.model, this.pg.patches)
   }
 
   startTransaction<T extends (...args: any) => any>(updater: T): ReturnType<T> {
@@ -174,6 +177,10 @@ export class BlockTree extends EventEmitter<BlockTreeEventTypes> {
 
   getByPath = (path: number[]) => {
     return BlockTree.getByPath(this.model, path)
+  }
+
+  walkTree = (callback: (path: number[], block: BlockModel) => void) => {
+    return BlockTree.walkTree([], this.model, callback)
   }
 
   walkTreeBetween = (from: number[], to: number[], callback: (path: number[], block: BlockModel) => void) => {
