@@ -6,7 +6,6 @@ const logger = createLogger('selection')
 
 export interface SelectionBlockPosition {
   path: number[],
-  propPath: (string | number)[],
   offset: number
 }
 
@@ -52,20 +51,14 @@ export const useSelection = ({ el }: {
     return node?.parentElement?.closest<HTMLElement>('[data-block-id]') ?? null
   }
 
-  const getBlockPropFromNode = (node: Node): string | null => {
-    let blockProp = (node as HTMLElement)?.dataset?.blockProp
-    if (blockProp) return blockProp
-    blockProp = node?.parentElement?.dataset.blockProp
-    if (blockProp) return blockProp
-    return node?.parentElement?.closest<HTMLElement>('[data-block-prop]')?.dataset!.blockProp ?? null
-  }
-
   const getBlockIdFromNode = (node: Node): string | null => {
     const blockEl = getBlockElFromNode(node)
     return blockEl?.dataset.blockId ?? null
   }
 
   const resetContenteditable = () => {
+    state.value.selection = null
+    state.value.rect = null
     isMultiSelect = false
     el.value!.querySelectorAll<HTMLElement>('[data-origin-contenteditable]')
       .forEach(dom => {
@@ -84,21 +77,17 @@ export const useSelection = ({ el }: {
     const range = selection.getRangeAt(0)
     const startBlockEl = getBlockElFromNode(range.startContainer)
     const startBlockPath = startBlockEl?.dataset.blockPath?.split(',').map(i => Number(i))
-    const startBlockProp = getBlockPropFromNode(range.startContainer)
 
     const endBlockEl = getBlockElFromNode(range.endContainer)
     const endBlockPath = endBlockEl?.dataset.blockPath?.split(',').map(i => Number(i))
-    const endBlockProp = getBlockPropFromNode(range.endContainer)
     
     state.value.selection = {
       from: {
         path: startBlockPath!,
-        propPath: startBlockProp!.split(','),
         offset: getSelectionOffset(startBlockEl!, range.startContainer) + range.startOffset
       },
       to: {
         path: endBlockPath!,
-        propPath: endBlockProp!.split(','),
         offset: getSelectionOffset(startBlockEl!, range.endContainer) + range.endOffset
       }
     }
@@ -116,13 +105,19 @@ export const useSelection = ({ el }: {
     const selection = window.getSelection()
     if (!selection || !selectionInEditor(selection)) return resetContenteditable()
 
-    logger.i('selectionchange', selection)
+    logger.i('selectionchangeHandler', selection)
     if (selection.anchorNode) {
       anchorNode = selection.anchorNode
       anchorOffset = selection.anchorOffset
       focusNode = selection.focusNode
       focusOffset = selection.focusOffset
       anchorNodeBlockId = getBlockIdFromNode(selection.anchorNode)
+    } else {
+      anchorNode = null
+      anchorOffset = 0
+      focusNode = null
+      focusOffset = 0
+      anchorNodeBlockId = null
     }
 
     state.value.rect = null
@@ -164,5 +159,5 @@ export const useSelection = ({ el }: {
       }
     }
   }
-  return { selection: state, pointermoveHandler }
+  return { state, pointermoveHandler }
 }

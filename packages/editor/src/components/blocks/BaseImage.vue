@@ -108,7 +108,7 @@ import FocusableControl from '../FocusableControl.vue';
 import { ImageAlign } from '../schema';
 import { useMode } from '../../hooks/mode';
 import type { ImageData } from '../schema';
-import type { BlockOptions } from '../../models/block';
+import type { BlockModel } from '../../models/block';
 
 const data = defineModel<ImageData>({ required: true })
 
@@ -116,7 +116,7 @@ const { readonly, canEdit } = useMode()
 
 const emits = defineEmits<{
   remove: [],
-  add: [options?: Partial<BlockOptions>]
+  add: [options?: Partial<BlockModel>]
 }>()
 
 const imageEl = ref<InstanceType<typeof FocusableControl>>()

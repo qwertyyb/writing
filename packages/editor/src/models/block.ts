@@ -25,3 +25,7 @@ export const createBlock = (options: Partial<BlockModel>): BlockModel => {
   }
   return block
 }
+
+export const isBlockModel = (value: any) => {
+  return typeof value.type === 'string' && typeof value.id === 'string'
+}

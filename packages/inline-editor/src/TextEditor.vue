@@ -20,7 +20,7 @@ const logger = createLogger('TextEditor')
 
 const model = defineModel<string | DeltaOperation[]>({ required: true })
 
-defineProps({
+const props = defineProps({
   readonly: {
     type: Boolean,
     default: false
@@ -72,6 +72,7 @@ onMounted(() => {
       clipboard: true,
       markdown: true
     },
+    readOnly: props.readonly,
     formats: ['background', 'bold', 'color', 'font', 'code', 'italic', 'link', 'size', 'strike', 'script', 'underline'],
     placeholder: 'Type someting'
   })
@@ -88,6 +89,10 @@ onBeforeUnmount(() => {
   editor = null
 })
 
+watch(() => props.readonly, () => {
+  editor.enable(!props.readonly)
+})
+
 const TRIGGER_KEY = '/'
 enum KeyCodes {
   Enter = 'Enter',
@@ -101,7 +106,8 @@ enum KeyCodes {
 }
 const keydownHandler = (event: KeyboardEvent) => {
   if (event.isComposing) return
-  const { index: offset } = editor!.getSelection(true)
+  const { index: offset, length } = editor!.getSelection(true)
+  if (length) return
   if (event.code === KeyCodes.Enter) {
     event.preventDefault()
     event.stopImmediatePropagation()
@@ -134,11 +140,6 @@ const keydownHandler = (event: KeyboardEvent) => {
 }
 
 const backspaceKeyHandler = (event: KeyboardEvent, offset: number) => {
-  const target = event.target as HTMLDivElement
-  if (!target.contentEditable) {
-    event.preventDefault()
-    return false
-  }
   if (offset > 0) {
     return
   }
@@ -175,8 +176,13 @@ const pasteHandler = (event: ClipboardEvent) => {
     return
   }
   // 先简单全部作为普通文本来处理
+  const { index } = editor.getSelection(true)
   const plainText = event.clipboardData?.getData('text/plain') ?? ''
-  document.execCommand('insertText', false, plainText)
+  editor.insertText(index, plainText)
+  setTimeout(() => {
+    logger.i('selection', index + plainText.length)
+    editor.setSelection(index + plainText.length, 0)
+  }, 10)
 }
 
 defineExpose({

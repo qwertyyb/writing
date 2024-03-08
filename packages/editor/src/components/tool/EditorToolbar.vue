@@ -109,7 +109,6 @@ const rootValue = inject<ShallowRef<BlockTree>>(rootSymbol)
 const TextBlockTypes = ['text', 'heading1', 'heading2', 'heading3', 'heading4', 'heading5', 'heading6']
 
 const props = defineProps<{
-  root: BlockModel,
   selection: SelectionState
 }>()
 
@@ -128,6 +127,7 @@ const getFormats = () => {
     selection.from.path,
     selection.to.path,
     (path, block) => {
+      logger.i('getFormats', [...path], { ...block })
       if (TextBlockTypes.includes(block.type)) {
         textBlocks.push({ path, block })
       }

@@ -1,7 +1,6 @@
 <template>
   <div class="text-block">
     <text-editor :modelValue="data.ops"
-      data-block-prop="data,html"
       :readonly="readonly"
       :spellcheck="spellcheck"
       @update:modelValue="updateModelValue"
@@ -33,13 +32,12 @@ import { ref, reactive, watch, toRaw, inject } from 'vue';
 import BlockTool from '../tool/BlockTool.vue';
 import TextEditor from '@writing/inline-editor';
 import { moveCaretToEnd } from '../../models/caret';
-import { createBlock, type BlockModel, type BlockOptions } from '../../models/block';
+import { createBlock, type BlockModel } from '../../models/block';
 import { useMode } from '../../hooks/mode';
 import { useSpellcheck } from '../../hooks/spellcheck';
 import { transformBlock } from '../../hooks/transform';
 import { createLogger } from '@writing/utils/logger';
 import { getImageRatio } from './image/utils';
-import { type DeltaOperation } from 'quill'
 import { isEmpty, split, toText } from '@writing/utils/delta';
 import type { TextData } from '../schema';
 import { uploadSymbol } from '../../utils/upload';
@@ -53,8 +51,8 @@ const props = defineProps<{
 }>()
 
 const emits = defineEmits<{
-  add: [options?: Partial<BlockOptions>],
-  update: [options: Partial<BlockOptions>]
+  add: [options?: Partial<BlockModel>],
+  update: [options: Partial<BlockModel>]
   remove: [],
   move: [newPath: number[]],
   moveUpper: [],
@@ -68,7 +66,7 @@ const uploader = inject<(file: Blob | File) => Promise<string>>(uploadSymbol)
 
 const data = ref<TextData>({ ...block.value.data, ops: block.value.data?.ops ?? [] })
 
-const updateModelValue = (ops: DeltaOperation[]) => {
+const updateModelValue = (ops: any[]) => {
   block.value = { ...block.value, data: { ops } }
   data.value = { ops }
 }

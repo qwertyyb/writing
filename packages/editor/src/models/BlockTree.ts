@@ -97,10 +97,10 @@ export class BlockTree extends EventEmitter<BlockTreeEventTypes> {
     const parent = this.getParentFromPath(path)
 
     if (!parent.children.length) {
-      throw new Error(`删除失败，该节点没有子节点`)
+      throw new Error(`删除失败，该节点没有子节点: ${path.join(',')}`)
     }
     if (index < 0 || index > parent.children.length - 1) {
-      throw new Error(`未找到待删除节点: ${index}`)
+      throw new Error(`未找到待删除节点: ${path.join(',')}`)
     }
 
     const [block] = parent.children.splice(index, 1)
@@ -109,6 +109,11 @@ export class BlockTree extends EventEmitter<BlockTreeEventTypes> {
   
     this.emit('removed', { path, block })
     return block
+  }
+
+  filter = (predicate: (item: BlockModel, path: number[], parent: BlockModel | null, root: BlockModel) => boolean, basePath: number[] = []) => {
+    const root = this.getByPath(basePath)
+    return BlockTree.filter(root, predicate)
   }
 
   static getByPath = (root: BlockModel, path: number[]) => {
@@ -137,6 +142,23 @@ export class BlockTree extends EventEmitter<BlockTreeEventTypes> {
         callback
       )
     }
+  }
+
+  static filter = (root: BlockModel, predicate: (item: BlockModel, path: number[], parent: BlockModel | null, root: BlockModel) => boolean) => {
+    const filterTree = (item: BlockModel, path: number[], parent: BlockModel, root: BlockModel) => {
+      const matched = predicate(item, path, parent, root)
+      if (!matched) return false
+      const children = item.children.reduce<BlockModel[]>((acc, child, index) => {
+        const result = filterTree(child, [...path, index], item, root)
+        if (!result) return acc
+        return [...acc, result]
+      }, [])
+      return {
+        ...item,
+        children
+      }
+    }
+    return filterTree(root, [], null, root)
   }
 
   static getCommonAncestorPath = (start: number[], end: number[]) => {

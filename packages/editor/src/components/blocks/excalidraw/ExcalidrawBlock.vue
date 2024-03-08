@@ -28,6 +28,7 @@
       fullscreen
       title="Excalidraw"
       class="excalidraw-dialog"
+      append-to-body
       :before-close="beforeCloseHandler"
       destroy-on-close>
       <excalidraw-editor
@@ -65,6 +66,11 @@ interface ExcalidrawData {
 }
 
 const block = defineModel<BlockModel>({ required: true })
+
+defineEmits<{
+  remove: [],
+  add: [options?: Partial<BlockModel>]
+}>()
 
 const editDialogVisible = ref(false)
 const editor = ref<InstanceType<typeof ExcalidrawEditor>>()

@@ -6,8 +6,9 @@
       <span class="material-symbols-outlined block-tool-icon"> drag_indicator </span>
     </div>
     <editor-toolbar
+      v-if="mode === Mode.Edit"
       :root="model"
-      :selection="selection"></editor-toolbar>
+      :selection="selectionState"></editor-toolbar>
     <div class="rich-text-editor-wrapper"
       ref="editorEl"
       @keydown.capture="keydownHandler"
@@ -27,7 +28,7 @@
 import { createBlock, type BlockModel } from '../models/block';
 import BlockEditor from './BlockEditor.vue';
 import { focusBlock } from '../hooks/focus';
-import { provide, type PropType, computed, ref, shallowRef, toRaw, watch } from 'vue';
+import { provide, type PropType, computed, ref, shallowRef, watch, onMounted, onBeforeUnmount } from 'vue';
 import { Mode } from './schema';
 import { useHistory } from '../hooks/history';
 import { useBlockTool } from '../hooks/use-block-tool';
@@ -36,6 +37,8 @@ import EditorToolbar from './tool/EditorToolbar.vue';
 import { createLogger } from '@writing/utils/logger';
 import { BlockTree, rootSymbol } from '../models/BlockTree';
 import { uploadSymbol } from '../utils/upload'
+import { JSONPatch } from '@writing/utils/patch';
+import * as R from 'ramda'
 
 const logger = createLogger('RichTextEditor')
 
@@ -72,7 +75,7 @@ provide('spellcheck', spellcheck)
 provide(uploadSymbol, props.upload)
 provide(rootSymbol, rootValue)
 
-const { selection, pointermoveHandler: selectionTrigger } = useSelection({ el: editorEl })
+const { state: selectionState, pointermoveHandler: selectionTrigger } = useSelection({ el: editorEl })
 
 const { state: blockToolState, pointermoveHandler: blockToolTrigger } = useBlockTool({
   el, mode
@@ -80,25 +83,42 @@ const { state: blockToolState, pointermoveHandler: blockToolTrigger } = useBlock
 
 const { undo, redo, pushLatest } = useHistory(el, model)
 
-rootValue.value.on('change', (value, changes) => {
+const changeHandler = (value: BlockModel, changes: JSONPatch[]) => {
   logger.i('change', value, changes)
   model.value = value
   pushLatest()
-})
-
-rootValue.value.on('added', ({ block }) => {
+}
+const addedHandler = ({ block }: { block: BlockModel }) => {
   focusBlock(block.id, 'start')
-})
-rootValue.value.on('updated', ({ oldBlock, block }) => {
+}
+const updatedHandler = ({ oldBlock, block }: { oldBlock: BlockModel, block: BlockModel }) => {
   if (oldBlock.type + oldBlock.id !== block.type + block.id) {
     focusBlock(block.id)
   }
-})
-rootValue.value.on('removed', ({ path }) => {
+}
+const removedHandler = ({ path }: { path: number[] }) => {
   const prev = rootValue.value.getPrev(path)
   if (prev) {
     focusBlock(prev.block.id)
   }
+}
+
+onMounted(() => {
+  if (props.mode === Mode.Edit) {
+    rootValue.value.on('change', changeHandler)
+
+    rootValue.value.on('added', addedHandler)
+    rootValue.value.on('updated', updatedHandler)
+    rootValue.value.on('removed', removedHandler)
+  }
+})
+
+onBeforeUnmount(() => {
+  rootValue.value.off('change', changeHandler)
+
+  rootValue.value.off('added', addedHandler)
+  rootValue.value.off('updated', updatedHandler)
+  rootValue.value.off('removed', removedHandler)
 })
 
 watch(model, (value) => {
@@ -106,11 +126,13 @@ watch(model, (value) => {
 })
 
 const pointermoveHandler = (event: PointerEvent) => {
+  if (props.mode === Mode.Readonly) return
   selectionTrigger(event)
   blockToolTrigger(event)
 }
 
 const keydownHandler = (event: KeyboardEvent) => {
+  if (props.mode === Mode.Readonly) return
   // 仅用来处理多选和历史
   // const selection = getSelectionPosition(el.value!)
   // resetContenteditable()
@@ -126,6 +148,43 @@ const keydownHandler = (event: KeyboardEvent) => {
     event.stopImmediatePropagation()
     event.stopPropagation()
     undo()
+  }
+
+  if (!selectionState.value.selection) return
+  const { from, to } = selectionState.value.selection
+  if (R.equals(from.path, to.path)) return
+
+  event.preventDefault()
+  event.stopImmediatePropagation()
+  event.stopPropagation()
+
+  const blockPaths: { path: number[], block: BlockModel }[] = []
+  rootValue.value.walkTreeBetween(from.path, to.path, (path, block) => {
+    blockPaths.push({ path, block })
+  })
+
+  const blockIds = blockPaths.map(item => item.block.id)
+  const firstBlock = R.head(blockPaths)
+  const lastBlock = R.tail(blockPaths)
+  const midBlocks = blockIds.filter((_, index) => index > 0 && index < blockIds.length - 1)
+  if (midBlocks.length) {
+    const leftBlocks: BlockModel[] = []
+    blockPaths.forEach(item => {
+      BlockTree.walkTree(item.path, rootValue.value.getByPath(item.path), (childPath, block) => {
+        const needLeft = !blockIds.includes(block.id)
+        if (needLeft && leftBlocks.indexOf(block) === -1) {
+          leftBlocks.push(block)
+        }
+      })
+    })
+
+    logger.i('keydownHandler', blockPaths, leftBlocks, blockIds)
+    // 把选中的组件删除
+    const result = BlockTree.filter(rootValue.value.model, (block) => {
+      return !blockIds.includes(block.id)
+    })
+    rootValue.value.updateModel(result)
+    logger.i('keydownHandler', result)
   }
 }
 </script>
