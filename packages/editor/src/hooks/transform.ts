@@ -11,7 +11,7 @@ export const transformBlock = (trigger: string, origin: BlockModel, content: Op[
     return {
       id: origin.id,
       type: 'heading' + trigger.length,
-      data: { op: content } 
+      data: { ops: content } 
     }
   }
   if (/^1\./.test(trigger)) {
@@ -22,7 +22,7 @@ export const transformBlock = (trigger: string, origin: BlockModel, content: Op[
         createBlock({
           type: 'text',
           data: {
-            op: content
+            ops: content
           }
         })
       ]
@@ -36,7 +36,7 @@ export const transformBlock = (trigger: string, origin: BlockModel, content: Op[
         createBlock({
           type: 'text',
           data: {
-            op: content
+            ops: content
           }
         })
       ]
@@ -50,7 +50,7 @@ export const transformBlock = (trigger: string, origin: BlockModel, content: Op[
         createBlock({
           type: 'text',
           data: {
-            op: content
+            ops: content
           }
         })
       ]
@@ -73,7 +73,7 @@ export const transformBlock = (trigger: string, origin: BlockModel, content: Op[
         createBlock({
           type: 'text',
           data: {
-            op: content
+            ops: content
           }
         })
       ]

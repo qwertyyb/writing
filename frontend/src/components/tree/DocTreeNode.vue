@@ -108,8 +108,10 @@ const remove = () => {
 const onAnimEnter = (el: Element) => {
   setHeight(el);
   (el as HTMLElement).style.height = '0'
-  setTimeout(() => {
-    (el as HTMLElement).style.height = ''
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      (el as HTMLElement).style.removeProperty('height')
+    })
   })
 }
 
@@ -251,7 +253,7 @@ const setHeight = (el: Element) => {
   }
   .slide-vertical-enter-to,
   .slide-vertical-leave-from {
-    height: var(--children-height, auto)
+    height: var(--children-height)
   }
 }
 </style>

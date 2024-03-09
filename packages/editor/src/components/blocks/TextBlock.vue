@@ -145,7 +145,7 @@ const keydownHandler = (event: KeyboardEvent, offset: number) => {
   if (event.code !== 'Space') return
   const { before, after: content } = split(data.value.ops, offset)
   const trigger = toText(before)
-  logger.i('keydownHandler', trigger, content)
+  logger.i('keydownHandler', trigger, JSON.parse(JSON.stringify(content)))
   const newBlock = transformBlock(trigger, block.value, content)
   if (newBlock) {
     event.preventDefault()
