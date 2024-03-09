@@ -12,7 +12,8 @@
     }
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vite"
   },
   "keywords": [],
   "author": "",
@@ -31,6 +32,8 @@
   },
   "devDependencies": {
     "@types/quill": "^2.0.14",
-    "@types/ramda": "^0.29.11"
+    "@types/ramda": "^0.29.11",
+    "@vitejs/plugin-vue": "^5.0.4",
+    "vite": "^5.1.5"
   }
 }
