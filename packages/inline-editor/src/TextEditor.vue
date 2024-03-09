@@ -106,7 +106,9 @@ enum KeyCodes {
 }
 const keydownHandler = (event: KeyboardEvent) => {
   if (event.isComposing) return
-  const { index: offset, length } = editor!.getSelection(true)
+  const range = editor!.getSelection(true)
+  if (!range) return
+  const { index: offset, length } = range
   if (length) return
   if (event.code === KeyCodes.Enter) {
     event.preventDefault()
@@ -176,7 +178,9 @@ const pasteHandler = (event: ClipboardEvent) => {
     return
   }
   // 先简单全部作为普通文本来处理
-  const { index } = editor.getSelection(true)
+  const range = editor.getSelection(true)
+  if (!range) return
+  const { index } = range
   const plainText = event.clipboardData?.getData('text/plain') ?? ''
   editor.insertText(index, plainText)
   setTimeout(() => {

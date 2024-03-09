@@ -1,5 +1,5 @@
 import { createLogger } from "@writing/utils/logger"
-import { type Ref, onMounted, onBeforeUnmount, ref } from "vue"
+import { type Ref, onMounted, onBeforeUnmount, ref, toRaw } from "vue"
 import { getSelectionOffset } from "../models/caret"
 
 const logger = createLogger('selection')
@@ -9,22 +9,92 @@ export interface SelectionBlockPosition {
   offset: number
 }
 
+export interface SelectionRange {
+  from: SelectionBlockPosition,
+  to: SelectionBlockPosition
+}
+
 export interface SelectionState {
-  selection: {
-    from: SelectionBlockPosition,
-    to: SelectionBlockPosition
-  } | null,
+  range: SelectionRange | null,
   rect: {
     top: number, left: number
     width: number, height: number
   } | null
 }
 
+
+const getBlockElFromNode = (node: Node): HTMLElement | null => {
+  let blockId = (node as HTMLElement)?.dataset?.blockId
+  if (blockId) return node as HTMLElement
+  blockId = node?.parentElement?.dataset.blockId
+  if (blockId) return node.parentElement as HTMLElement
+  return node?.parentElement?.closest<HTMLElement>('[data-block-id]') ?? null
+}
+
+const getBlockIdFromPoint = (x: number, y: number) => {
+  const element = document.elementFromPoint(x, y) as HTMLElement
+  if (element.dataset?.blockId) return element.dataset.blockId
+  const closestBlockEl = element.closest<HTMLElement>('[data-block-id]')
+  return closestBlockEl?.dataset!.blockId
+}
+
+const getBlockIdFromNode = (node: Node): string | null => {
+  const blockEl = getBlockElFromNode(node)
+  return blockEl?.dataset.blockId ?? null
+}
+
+export const getSelectionRange = (range: Range): SelectionRange => {
+  const startBlockEl = getBlockElFromNode(range.startContainer)
+  const startBlockPath = startBlockEl?.dataset.blockPath?.split(',').map(i => Number(i))
+  const startOffset = getSelectionOffset(startBlockEl!, range.startContainer) + range.startOffset
+
+  const endBlockEl = getBlockElFromNode(range.endContainer)
+  const endBlockPath = endBlockEl?.dataset.blockPath?.split(',').map(i => Number(i))
+  const endOffset = getSelectionOffset(endBlockEl!, range.endContainer) + range.endOffset
+
+  logger.i('rangeHandler from', [...startBlockPath], 'to', [...endBlockPath])
+  logger.i('rangeHandler offset', startOffset, endOffset)
+  
+  return {
+    from: {
+      path: startBlockPath!,
+      offset: startOffset
+    },
+    to: {
+      path: endBlockPath!,
+      offset: endOffset
+    }
+  }
+}
+
+const getNodeAndOffset = (position: SelectionBlockPosition) => {
+  const { path, offset } = position
+  const element = document.querySelector(`[data-block-path=${JSON.stringify(path.join(','))}]`)
+  const iterator = document.createNodeIterator(element, NodeFilter.SHOW_TEXT)
+
+  let nodeOffset = offset
+  while(iterator.nextNode()) {
+    const len = iterator.referenceNode.textContent.length
+    if (len >= nodeOffset) {
+      return { node: iterator.referenceNode, offset: nodeOffset }
+    }
+    nodeOffset -= len
+  }
+  return { node: iterator.referenceNode, offset: offset ? 1 : 0 }
+}
+
+export const setSelectionRange = (selection: SelectionRange) => {
+  const { from, to } = selection
+  const { node: startContainer, offset: startOffset } = getNodeAndOffset(from)
+  const { node: endContainer, offset: endOffset } = getNodeAndOffset(to)
+  window.getSelection()?.setBaseAndExtent(startContainer, startOffset, endContainer, endOffset)
+}
+
 export const useSelection = ({ el }: {
   el: Ref<HTMLElement | undefined>
 }) => {
   const state = ref<SelectionState>({
-    selection: null,
+    range: null,
     rect: null
   })
 
@@ -36,28 +106,9 @@ export const useSelection = ({ el }: {
   let focusOffset = 0
   let anchorOffset = 0
 
-  const getBlockIdFromPoint = (x: number, y: number) => {
-    const element = document.elementFromPoint(x, y) as HTMLElement
-    if (element.dataset?.blockId) return element.dataset.blockId
-    const closestBlockEl = element.closest<HTMLElement>('[data-block-id]')
-    return closestBlockEl?.dataset!.blockId
-  }
-
-  const getBlockElFromNode = (node: Node): HTMLElement | null => {
-    let blockId = (node as HTMLElement)?.dataset?.blockId
-    if (blockId) return node as HTMLElement
-    blockId = node?.parentElement?.dataset.blockId
-    if (blockId) return node.parentElement as HTMLElement
-    return node?.parentElement?.closest<HTMLElement>('[data-block-id]') ?? null
-  }
-
-  const getBlockIdFromNode = (node: Node): string | null => {
-    const blockEl = getBlockElFromNode(node)
-    return blockEl?.dataset.blockId ?? null
-  }
-
   const resetContenteditable = () => {
-    state.value.selection = null
+    logger.i('resetContenteditable')
+    state.value.range = null
     state.value.rect = null
     isMultiSelect = false
     el.value!.querySelectorAll<HTMLElement>('[data-origin-contenteditable]')
@@ -75,37 +126,26 @@ export const useSelection = ({ el }: {
     const selection = window.getSelection()
     if (!selection || selection.rangeCount < 1) return
     const range = selection.getRangeAt(0)
-    const startBlockEl = getBlockElFromNode(range.startContainer)
-    const startBlockPath = startBlockEl?.dataset.blockPath?.split(',').map(i => Number(i))
+    logger.i('rangeHandler', range)
 
-    const endBlockEl = getBlockElFromNode(range.endContainer)
-    const endBlockPath = endBlockEl?.dataset.blockPath?.split(',').map(i => Number(i))
-    
-    state.value.selection = {
-      from: {
-        path: startBlockPath!,
-        offset: getSelectionOffset(startBlockEl!, range.startContainer) + range.startOffset
-      },
-      to: {
-        path: endBlockPath!,
-        offset: getSelectionOffset(startBlockEl!, range.endContainer) + range.endOffset
-      }
-    }
+    state.value.range = getSelectionRange(range)
+    logger.i('rangeHandler selection', { ...toRaw(state.value.range) })
+
     const rect = range.getBoundingClientRect()
-    const pRect = el.value!.getBoundingClientRect()
     state.value.rect = {
       width: rect.width,
       height: rect.height,
-      top: rect.top - pRect.top,
-      left: rect.left - pRect.left
+      top: rect.top,
+      left: rect.left
     }
   }
 
   const selectionchangeHandler = () => {
     const selection = window.getSelection()
+    logger.i('selectionchangeHandler', selection)
+    if (selection.type === 'None') return
     if (!selection || !selectionInEditor(selection)) return resetContenteditable()
 
-    logger.i('selectionchangeHandler', selection)
     if (selection.anchorNode) {
       anchorNode = selection.anchorNode
       anchorOffset = selection.anchorOffset

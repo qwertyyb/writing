@@ -39,6 +39,7 @@ import { BlockTree, rootSymbol } from '../models/BlockTree';
 import { uploadSymbol } from '../utils/upload'
 import { JSONPatch } from '@writing/utils/patch';
 import * as R from 'ramda'
+import Delta from 'quill-delta';
 
 const logger = createLogger('RichTextEditor')
 
@@ -150,41 +151,61 @@ const keydownHandler = (event: KeyboardEvent) => {
     undo()
   }
 
-  if (!selectionState.value.selection) return
-  const { from, to } = selectionState.value.selection
+  if (!selectionState.value.range) return
+  const { from, to } = selectionState.value.range
   if (R.equals(from.path, to.path)) return
 
-  event.preventDefault()
-  event.stopImmediatePropagation()
-  event.stopPropagation()
+  if (event.code === 'Backspace') {
+    event.preventDefault()
+    event.stopImmediatePropagation()
+    event.stopPropagation()
 
-  const blockPaths: { path: number[], block: BlockModel }[] = []
-  rootValue.value.walkTreeBetween(from.path, to.path, (path, block) => {
-    blockPaths.push({ path, block })
-  })
+    const blocksInRange: { path: number[], block: BlockModel }[] = []
+    rootValue.value.walkTreeBetween(from.path, to.path, (path, block) => {
+      blocksInRange.push({ path, block })
+    })
+    const firstBlock = R.head(blocksInRange)
+    const lastBlock = R.last(blocksInRange)
+    const needRemoveBlocks = R.takeLast(R.length(blocksInRange) - 1, blocksInRange)
 
-  const blockIds = blockPaths.map(item => item.block.id)
-  const firstBlock = R.head(blockPaths)
-  const lastBlock = R.tail(blockPaths)
-  const midBlocks = blockIds.filter((_, index) => index > 0 && index < blockIds.length - 1)
-  if (midBlocks.length) {
+    // @todo 判断第一个块和最后一个块是文字块
+    // 把第一个选中块选中范围之前的文字和最后一个选中块选中范围之后的文字拼接
+    const firstBeforeText = new Delta(firstBlock.block.data.ops).slice(0, from.offset)
+    const lastAfterText = new Delta(lastBlock.block.data.ops).slice(to.offset)
+    const firstText = firstBeforeText.compose(new Delta().retain(from.offset).concat(lastAfterText))
+
     const leftBlocks: BlockModel[] = []
-    blockPaths.forEach(item => {
-      BlockTree.walkTree(item.path, rootValue.value.getByPath(item.path), (childPath, block) => {
-        const needLeft = !blockIds.includes(block.id)
-        if (needLeft && leftBlocks.indexOf(block) === -1) {
-          leftBlocks.push(block)
-        }
+    if (needRemoveBlocks.length) {
+      const blockIds = needRemoveBlocks.map(item => item.block.id)
+      needRemoveBlocks.forEach(item => {
+        BlockTree.walkTree(item.path, rootValue.value.getByPath(item.path), (childPath, block) => {
+          const needLeft = !blockIds.includes(block.id)
+          if (needLeft && leftBlocks.indexOf(block) === -1) {
+            leftBlocks.push(block)
+          }
+        })
       })
-    })
 
-    logger.i('keydownHandler', blockPaths, leftBlocks, blockIds)
-    // 把选中的组件删除
-    const result = BlockTree.filter(rootValue.value.model, (block) => {
-      return !blockIds.includes(block.id)
+      // 把选中的组件删除
+      const result = BlockTree.filter(rootValue.value.model, (block) => {
+        return !blockIds.includes(block.id)
+      })
+      rootValue.value.updateModel(result)
+      logger.i('keydownHandler after filter', result)
+
+    }
+    logger.i('firstText', JSON.stringify(firstText.ops))
+    rootValue.value.startTransaction(() => {
+      rootValue.value.update(
+        firstBlock.path,
+        { data: { ...firstBlock.block.data, ops: firstText.ops } }
+      )
+      if (leftBlocks.length) {
+        leftBlocks.forEach((block, index) => {
+          rootValue.value.addAfter([...firstBlock.path, index - 1], block)
+        })
+      }
     })
-    rootValue.value.updateModel(result)
-    logger.i('keydownHandler', result)
   }
 }
 </script>

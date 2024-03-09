@@ -1,12 +1,16 @@
 import { BlockTree, rootSymbol } from "../models/BlockTree"
 import type { BlockModel } from "../models/block"
-import { type ShallowRef, inject } from "vue"
+import { type ShallowRef, inject, computed, Ref, ref, watch, nextTick, toRaw, shallowRef } from "vue"
 import * as R from 'ramda'
 import { createLogger } from "@writing/utils/logger"
-import { join } from "@writing/utils/delta"
+import { getOps, join } from "@writing/utils/delta"
 import { moveCaret } from "../models/caret"
+import { SelectionRange, SelectionState, setSelectionRange } from "./selection"
+import Delta from "quill-delta"
 
 const logger = createLogger('operator')
+
+export const isTextBlock = (block: BlockModel) => ['text', 'heading1', 'heading2', 'heading3', 'heading4', 'heading5', 'heading6'].includes(block.type)
 
 export const useOperator = (props: { path: number[] }) => {
   const rootValue = inject<ShallowRef<BlockTree>>(rootSymbol)
@@ -153,4 +157,136 @@ export const useMerge = () => {
   }
 
   return { merge }
+}
+
+export const useFormat = (propsSelection: SelectionState) => {
+  const rootValue = inject<ShallowRef<BlockTree>>(rootSymbol)
+  const link = ref<string | null>('')
+  const savedSelection = shallowRef<SelectionState>()
+
+  const selection = computed(() => {
+    return savedSelection.value || propsSelection
+  })
+
+  const formats = computed<Record<string, any>>(() => {
+    logger.i('formats', selection.value.range)
+    if (!selection.value.range) return {};
+    return getFormats(selection.value.range)
+  })
+
+  const getFormats = (selection: SelectionRange) => {
+    if (!selection) return {
+      bold: false, italic: false, link: false, code: false
+    }
+    const formats = {
+      bold: [], italic: [], link: [], code: [], strike: [], underline: [],
+      script: [],
+      background: [], color: [],
+      size: []
+    }
+    rootValue?.value.walkTreeBetween(
+      selection.from.path,
+      selection.to.path,
+      (path, block) => {
+        if (!isTextBlock(block)) return
+  
+        const delta = new Delta(block.data.ops)
+        const start = R.equals(path, selection.from.path) ? selection.from.offset : 0
+        const end = R.equals(path, selection.to.path) ? selection.to.offset : delta.length()
+        const ops = getOps(block.data.ops, { index: start, length: end - start})
+        R.forEach(
+          (op) => {
+            R.forEach(
+              ([key, value]: [string, any[]]) => {
+                value.push((op as any).attributes?.[key])
+              },
+              R.toPairs(formats)
+            )
+          },
+          ops
+        )
+      }
+    )
+    const result = R.map((value) => {
+      const uniqValue = R.uniq(value)
+      return uniqValue.length > 1 ? false : R.head(uniqValue)
+    }, formats)
+    logger.i('formats', result)
+    return result
+  }
+
+  const setFormats = (formats: Record<string, any>) => {
+    const { from, to } = selection.value.range
+    rootValue?.value.walkTreeBetween(
+      from.path,
+      to.path,
+      (path, block) => {
+        if (!isTextBlock(block)) return
+        const delta = new Delta(block.data.ops)
+        const start = R.equals(path, from.path) ? from.offset : 0
+        const end = R.equals(path, to.path) ? to.offset : delta.length()
+  
+        const ops = delta.compose(new Delta().retain(start).retain(end - start, formats)).ops
+  
+        rootValue?.value.update(path, {
+          data: {
+            ...block.data,
+            ops
+          }
+        })
+      }
+    )
+  }
+
+  const formatText = (name: string, value: boolean | string) => {
+    const range = toRaw(selection.value.range)
+    logger.i('formatText', name, value, range)
+    setFormats({
+      [name]: value
+    })
+    nextTick(() => {
+      setSelectionRange(range)
+    })
+  }
+  
+  const toggleFormat = (format: string) => {
+    let name = format
+    let value: string | boolean = !formats.value[name]
+    formatText(name, value)
+  }
+  
+  const setSizeFormat = (action: 'decrease' | 'increase') => {
+    let size = formats.value.size ? parseInt(formats.value.size) : 16
+    if (action === 'decrease') {
+      size = Math.max(10, size - 1)
+    } else {
+      size = Math.min(110, size + 1)
+    }
+    formatText('size', size + 'px')
+  }
+
+  const saveSelection = () => {
+    logger.i('saveRange', selection.value.range)
+    savedSelection.value = JSON.parse(JSON.stringify(selection.value))
+  }
+
+  const restoreRange = () => {
+    if (!savedSelection.value) return
+    setSelectionRange(savedSelection.value.range)
+  }
+
+  const setLinkFormat = () => {
+    restoreRange()
+    setTimeout(() => {
+      savedSelection.value = null
+      const value = link.value || null
+      formatText('link', value)
+    })
+  }
+
+  return {
+    formats, link, selection,
+    toggleFormat, formatText, setSizeFormat, setLinkFormat,
+    saveSelection
+  }
 }

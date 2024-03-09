@@ -1,276 +1,236 @@
 <template>
-  <ul class="editor-toolbar" :style="style" v-show="style"
-    @mousedown.prevent>
-    <li class="toolbar-item">
-      <span class="material-symbols-outlined">text_increase</span>
-    </li>
-    <li class="toolbar-item">
-      <span class="material-symbols-outlined">text_decrease</span>
-    </li>
-    <li class="toolbar-item"
-      :class="{ actived: formats?.bold }"
-      @click.capture="clickHandler('bold')">B</li>
-    <li class="toolbar-item"
-      :class="{ actived: formats?.italic }"
-      @pointerdown.capture.stop="clickHandler('italic')">I</li>
-    <li class="toolbar-item">
-      <span class="material-symbols-outlined" :style="{color: formats.background || ''}">format_color_fill</span>
-      <el-color-picker :model-value="formats.background"
-        show-alpha
-        @change="formatText('background', $event)"
-        class="editor-color-picker"
-        :predefine="[
-        '#ff4500',
-        '#ff8c00',
-        '#ffd700',
-        '#90ee90',
-        '#00ced1',
-        '#1e90ff',
-        '#c71585',
-        'rgba(255, 69, 0, 0.68)',
-        'rgb(255, 120, 0)',
-        'hsv(51, 100, 98)',
-        'hsva(120, 40, 94, 0.5)',
-        'hsl(181, 100%, 37%)',
-        'hsla(209, 100%, 56%, 0.73)',
-        '#c7158577',
-      ]" />
-    </li>
-    <li class="toolbar-item">
-      <el-color-picker :model-value="formats.color || ''"
-        show-alpha
-        class="editor-color-picker"
-        @change="formatText('color', $event)"
-        :predefine="[
-        '#ff4500',
-        '#ff8c00',
-        '#ffd700',
-        '#90ee90',
-        '#00ced1',
-        '#1e90ff',
-        '#c71585',
-        'rgba(255, 69, 0, 0.68)',
-        'rgb(255, 120, 0)',
-        'hsv(51, 100, 98)',
-        'hsva(120, 40, 94, 0.5)',
-        'hsl(181, 100%, 37%)',
-        'hsla(209, 100%, 56%, 0.73)',
-        '#c7158577',
-      ]" />
-      <span class="material-symbols-outlined" :style="{color: formats.color || ''}">format_color_text</span>
-    </li>
-    <li class="toolbar-item"
-      :class="{ actived: formats?.underline }"
-      @pointerdown.capture.stop="clickHandler('underline')">
-      <span class="material-symbols-outlined">format_underlined</span>
-    </li>
-    <li class="toolbar-item"
-      :class="{ actived: formats?.strike }"
-      @pointerdown.capture.stop="clickHandler('strike')">
-      <span class="material-symbols-outlined">format_strikethrough</span>
-    </li>
-    <li class="toolbar-item"
-      :class="{ actived: formats?.link }">
-      <span class="material-symbols-outlined">add_link</span>
-    </li>
-    <li class="toolbar-item"
-      :class="{ actived: formats?.code }"
-      @pointerdown.capture.stop="clickHandler('code')">
-      <span class="material-symbols-outlined">code</span>
-    </li>
-    <li class="toolbar-item"
-      :class="{ actived: formats?.super }"
-      @pointerdown.capture.stop="clickHandler('super')">
-      <span class="material-symbols-outlined">superscript</span>
-    </li>
-    <li class="toolbar-item"
-      :class="{ actived: formats?.sub }"
-      @pointerdown.capture.stop="clickHandler('sub')">
-      <span class="material-symbols-outlined">subscript</span>
-    </li>
-  </ul>
+  <div class="editor-toolbar" ref="el" :style="floatingStyles"
+    :data-popper-placement="placement"
+    v-show="selection.rect">
+    <ul class="editor-toolbar-item-list"
+      @mousedown.prevent>
+      <li class="toolbar-item" @click.capture="setSizeFormat('decrease')">
+        <span class="material-symbols-outlined">text_decrease</span>
+      </li>
+      <li class="toolbar-item">{{ formats?.size || '16px' }}</li>
+      <li class="toolbar-item" @click.capture="setSizeFormat('increase')">
+        <span class="material-symbols-outlined">text_increase</span>
+      </li>
+      <li class="toolbar-item"
+        :class="{ actived: formats?.bold }"
+        @click.capture="toggleFormat('bold')">
+        <span class="material-symbols-outlined">format_bold</span>
+      </li>
+      <li class="toolbar-item"
+        :class="{ actived: formats?.italic }"
+        @pointerdown.capture.stop="toggleFormat('italic')">
+        <span class="material-symbols-outlined">format_italic</span>
+      </li>
+      <li class="toolbar-item">
+        <span class="material-symbols-outlined" :style="{color: formats.background || ''}">format_color_fill</span>
+        <el-color-picker :model-value="formats.background || ''"
+          show-alpha
+          @change="formatText('background', $event)"
+          class="editor-color-picker"
+          :predefine="[
+          '#ff4500',
+          '#ff8c00',
+          '#ffd700',
+          '#90ee90',
+          '#00ced1',
+          '#1e90ff',
+          '#c71585',
+          'rgba(255, 69, 0, 0.68)',
+          'rgb(255, 120, 0)',
+          'hsv(51, 100, 98)',
+          'hsva(120, 40, 94, 0.5)',
+          'hsl(181, 100%, 37%)',
+          'hsla(209, 100%, 56%, 0.73)',
+          '#c7158577',
+        ]" />
+      </li>
+      <li class="toolbar-item">
+        <el-color-picker :model-value="formats.color || ''"
+          show-alpha
+          class="editor-color-picker"
+          @change="formatText('color', $event)"
+          :predefine="[
+          '#ff4500',
+          '#ff8c00',
+          '#ffd700',
+          '#90ee90',
+          '#00ced1',
+          '#1e90ff',
+          '#c71585',
+          'rgba(255, 69, 0, 0.68)',
+          'rgb(255, 120, 0)',
+          'hsv(51, 100, 98)',
+          'hsva(120, 40, 94, 0.5)',
+          'hsl(181, 100%, 37%)',
+          'hsla(209, 100%, 56%, 0.73)',
+          '#c7158577',
+        ]" />
+        <span class="material-symbols-outlined" :style="{color: formats.color || ''}">format_color_text</span>
+      </li>
+      <li class="toolbar-item"
+        :class="{ actived: formats?.underline }"
+        @pointerdown.capture.stop="toggleFormat('underline')">
+        <span class="material-symbols-outlined">format_underlined</span>
+      </li>
+      <li class="toolbar-item"
+        :class="{ actived: formats?.strike }"
+        @pointerdown.capture.stop="toggleFormat('strike')">
+        <span class="material-symbols-outlined">format_strikethrough</span>
+      </li>
+      <li class="toolbar-item"
+        :class="{ actived: formats?.link }"
+        @click="onLinkTap">
+        <el-popover trigger="click" :width="340" :visible="selection.rect && linkPopoverVisible">
+          <template #reference>
+            <span class="material-symbols-outlined">add_link</span>
+          </template>
+          <div class="link-input-wrapper">
+            <el-input size="small"
+              class="link-input"
+              v-model="link"
+              placeholder="请输入链接"></el-input>
+            <el-button type="danger" size="small" @click="onLinkClearBtnTap">清除</el-button>
+            <el-button type="primary" size="small" @click="onLinkSaveBtnTap">保存</el-button>
+          </div>
+        </el-popover>
+      </li>
+      <li class="toolbar-item"
+        :class="{ actived: formats?.code }"
+        @pointerdown.capture.stop="toggleFormat('code')">
+        <span class="material-symbols-outlined">code</span>
+      </li>
+      <li class="toolbar-item"
+        :class="{ actived: formats?.script === 'super' }"
+        @pointerdown.capture.stop="formatText('script', 'super')">
+        <span class="material-symbols-outlined">superscript</span>
+      </li>
+      <li class="toolbar-item"
+        :class="{ actived: formats?.script === 'sub' }"
+        @pointerdown.capture.stop="formatText('script', 'sub')">
+        <span class="material-symbols-outlined">subscript</span>
+      </li>
+    </ul>
+    <div
+      ref="floatingArrow"
+      class="floating-arrow"
+      :style="{
+        position: 'absolute',
+        left:
+          middlewareData.arrow?.x != null
+            ? `${middlewareData.arrow.x}px`
+            : '',
+        top:
+          middlewareData.arrow?.y != null
+            ? `${middlewareData.arrow.y}px`
+            : '',
+      }"
+    ></div>
+  </div>
 </template>
 
 <script lang="ts" setup>
-import { computed, inject, toRaw, type ShallowRef, ref } from 'vue'
-import type { SelectionState } from '../../hooks/selection';
-import { createLogger } from '@writing/utils/logger';
-import { type BlockModel } from '../../models/block';
-import * as R from 'ramda'
-import { getOps } from '../../models/delta'
-import Delta from 'quill-delta';
-import { BlockTree, rootSymbol } from '../../models/BlockTree';
+import { computed, inject, toRaw, type ShallowRef, ref, onMounted, onBeforeUnmount, watch, toRef } from 'vue'
+import { SelectionRange, type SelectionState } from '../../hooks/selection';
 import { ElColorPicker } from 'element-plus'
-
-const logger = createLogger('EditorToolbar')
-
-const rootValue = inject<ShallowRef<BlockTree>>(rootSymbol)
-
-const TextBlockTypes = ['text', 'heading1', 'heading2', 'heading3', 'heading4', 'heading5', 'heading6']
+import { VirtualElement, useFloating, flip, shift, arrow, offset } from '@floating-ui/vue'
+import { useFormat } from '../../hooks/operator';
 
 const props = defineProps<{
   selection: SelectionState
 }>()
+const el = ref<HTMLElement>()
+const floatingArrow = ref<HTMLElement>()
+const linkPopoverVisible = ref(false)
 
-const finalState = (origin: boolean | null, value: boolean) => {
-  if (origin === null) return value
-  return origin && value
+const {
+  formats, link, selection,
+  formatText, toggleFormat, setSizeFormat, setLinkFormat,
+  saveSelection
+} = useFormat(props.selection)
+
+const onLinkTap = () => {
+  link.value = formats.value.link || ''
+  saveSelection()
+  linkPopoverVisible.value = true
 }
 
-const getFormats = () => {
-  if (!props.selection.selection) return {
-    bold: false, italic: false, link: false, code: false
-  }
-  const { selection } = props.selection
-  const textBlocks: { path: number[], block: BlockModel}[] = []
-  rootValue?.value.walkTreeBetween(
-    selection.from.path,
-    selection.to.path,
-    (path, block) => {
-      logger.i('getFormats', [...path], { ...block })
-      if (TextBlockTypes.includes(block.type)) {
-        textBlocks.push({ path, block })
-      }
+const onLinkSaveBtnTap = () => {
+  setLinkFormat()
+  linkPopoverVisible.value = false
+}
+const onLinkClearBtnTap = () => {
+  link.value = ''
+  setLinkFormat()
+  linkPopoverVisible.value = false
+}
+
+
+
+const getRect = () => ({
+  getBoundingClientRect: () => {
+    if (!selection.value.rect) return {
+      x: 0, y: 0, top: 0, left: 0, width: 0, height: 0, right: 0, bottom: 0
     }
-  )
-  const formats = textBlocks.reduce<Record<string, any>>((acc, cur) => {
-    const delta = new Delta(cur.block.data.ops)
-    const start = R.equals(cur.path, selection.from.path) ? selection.from.offset : 0
-    const end = R.equals(cur.path, selection.to.path) ? selection.to.offset : delta.length()
-    const ops = getOps(cur.block.data.ops, { index: start, length: end - start})
-    const bold = ops.every(op => op.attributes?.bold)
-    const italic = ops.every(op => op.attributes?.italic)
-    const link = ops.every(op => op.attributes?.link)
-    const code = ops.every(op => op.attributes?.code)
-    const scriptSub = ops.every(op => op.attributes?.script === 'sub')
-    const scriptSuper = ops.every(op => op.attributes?.script === 'super')
-    const strike = ops.every(op => op.attributes?.strike)
-    const underline = ops.every(op => op.attributes?.underline)
-    if (acc.color === null || typeof acc.color === 'string') {
-      const allColors = ops.map(op => {
-        if (op.insert) {
-          return op.attributes?.color
-        }
-        return null
-      })
-      const colors = new Set(allColors)
-      if (colors.size === 1) {
-        acc.color = acc.color === null ? allColors[0] : acc.color === allColors[0] ? acc.color : false
-      } else if (colors.size > 1) {
-        acc.color = false
-      }
-    }
-    if (acc.background === null || typeof acc.background === 'string') {
-      const allBackgrounds = ops.map(op => {
-        if (op.insert) {
-          return op.attributes?.background
-        }
-        return null
-      })
-      const backgrounds = new Set(allBackgrounds)
-      if (backgrounds.size === 1) {
-        acc.background = acc.background === null ? allBackgrounds[0] : acc.background === allBackgrounds[0] ? acc.background : false
-      } else if (backgrounds.size > 1) {
-        acc.background = false
-      }
-    }
+    const { top, left, width, height  } = selection.value.rect
     return {
-      ...acc,
-      bold: finalState(acc.bold, bold),
-      italic: finalState(acc.italic, italic),
-      link: finalState(acc.link, link),
-      code: finalState(acc.code, code),
-      sub: finalState(acc.sub, scriptSub),
-      super: finalState(acc.super, scriptSuper),
-      strike: finalState(acc.strike, strike),
-      underline: finalState(acc.underline, underline)
+      x: left,
+      y: top,
+      top: top,
+      left: left,
+      width: width,
+      height: height,
+      right: left + width,
+      bottom: top + height
     }
-  }, {
-    bold: null, italic: null, link: null, code: null, sub: null, super: null, strike: null, underline: null,
-    background: null, color: null
-  })
-  logger.i('formats', formats.background, formats.color)
-  return formats
-}
-
-const setFormats = (formats: Record<string, any>) => {
-  if (!props.selection.selection) return {
-    bold: false, italic: false, link: false, code: false
-  }
-  const { selection } = props.selection
-  rootValue?.value.walkTreeBetween(
-    selection.from.path,
-    selection.to.path,
-    (path, block) => {
-      if (!TextBlockTypes.includes(block.type)) return
-      const delta = new Delta(block.data.ops)
-      const start = R.equals(path, selection.from.path) ? selection.from.offset : 0
-      const end = R.equals(path, selection.to.path) ? selection.to.offset : delta.length()
-
-      const ops = delta.compose(new Delta().retain(start).retain(end - start, formats)).ops
-
-      rootValue?.value.update(path, {
-        data: {
-          ...block.data,
-          ops
-        }
-      })
-    }
-  )
-}
-
-const formats = computed(() => {
-  if (!props.selection.selection) return {};
-  return getFormats()
-})
-
-const style = computed(() => {
-  if (!props.selection.rect) return null
-  logger.i('style', props.selection.rect.left + props.selection.rect.width / 2)
-  return {
-    top: (props.selection.rect.top - 42) + 'px',
-    left: (props.selection.rect.left) + 'px'
   }
 })
 
-const clickHandler = (format: string) => {
-  logger.i('clickHandler', format, toRaw(props.selection))
-  let name = format
-  let value: string | boolean = !formats.value[name]
-  if (format === 'super') {
-    name = 'script'
-    value = formats.value[name] ? false : 'super'
-  } else if (format === 'sub') {
-    name = 'script'
-    value = formats.value[name] ? false : 'sub'
-  }
-  setFormats({
-    [name]: value
-  })
-}
+const reference = ref<VirtualElement>(getRect())
 
-const formatText = (name: string, value: boolean | string) => {
-  setFormats({
-    [name]: value
-  })
-}
+watch(() => selection.value.rect, () => {
+  reference.value = getRect()
+})
+
+const { floatingStyles, middlewareData, placement } = useFloating(reference, el, {
+  placement: 'bottom',
+  middleware: [offset(10), flip({ mainAxis: true, crossAxis: false, }), shift(), arrow({ element: floatingArrow })]
+})
 
 </script>
 
 <style lang="less" scoped>
 .editor-toolbar {
+  filter: drop-shadow(4px 7px 7px #ccc);
+  z-index: 10;
+
+  &[data-popper-placement="top"] .floating-arrow {
+    width: 0; 
+    height: 0; 
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    
+    border-top: 10px solid #eee;
+  }
+
+  &[data-popper-placement="bottom"] .floating-arrow {
+    width: 0; 
+    height: 0; 
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    
+    border-bottom: 10px solid #eee;
+    top: -10px;
+  }
+}
+.editor-toolbar-item-list {
   display: flex;
   color: #444;
   font-size: 16px;
   background: #eee;
-  border: 1px solid #bbb;
-  box-shadow: 4px 7px 7px #ccc;
   list-style: none;
   padding: 0;
   margin: 0;
   transition: top .1s, left .1s;
-  position: absolute;
-  // transform: translateX(-50%);
   .toolbar-item {
     height: 36px;
     display: flex;
@@ -287,7 +247,7 @@ const formatText = (name: string, value: boolean | string) => {
       background: #dedede;
     }
     &.actived {
-      color: blue;
+      background: #aaa;
     }
     &:deep(.material-symbols-outlined) {
       font-size: 20px;
@@ -297,6 +257,12 @@ const formatText = (name: string, value: boolean | string) => {
       position: absolute;
       opacity: 0;
     }
+  }
+}
+.link-input-wrapper {
+  display: flex;
+  .link-input {
+    margin-right: 12px;
   }
 }
 </style>
