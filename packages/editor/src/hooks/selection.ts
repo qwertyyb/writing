@@ -90,6 +90,11 @@ export const setSelectionRange = (selection: SelectionRange) => {
   window.getSelection()?.setBaseAndExtent(startContainer, startOffset, endContainer, endOffset)
 }
 
+export const setCaretPosition = (position: SelectionBlockPosition) => {
+  const { node: startContainer, offset: startOffset } = getNodeAndOffset(position)
+  window.getSelection()?.setBaseAndExtent(startContainer, startOffset, startContainer, startOffset)
+}
+
 export const useSelection = ({ el }: {
   el: Ref<HTMLElement | undefined>
 }) => {
@@ -106,8 +111,8 @@ export const useSelection = ({ el }: {
   let focusOffset = 0
   let anchorOffset = 0
 
-  const resetContenteditable = () => {
-    logger.i('resetContenteditable')
+  const clear = () => {
+    logger.i('clear')
     state.value.range = null
     state.value.rect = null
     isMultiSelect = false
@@ -142,9 +147,8 @@ export const useSelection = ({ el }: {
 
   const selectionchangeHandler = () => {
     const selection = window.getSelection()
-    logger.i('selectionchangeHandler', selection)
     if (selection.type === 'None') return
-    if (!selection || !selectionInEditor(selection)) return resetContenteditable()
+    if (!selection || !selectionInEditor(selection)) return clear()
 
     if (selection.anchorNode) {
       anchorNode = selection.anchorNode
@@ -163,7 +167,7 @@ export const useSelection = ({ el }: {
     state.value.rect = null
 
     if (selection.type === 'Caret') {
-      resetContenteditable()
+      clear()
       return
     }
 
@@ -199,5 +203,5 @@ export const useSelection = ({ el }: {
       }
     }
   }
-  return { state, pointermoveHandler }
+  return { state, pointermoveHandler, clear }
 }

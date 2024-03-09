@@ -1,4 +1,4 @@
-import { BlockTree, rootSymbol } from "../models/BlockTree"
+import { BlockTree, OperateSource, rootSymbol } from "../models/BlockTree"
 import type { BlockModel } from "../models/block"
 import { type ShallowRef, inject, computed, Ref, ref, watch, nextTick, toRaw, shallowRef } from "vue"
 import * as R from 'ramda'
@@ -20,16 +20,16 @@ export const useOperator = (props: { path: number[] }) => {
     const prev = rootValue?.value.getByPath(prevPath)
     return rootValue?.value.startTransaction(() => {
       const children = data?.children ?? prev?.children ?? []
-      rootValue?.value.addAfter([...props.path, index], { ...data, children })
+      rootValue?.value.addAfter([...props.path, index], { ...data, children }, OperateSource.User)
       rootValue?.value.update(
         prevPath,
         { children: [] }
       )
-    })
+    }, OperateSource.User)
   }
 
   const updateBlock = (index: number, data: Partial<BlockModel>) => {
-    return rootValue?.value.startTransaction(() => rootValue?.value.update([...props.path, index], data))
+    return rootValue?.value.startTransaction(() => rootValue?.value.update([...props.path, index], data), OperateSource.User)
   }
 
   const removeBlock = (index: number) => {
@@ -40,7 +40,7 @@ export const useOperator = (props: { path: number[] }) => {
         prevPath,
         { children: [ ...prev.children, ... removed.children ] }
       )
-    })
+    }, OperateSource.User)
   }
 
   return { addBlock, updateBlock, removeBlock }
@@ -89,8 +89,8 @@ export const useMove = () => {
     rootValue?.value.startTransaction(() => {
       const removed = rootValue!.value.remove(oldPath)
       logger.i('move, removed: ', JSON.parse(JSON.stringify(removed)))
-      rootValue!.value.addAfter(newPath, removed)
-    })
+      rootValue!.value.addAfter(newPath, removed, OperateSource.User)
+    }, OperateSource.User)
   }
 
   const moveUpper = (path: number[]) => {
@@ -113,8 +113,8 @@ export const useMove = () => {
           ...oldBlock.children || [],
           ...afterChildren
         ]
-      })
-    })
+      }, OperateSource.User)
+    }, OperateSource.User)
   }
 
   const moveLower = (path: number[]) => {
@@ -150,7 +150,7 @@ export const useMerge = () => {
         ]
       })
       rootValue!.value.remove(originPath)
-    })
+    }, OperateSource.User)
     setTimeout(() => {
       moveCaret(document.body.querySelector<HTMLDivElement>(`[data-block-id=${JSON.stringify(mergeBlock.id)}] [data-focusable]`)!, offset)
     })

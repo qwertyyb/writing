@@ -28,14 +28,14 @@
 import { createBlock, type BlockModel } from '../models/block';
 import BlockEditor from './BlockEditor.vue';
 import { focusBlock } from '../hooks/focus';
-import { provide, type PropType, computed, ref, shallowRef, watch, onMounted, onBeforeUnmount } from 'vue';
+import { provide, type PropType, computed, ref, shallowRef, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { Mode } from './schema';
 import { useHistory } from '../hooks/history';
 import { useBlockTool } from '../hooks/use-block-tool';
-import { useSelection } from '../hooks/selection';
+import { setCaretPosition, useSelection } from '../hooks/selection';
 import EditorToolbar from './tool/EditorToolbar.vue';
 import { createLogger } from '@writing/utils/logger';
-import { BlockTree, rootSymbol } from '../models/BlockTree';
+import { BlockTree, OperateSource, rootSymbol } from '../models/BlockTree';
 import { uploadSymbol } from '../utils/upload'
 import { JSONPatch } from '@writing/utils/patch';
 import * as R from 'ramda'
@@ -76,7 +76,7 @@ provide('spellcheck', spellcheck)
 provide(uploadSymbol, props.upload)
 provide(rootSymbol, rootValue)
 
-const { state: selectionState, pointermoveHandler: selectionTrigger } = useSelection({ el: editorEl })
+const { state: selectionState, pointermoveHandler: selectionTrigger, clear: clearSelection } = useSelection({ el: editorEl })
 
 const { state: blockToolState, pointermoveHandler: blockToolTrigger } = useBlockTool({
   el, mode
@@ -89,8 +89,10 @@ const changeHandler = (value: BlockModel, changes: JSONPatch[]) => {
   model.value = value
   pushLatest()
 }
-const addedHandler = ({ block }: { block: BlockModel }) => {
-  focusBlock(block.id, 'start')
+const addedHandler = ({ block }: { block: BlockModel }, source) => {
+  if (source === OperateSource.User) {
+    focusBlock(block.id, 'start')
+  }
 }
 const updatedHandler = ({ oldBlock, block }: { oldBlock: BlockModel, block: BlockModel }) => {
   if (oldBlock.type + oldBlock.id !== block.type + block.id) {
@@ -202,9 +204,15 @@ const keydownHandler = (event: KeyboardEvent) => {
       )
       if (leftBlocks.length) {
         leftBlocks.forEach((block, index) => {
-          rootValue.value.addAfter([...firstBlock.path, index - 1], block)
+          rootValue.value.addAfter([...firstBlock.path, index - 1], block, OperateSource.API)
         })
       }
+    }, OperateSource.API)
+    const firstPath = [...from.path]
+    const offset = from.offset
+    clearSelection()
+    nextTick(() => {
+      setCaretPosition({ path: firstPath, offset })
     })
   }
 }

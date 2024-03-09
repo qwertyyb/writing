@@ -9,11 +9,17 @@ const logger = createLogger('BlockTree')
 
 export const rootSymbol = Symbol('root')
 
+export enum OperateSource {
+  User = 'User',
+  API = 'API',
+  Silent = 'Silent'
+}
+
 interface BlockTreeEventTypes {
-  added: [{ path: number[], block: BlockModel }],
+  added: [{ path: number[], block: BlockModel }, source: OperateSource],
   updated: [{ path: number[], block: BlockModel, oldBlock: BlockModel }],
   removed: [{ path: number[], block: BlockModel }],
-  change: [root: BlockModel, patches: JSONPatch[]]
+  change: [root: BlockModel, patches: JSONPatch[], source: OperateSource]
 }
 
 export class BlockTree extends EventEmitter<BlockTreeEventTypes> {
@@ -33,25 +39,25 @@ export class BlockTree extends EventEmitter<BlockTreeEventTypes> {
     return parent
   }
 
-  private emitChange() {
-    this.emit('change', this.model, this.pg.patches)
+  private emitChange(source: OperateSource) {
+    this.emit('change', this.model, this.pg.patches, source)
     this.pg.clear()
   }
 
-  updateModel(model: BlockModel) {
+  updateModel(model: BlockModel, source = OperateSource.API) {
     const oldBlock = { ...model }
     this._model = model
     this.emit('updated', { path: [], oldBlock, block: model })
-    this.emit('change', this.model, this.pg.patches)
+    this.emit('change', this.model, this.pg.patches, source)
   }
 
-  startTransaction<T extends (...args: any) => any>(updater: T): ReturnType<T> {
+  startTransaction<T extends (...args: any) => any>(updater: T, source: OperateSource = OperateSource.API): ReturnType<T> {
     const result = updater()
-    this.emitChange()
+    this.emitChange(source)
     return result
   }
 
-  addAfter(path: number[], data: Partial<BlockModel>) {
+  addAfter(path: number[], data: Partial<BlockModel>, source: OperateSource = OperateSource.API) {
     const index = R.last(path)!
     const parent = this.getParentFromPath(path)
 
@@ -66,7 +72,7 @@ export class BlockTree extends EventEmitter<BlockTreeEventTypes> {
     const newPath = [...R.take(path.length - 1, path), index + 1]
     this.pg.add(newPath, newBlock)
 
-    this.emit('added', { path: newPath, block: newBlock })
+    this.emit('added', { path: newPath, block: newBlock }, source)
     return newBlock
   }
 
