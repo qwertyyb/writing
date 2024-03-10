@@ -18,6 +18,11 @@ interface BlockConfig {
   identifier: string,
   label: string,
   icon?: string,
+
+  // 是否在选择器中显示，默认为显示
+  visibleInSelector?: boolean,
+
+  // 是否接管children的渲染
   renderChildren?: boolean,
 
   component: Component,

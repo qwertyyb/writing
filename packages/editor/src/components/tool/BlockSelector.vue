@@ -21,10 +21,12 @@
 <script lang="ts" setup>
 import { computed, ref, watch, nextTick, shallowRef } from 'vue';
 import { VirtualElement, useFloating, shift, flip } from '@floating-ui/vue';
-import blocks from '../blocks';
+import allBlocks from '../blocks';
 import { createLogger } from '@writing/utils/logger';
 
 const logger = createLogger('BlockSelector')
+
+const blocks = allBlocks.filter(item => item.visibleInSelector !== false)
 
 const props = defineProps<{
   rect: { top: number, left: number, width: number, height: number },
@@ -45,7 +47,8 @@ const reference = shallowRef<VirtualElement>({
       right: left + width,
       bottom: top + height
     }
-  }
+  },
+  contextElement: document.body
 })
 const el = ref<HTMLDivElement>()
 
@@ -59,12 +62,14 @@ watch(() => props.rect, () => {
         right: left + width,
         bottom: top + height
       }
-    }
+    },
+    contextElement: document.body
   }
 })
 
 const { floatingStyles, update: updatePopover } = useFloating(reference, el, {
   placement: 'bottom-start',
+  strategy: 'absolute',
   middleware: [flip({ mainAxis: true, crossAxis: false, }), shift()]
 })
 
@@ -122,7 +127,6 @@ defineExpose({
   border: 1px solid #e8e8eb;
   border-radius: 6px;
   padding: 4px;
-  position: absolute;
   background: #fff;
   color: rgba(100, 100, 100, 1);
   min-width: 200px;
@@ -135,7 +139,7 @@ defineExpose({
     overflow: auto;
     &::-webkit-scrollbar {
       border: none;
-      width: 8px;
+      width: 4px;
     }
     &::-webkit-scrollbar-thumb {
       background-color: #ddd;

@@ -17,8 +17,8 @@
       ref="textEditorEl"
     ></text-editor>
 
-    <teleport to="body">
-      <block-selector v-if="selectorState.visible"
+    <teleport to=".rich-text-editor" v-if="selectorState.visible">
+      <block-selector
         v-click-outside="closeSelector"
         ref="selector"
         @confirm="onCommand"
