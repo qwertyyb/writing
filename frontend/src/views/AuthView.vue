@@ -17,7 +17,7 @@
 import { useAuthStore } from '@/stores/auth';
 import { ElMessage } from 'element-plus';
 import { ref } from 'vue';
-import { startRegistration, startAuthentication, browserSupportsWebAuthn } from '@simplewebauthn/browser';
+import { startRegistration, browserSupportsWebAuthn } from '@simplewebauthn/browser';
 import router from '@/router';
 import { checkLogin as checkLoginApi, getCanRegisterWebAuthn, getRegisterOptions, verifyRegister } from '@/services/auth';
 import { createLogger } from '@/utils/logger';
