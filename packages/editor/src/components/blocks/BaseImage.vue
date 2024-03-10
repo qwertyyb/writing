@@ -111,73 +111,73 @@ import { useMode } from '../../hooks/mode';
 import type { ImageData } from '../schema';
 import type { BlockModel } from '../../models/block';
 
-const data = defineModel<ImageData>({ required: true })
+const data = defineModel<ImageData>({ required: true });
 
-const { readonly, canEdit } = useMode()
+const { readonly, canEdit } = useMode();
 
 const emits = defineEmits<{
   remove: [],
   add: [options?: Partial<BlockModel>]
-}>()
+}>();
 
-const imageEl = ref<InstanceType<typeof FocusableControl>>()
-const containerEl = ref<HTMLDivElement>()
-const settingsVisible = ref(false)
+const imageEl = ref<InstanceType<typeof FocusableControl>>();
+const containerEl = ref<HTMLDivElement>();
+const settingsVisible = ref(false);
 
 const uploadState = ref({
   loading: false,
   text: '',
   tempUrl: '',
   tempRatio: 1,
-})
+});
 
 const update = (newData: Partial<ImageData>) => {
   data.value = {
     ...data.value,
     ...newData
-  }
-}
+  };
+};
 
 const commandHandler = (command: string) => {
   switch (command) {
-    case 'Align.Left':
-      update({ align: ImageAlign.Left })
-      break
-    case 'Align.Right':
-      update({ align: ImageAlign.Right })
-      break
-    case 'Align.Center':
-      update({ align: ImageAlign.Center })
-      break
-    case 'Size.Large':
-      update({ size: Math.min(100, data.value.size + 25) })
-      break
-    case 'Size.Small':
-      update({ size: Math.max(0, data.value.size - 25) })
-      break
-    case 'Remove': 
-      emits('remove')
+  case 'Align.Left':
+    update({ align: ImageAlign.Left });
+    break;
+  case 'Align.Right':
+    update({ align: ImageAlign.Right });
+    break;
+  case 'Align.Center':
+    update({ align: ImageAlign.Center });
+    break;
+  case 'Size.Large':
+    update({ size: Math.min(100, data.value.size + 25) });
+    break;
+  case 'Size.Small':
+    update({ size: Math.max(0, data.value.size - 25) });
+    break;
+  case 'Remove': 
+    emits('remove');
   }
-}
+};
 
-const startPos = { x: 0, y: 0, width: 0, height: 0 }
+const startPos = { x: 0, y: 0, width: 0, height: 0 };
 const pointerdownHandler = (direction: 'left' | 'right', event: PointerEvent) => {
   startPos.x = event.clientX;
   startPos.width = imageEl.value?.$el.getBoundingClientRect().width ?? 0;
-  (event.target as HTMLElement).setPointerCapture(event.pointerId)
-}
+  (event.target as HTMLElement).setPointerCapture(event.pointerId);
+};
 const pointermoveHandler = (direction: 'left' | 'right', event: PointerEvent) => {
-  if (event.buttons !== 1) return
-  const pwidth = containerEl.value!.getBoundingClientRect().width
-  let dwidth = direction === 'left' ? startPos.x - event.clientX : event.clientX - startPos.x
+  if (event.buttons !== 1) return;
+  const pwidth = containerEl.value!.getBoundingClientRect().width;
+  let dwidth = direction === 'left' ? startPos.x - event.clientX : event.clientX - startPos.x;
   if (data.value.align === ImageAlign.Center) {
-    dwidth *= 2
+    dwidth *= 2;
   }
-  update({ 'size': Math.round((startPos.width + dwidth) / pwidth * 100) })
-}
+  update({ 'size': Math.round((startPos.width + dwidth) / pwidth * 100) });
+};
 const pointerupHandler = (event: PointerEvent) => {
-  (event.target as HTMLElement).releasePointerCapture(event.pointerId)
-}
+  (event.target as HTMLElement).releasePointerCapture(event.pointerId);
+};
 </script>
 
 <style lang="less" scoped>

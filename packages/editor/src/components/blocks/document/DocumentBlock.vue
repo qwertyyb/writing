@@ -13,30 +13,30 @@ import type { BlockModel } from '../../../models/block';
 import { useMode } from '../../../hooks/mode';
 import { ref, watch } from 'vue';
 
-const block = defineModel<BlockModel>({ required: true })
+const block = defineModel<BlockModel>({ required: true });
 
-const { readonly } = useMode()
+const { readonly } = useMode();
 
 const data = ref({
   title: block.value.data?.title || ''
-})
+});
 
 watch(block, () => {
   data.value = {
     title: block.value.data?.title || ''
-  }
-})
+  };
+});
 
 const update = (values: { title: string }) => {
   data.value = {
     ...data.value,
     ...values
-  }
+  };
   block.value = {
     ...block.value,
     data: data.value
-  }
-}
+  };
+};
 
 </script>
 

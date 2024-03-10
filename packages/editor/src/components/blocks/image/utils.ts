@@ -1,20 +1,20 @@
-import { ImageAlign, type ImageData } from "../../schema"
-import { createBlock } from "../../../models/block"
+import { ImageAlign, type ImageData } from '../../schema';
+import { createBlock } from '../../../models/block';
 
 export const getImageRatio = (url: string): Promise<{src: string, ratio: number}> => {
   return new Promise((resolve) => {
-    const image = document.createElement('img')
+    const image = document.createElement('img');
     image.onload = () => {
-      resolve({ src: url, ratio: image.naturalWidth / image.naturalHeight })
-    }
-    image.src = url
-  })
-}
+      resolve({ src: url, ratio: image.naturalWidth / image.naturalHeight });
+    };
+    image.src = url;
+  });
+};
 
 export const createImageData = async (url: string, ratio?: number): Promise<ImageData> => {
   if (!ratio) {
-    const data = await getImageRatio(url)
-    ratio = data.ratio
+    const data = await getImageRatio(url);
+    ratio = data.ratio;
   }
   return {
     src: url,
@@ -24,5 +24,5 @@ export const createImageData = async (url: string, ratio?: number): Promise<Imag
       type: 'text',
     }),
     size: 50,
-  }
-}
+  };
+};

@@ -1,4 +1,4 @@
-import TextBlock from "./TextBlock.vue";
+import TextBlock from './TextBlock.vue';
 
 export default {
   identifier: 'text',
@@ -6,4 +6,4 @@ export default {
   icon: 'format_paragraph',
 
   component: TextBlock,
-}
+};

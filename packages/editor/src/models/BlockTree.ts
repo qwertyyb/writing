@@ -1,14 +1,13 @@
-import { createLogger } from "@writing/utils/logger"
-import * as R from "ramda"
-import EventEmitter from 'eventemitter3'
-import { createBlock, type BlockModel } from "./block"
-import { JSONPatch, PatchGenerator } from "@writing/utils/patch"
-import { toRaw } from "vue"
-import { isTextBlock } from "../hooks/operator"
+import { createLogger } from '@writing/utils/logger';
+import * as R from 'ramda';
+import EventEmitter from 'eventemitter3';
+import { createBlock, type BlockModel } from './block';
+import { JSONPatch, PatchGenerator } from '@writing/utils/patch';
+import { toRaw } from 'vue';
 
-const logger = createLogger('BlockTree')
+const logger = createLogger('BlockTree');
 
-export const rootSymbol = Symbol('root')
+export const rootSymbol = Symbol('root');
 
 export enum OperateSource {
   User = 'User',
@@ -24,237 +23,237 @@ interface BlockTreeEventTypes {
 }
 
 export class BlockTree extends EventEmitter<BlockTreeEventTypes> {
-  private _model: BlockModel
+  private _model: BlockModel;
   get model(): BlockModel {
-    return this._model
+    return this._model;
   }
-  private pg: PatchGenerator = new PatchGenerator()
+  private pg: PatchGenerator = new PatchGenerator();
   constructor(model: BlockModel) {
-    super()
-    this._model = model
+    super();
+    this._model = model;
   }
 
   private getParentFromPath(path: number[]) {
-    const parentPath = R.take(path.length - 1, path)
-    const parent = this.getByPath(parentPath)
-    return parent
+    const parentPath = R.take(path.length - 1, path);
+    const parent = this.getByPath(parentPath);
+    return parent;
   }
 
   private emitChange(source: OperateSource) {
-    this.emit('change', this.model, this.pg.patches, source)
-    this.pg.clear()
+    this.emit('change', this.model, this.pg.patches, source);
+    this.pg.clear();
   }
 
   updateModel(model: BlockModel, source = OperateSource.API) {
-    const oldBlock = { ...model }
-    this._model = model
-    this.emit('updated', { path: [], oldBlock, block: model }, source)
-    this.emit('change', this.model, this.pg.patches, source)
+    const oldBlock = { ...model };
+    this._model = model;
+    this.emit('updated', { path: [], oldBlock, block: model }, source);
+    this.emit('change', this.model, this.pg.patches, source);
   }
 
-  startTransaction<T extends (...args: any) => any>(updater: T, source: OperateSource = OperateSource.API): ReturnType<T> {
-    const result = updater()
-    this.emitChange(source)
-    return result
+  startTransaction<T extends (...args: any[]) => any>(updater: T, source: OperateSource = OperateSource.API): ReturnType<T> {
+    const result = updater();
+    this.emitChange(source);
+    return result;
   }
 
   addAfter(path: number[], data: Partial<BlockModel>, source: OperateSource = OperateSource.API) {
-    const index = R.last(path)!
-    const parent = this.getParentFromPath(path)
+    const index = R.last(path)!;
+    const parent = this.getParentFromPath(path);
 
     if (index > parent.children.length) {
-      logger.e('index out range', index, [...path], parent, this.model)
-      throw new Error('index 超出范围, length: ' + parent.children.length)
+      logger.e('index out range', index, [...path], parent, this.model);
+      throw new Error('index 超出范围, length: ' + parent.children.length);
     }
 
-    const newBlock = createBlock(data)
-    parent.children.splice(index + 1, 0, newBlock)
+    const newBlock = createBlock(data);
+    parent.children.splice(index + 1, 0, newBlock);
     
-    const newPath = [...R.take(path.length - 1, path), index + 1]
-    this.pg.add(newPath, newBlock)
+    const newPath = [...R.take(path.length - 1, path), index + 1];
+    this.pg.add(newPath, newBlock);
 
-    this.emit('added', { path: newPath, block: newBlock }, source)
-    return newBlock
+    this.emit('added', { path: newPath, block: newBlock }, source);
+    return newBlock;
   }
 
   update(path: number[], data: Partial<BlockModel>, source = OperateSource.User) {
-    const index = R.last(path)!
-    const parent = this.getParentFromPath(path)
+    const index = R.last(path)!;
+    const parent = this.getParentFromPath(path);
 
-    logger.i('update', [...path], data)
-    const child = parent.children[index]
+    logger.i('update', [...path], data);
+    const child = parent.children[index];
     if (!child) {
-      logger.e('未找到子节点', toRaw(parent), [...path])
-      throw new Error('未找到子节点')
+      logger.e('未找到子节点', toRaw(parent), [...path]);
+      throw new Error('未找到子节点');
     }
-    const oldBlock = { ...child }
+    const oldBlock = { ...child };
     parent.children[index] = {
       ...child,
       ...data
-    }
+    };
 
-    this.pg.replace(path, parent.children[index])
+    this.pg.replace(path, parent.children[index]);
 
-    this.emit('updated', { path, oldBlock, block: parent.children[index] }, source)
-    return parent.children[index]
+    this.emit('updated', { path, oldBlock, block: parent.children[index] }, source);
+    return parent.children[index];
   }
 
   remove = (path: number[]) => {
-    const index = R.last(path)!
-    const parent = this.getParentFromPath(path)
+    const index = R.last(path)!;
+    const parent = this.getParentFromPath(path);
 
     if (!parent.children.length) {
-      throw new Error(`删除失败，该节点没有子节点: ${path.join(',')}`)
+      throw new Error(`删除失败，该节点没有子节点: ${path.join(',')}`);
     }
     if (index < 0 || index > parent.children.length - 1) {
-      throw new Error(`未找到待删除节点: ${path.join(',')}`)
+      throw new Error(`未找到待删除节点: ${path.join(',')}`);
     }
 
-    const [block] = parent.children.splice(index, 1)
+    const [block] = parent.children.splice(index, 1);
 
-    this.pg.remove(path)
+    this.pg.remove(path);
   
-    this.emit('removed', { path, block })
-    return block
-  }
+    this.emit('removed', { path, block });
+    return block;
+  };
 
   filter = (predicate: (item: BlockModel, path: number[], parent: BlockModel | null, root: BlockModel) => boolean, basePath: number[] = []) => {
-    const root = this.getByPath(basePath)
-    return BlockTree.filter(root, predicate)
-  }
+    const root = this.getByPath(basePath);
+    return BlockTree.filter(root, predicate);
+  };
 
   getByPath = (path: number[]) => {
-    return BlockTree.getByPath(this.model, path)
-  }
+    return BlockTree.getByPath(this.model, path);
+  };
 
   walkTree = (callback: (path: number[], block: BlockModel) => void) => {
-    return BlockTree.walkTree([], this.model, callback)
-  }
+    return BlockTree.walkTree([], this.model, callback);
+  };
 
   walkTreeBetween = (from: number[], to: number[], callback: (path: number[], block: BlockModel) => void) => {
-    return BlockTree.walkTreeBetween(this.model, from, to, callback)
-  }
+    return BlockTree.walkTreeBetween(this.model, from, to, callback);
+  };
 
   getPrev = (
     path: number[],
     predicate: (path: number[], block: BlockModel) => boolean = (() => true)
   ) => {
-    if (!path.length) return null
+    if (!path.length) return null;
   
     const getMergablePathLast = (root: BlockModel, path: number[]): {
       path: number[],
       block: BlockModel
     } | null => {
-      const block = BlockTree.getByPath(root, path)
+      const block = BlockTree.getByPath(root, path);
   
       for(let i = (block.children?.length ?? 0) - 1; i >= 0; i -= 1) {
-        const mergablePath = getMergablePathLast(root, [...path, i])
-        if (mergablePath) return mergablePath
+        const mergablePath = getMergablePathLast(root, [...path, i]);
+        if (mergablePath) return mergablePath;
       }
   
       if (predicate(path, block)) {
-        return { path, block }
+        return { path, block };
       }
-      return null
-    }
+      return null;
+    };
   
-    const prevPath = [...path]
+    const prevPath = [...path];
     while(prevPath.length) {
-      let prevPathIndex = prevPath.pop()! - 1
+      let prevPathIndex = prevPath.pop()! - 1;
       while(prevPathIndex >= 0) {
-        const prevBlock = this.getByPath([...prevPath, prevPathIndex])
-        if (!prevBlock) break
+        const prevBlock = this.getByPath([...prevPath, prevPathIndex]);
+        if (!prevBlock) break;
   
-        const mergable = getMergablePathLast(this.model, [...prevPath, prevPathIndex])
+        const mergable = getMergablePathLast(this.model, [...prevPath, prevPathIndex]);
         if (mergable) {
-          return mergable
+          return mergable;
         }
   
-        prevPathIndex -= 1
+        prevPathIndex -= 1;
       }
     }
-    return null
-  }
+    return null;
+  };
 
   // 静态方法
   static getByPath = (root: BlockModel, path: number[]) => {
-    let node: BlockModel = root
-    const restPath = [...path]
+    let node: BlockModel = root;
+    const restPath = [...path];
     while(restPath.length) {
       if (!node) {
-        throw new Error(`路径${JSON.stringify(path)}不正确`)
+        throw new Error(`路径${JSON.stringify(path)}不正确`);
       }
-      const curIndex = restPath.shift()!
-      node = node.children[curIndex]
+      const curIndex = restPath.shift()!;
+      node = node.children[curIndex];
     }
-    return node
-  }
+    return node;
+  };
 
   static walkTree = (
     prefixPath: number[],
     ancestor: BlockModel,
     callback: (path: number[], block: BlockModel) => void
   ) => {
-    callback(prefixPath, ancestor)
+    callback(prefixPath, ancestor);
     for(let i = 0; i < (ancestor.children?.length ?? 0); i+= 1) {
       BlockTree.walkTree(
         [...prefixPath, i],
         ancestor.children![i],
         callback
-      )
+      );
     }
-  }
+  };
 
   static filter = (root: BlockModel, predicate: (item: BlockModel, path: number[], parent: BlockModel | null, root: BlockModel) => boolean) => {
     const filterTree = (item: BlockModel, path: number[], parent: BlockModel, root: BlockModel) => {
-      const matched = predicate(item, path, parent, root)
-      if (!matched) return false
+      const matched = predicate(item, path, parent, root);
+      if (!matched) return false;
       const children = item.children.reduce<BlockModel[]>((acc, child, index) => {
-        const result = filterTree(child, [...path, index], item, root)
-        if (!result) return acc
-        return [...acc, result]
-      }, [])
+        const result = filterTree(child, [...path, index], item, root);
+        if (!result) return acc;
+        return [...acc, result];
+      }, []);
       return {
         ...item,
         children
-      }
-    }
-    return filterTree(root, [], null, root)
-  }
+      };
+    };
+    return filterTree(root, [], null, root);
+  };
 
   static getCommonAncestorPath = (start: number[], end: number[]) => {
-    let commonPath = start.length < end.length ? start.slice() : end.slice()
+    let commonPath = start.length < end.length ? start.slice() : end.slice();
     for(let i = 0; i < Math.min(start.length, end.length); i+= 1) {
       if (start[i] !== end[i]) {
-        commonPath = start.slice(0, i)
-        break
+        commonPath = start.slice(0, i);
+        break;
       }
     }
-    return commonPath
-  }
+    return commonPath;
+  };
 
   static walkTreeBetween = (
     root: BlockModel,
     start: number[], end: number[],
     callback: (path: number[], block: BlockModel) => void
   ) => {
-    const commonPath = BlockTree.getCommonAncestorPath(start, end)
-    const ancestor = BlockTree.getByPath(root, commonPath)
-    let started = false
-    let ended = true
+    const commonPath = BlockTree.getCommonAncestorPath(start, end);
+    const ancestor = BlockTree.getByPath(root, commonPath);
+    let started = false;
+    let ended = true;
     BlockTree.walkTree(commonPath, ancestor, (path, block) => {
       if (started && !ended && R.equals(end, path)) {
-        callback(path, block)
-        ended = true
+        callback(path, block);
+        ended = true;
       }
       if (started && !ended) {
-        callback(path, block)
+        callback(path, block);
       }
       if (R.equals(start, path)) {
-        callback(path, block)
-        started = true
-        ended = R.equals(end, path)
+        callback(path, block);
+        started = true;
+        ended = R.equals(end, path);
       }
-    })
-  }
+    });
+  };
 }

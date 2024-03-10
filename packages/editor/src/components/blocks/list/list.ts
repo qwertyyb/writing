@@ -1,5 +1,5 @@
-import NumberedListBlock from './NumberedListBlock.vue'
-import BulletedListBlock from './BulletedListBlock.vue'
+import NumberedListBlock from './NumberedListBlock.vue';
+import BulletedListBlock from './BulletedListBlock.vue';
 
 const numberedList = {
   identifier: 'ordered-list',
@@ -8,7 +8,7 @@ const numberedList = {
   renderChildren: true,
 
   component: NumberedListBlock
-}
+};
 
 const bulletedList = {
   identifier: 'unordered-list',
@@ -17,6 +17,6 @@ const bulletedList = {
   renderChildren: true,
 
   component: BulletedListBlock
-}
+};
 
-export default [ numberedList, bulletedList ]
+export default [ numberedList, bulletedList ];

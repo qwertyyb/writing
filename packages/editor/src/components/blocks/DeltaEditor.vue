@@ -6,5 +6,5 @@
 
 defineExpose({
   getRange() {}
-})
+});
 </script>

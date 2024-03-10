@@ -1,5 +1,5 @@
-import type { BlockModel } from "../models/block"
-import type { DeltaOperation } from "quill"
+import type { BlockModel } from '../models/block';
+import type { DeltaOperation } from 'quill';
 
 export enum Mode {
   Edit = 'Edit',

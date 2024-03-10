@@ -38,15 +38,15 @@ import { getBlockConfig } from './blocks';
 import { focusBefore, focusAfter } from '../hooks/focus';
 import { useMerge, useMove, useOperator } from '../hooks/operator';
 
-const block = defineModel<BlockModel>({ required: true })
+const block = defineModel<BlockModel>({ required: true });
 
 const props = defineProps<{
   index: number,
   path: number[],
   parent?: BlockModel
-}>()
+}>();
 
-const emits = defineEmits<{
+defineEmits<{
   added: [{ block: BlockModel, index: number, parent?: BlockModel }],
   updated: [{ oldBlock: BlockModel, block: BlockModel, index: number, parent?: BlockModel }],
   removed: [{ removed: BlockModel, index: number, parent?: BlockModel }],
@@ -55,21 +55,21 @@ const emits = defineEmits<{
   'update:modelValue': [BlockModel]
   add: [options: Partial<BlockModel>],
   remove: [],
-}>()
+}>();
 
 const needRenderChildren = computed(() => {
-  return block.value.children && !getBlockConfig(block.value)?.renderChildren
-})
+  return block.value.children && !getBlockConfig(block.value)?.renderChildren;
+});
 
 const {
   addBlock,
   updateBlock,
   removeBlock,
-} = useOperator(props)
+} = useOperator(props);
 
-const { move, moveUpper, moveLower } = useMove()
+const { move, moveUpper, moveLower } = useMove();
 
-const { merge } = useMerge()
+const { merge } = useMerge();
 
 </script>
 

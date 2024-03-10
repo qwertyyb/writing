@@ -13,12 +13,12 @@
 <script lang="ts" setup>
 import { markRaw, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { createLogger } from '@writing/utils/logger';
-import Quill from './quill'
+import Quill from './quill';
 import { DeltaOperation } from 'quill';
 
-const logger = createLogger('TextEditor')
+const logger = createLogger('TextEditor');
 
-const model = defineModel<string | DeltaOperation[]>({ required: true })
+const model = defineModel<string | DeltaOperation[]>({ required: true });
 
 const props = defineProps({
   readonly: {
@@ -33,7 +33,7 @@ const props = defineProps({
     type: String,
     default: '/'
   }
-})
+});
 
 const emits = defineEmits<{
   keyEnter: [offset: number],
@@ -49,26 +49,26 @@ const emits = defineEmits<{
 
   keyTrigger: [{ top: number, left: number, width: number, height: number }, offset: number],
   change: [editor: Quill]
-}>()
+}>();
 
-const el = ref<HTMLDivElement>()
+const el = ref<HTMLDivElement>();
 
-let editor: Quill | null
+let editor: Quill | null;
 
 const setValue = () => {
-  let values: DeltaOperation[] = model.value as DeltaOperation[]
+  let values: DeltaOperation[] = model.value as DeltaOperation[];
   if (typeof model.value === 'string') {
-    values = [{ insert: model.value }]
+    values = [{ insert: model.value }];
   }
-  editor?.setContents(values as any)
-}
+  editor?.setContents(values as any);
+};
 
 watch(model, () => {
-  if (!editor) return
+  if (!editor) return;
   if (JSON.stringify(model.value) !== JSON.stringify(editor.getContents().ops)) {
-    setValue()
+    setValue();
   }
-})
+});
 
 onMounted(() => {
   editor = new Quill(el.value!, {
@@ -80,24 +80,24 @@ onMounted(() => {
     readOnly: props.readonly,
     formats: ['background', 'bold', 'color', 'font', 'code', 'italic', 'link', 'size', 'strike', 'script', 'underline'],
     placeholder: 'Type someting'
-  })
-  setValue()
-  editor.on('text-change', (delta, origin, source) => {
-    logger.i('text-change', delta, origin)
-    const { ops } = editor!.getContents()
-    model.value = markRaw(ops as DeltaOperation[])
-    emits('change', editor)
-  })
-  el.value!.querySelector<HTMLElement>('.ql-editor')!.dataset.focusable = 'true'
-})
+  });
+  setValue();
+  editor.on('text-change', (delta, origin) => {
+    logger.i('text-change', delta, origin);
+    const { ops } = editor!.getContents();
+    model.value = markRaw(ops as DeltaOperation[]);
+    emits('change', editor);
+  });
+  el.value!.querySelector<HTMLElement>('.ql-editor')!.dataset.focusable = 'true';
+});
 
 onBeforeUnmount(() => {
-  editor = null
-})
+  editor = null;
+});
 
 watch(() => props.readonly, () => {
-  editor.enable(!props.readonly)
-})
+  editor.enable(!props.readonly);
+});
 
 enum KeyCodes {
   Enter = 'Enter',
@@ -107,96 +107,87 @@ enum KeyCodes {
   Tab = 'Tab',
 }
 const keydownHandler = (event: KeyboardEvent) => {
-  if (event.isComposing) return
-  const range = editor!.getSelection(true)
-  if (!range) return
-  const { index: offset, length } = range
-  if (length) return
+  if (event.isComposing) return;
+  const range = editor!.getSelection(true);
+  if (!range) return;
+  const { index: offset, length } = range;
+  if (length) return;
   if (event.code === KeyCodes.Enter) {
-    event.preventDefault()
-    event.stopImmediatePropagation()
-    event.stopPropagation()
-    emits('keyEnter', offset)
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    event.stopPropagation();
+    emits('keyEnter', offset);
   } else if (event.code === KeyCodes.Escape) {
-    event.preventDefault()
-    event.stopImmediatePropagation()
-    event.stopPropagation()
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    event.stopPropagation();
     // 根据当前状态，判断是否要关闭命令选择
-    escapeKeyHandler(event)
+    escapeKeyHandler(event);
   } else if (event.code === KeyCodes.Backspace) {
-    backspaceKeyHandler(event, offset)
+    backspaceKeyHandler(event, offset);
   } else if (event.key === props.trigger) {
     // 打开命令选择
-    triggerKeyHandler(event)
+    triggerKeyHandler();
   } else if (event.code === KeyCodes.Tab && event.shiftKey) {
-    event.preventDefault()
-    event.stopImmediatePropagation()
-    event.stopPropagation()
-    emits('keyShiftTab', event)
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    event.stopPropagation();
+    emits('keyShiftTab', event);
   } else if (event.code === KeyCodes.Tab) {
-    event.preventDefault()
-    event.stopImmediatePropagation()
-    event.stopPropagation()
-    emits('keyTab', event)
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    event.stopPropagation();
+    emits('keyTab', event);
   } else {
-    emits('keydown', event, offset)
+    emits('keydown', event, offset);
   }
-}
+};
 
 const backspaceKeyHandler = (event: KeyboardEvent, offset: number) => {
   if (offset > 0) {
-    return
+    return;
   }
-  event.preventDefault()
-  emits('backspace', offset)
-}
+  event.preventDefault();
+  emits('backspace', offset);
+};
 
 const escapeKeyHandler = (event: KeyboardEvent) => {
-  event.preventDefault()
-  emits('keyEsc', event)
-}
+  event.preventDefault();
+  emits('keyEsc', event);
+};
 
-const triggerKeyHandler = (event: KeyboardEvent) => {
+const triggerKeyHandler = () => {
   // 待输入字符上屏之后再获取位置信息
   setTimeout(() => {
-    const { index } = editor!.getSelection(true)
-    const { top, left, height, width } = editor!.getBounds(index) || { x: 0, y: 0, height: 24 }
-    const pRect = el.value.getBoundingClientRect()
+    const { index } = editor!.getSelection(true);
+    const { top, left, height, width } = editor!.getBounds(index) || { x: 0, y: 0, height: 24 };
+    const pRect = el.value.getBoundingClientRect();
     emits('keyTrigger',
       { top: top + pRect.top, left: left + pRect.left, width, height },
       index
-    )
-  })
-}
-
-const removeTriggerKey = () => {
-  const { index } = editor!.getSelection(true)
-  editor!.deleteText(index, 1)
-}
+    );
+  });
+};
 
 const pasteHandler = (event: ClipboardEvent) => {
-  event.preventDefault()
-  logger.i('paste', event, event.clipboardData?.files)
-  const file = event.clipboardData?.files?.[0]
+  event.preventDefault();
+  logger.i('paste', event, event.clipboardData?.files);
+  const file = event.clipboardData?.files?.[0];
   if (file) {
-    emits('upload', file)
-    return
+    emits('upload', file);
+    return;
   }
   // 先简单全部作为普通文本来处理
-  const range = editor.getSelection(true)
-  if (!range) return
-  const { index } = range
-  const plainText = event.clipboardData?.getData('text/plain') ?? ''
-  editor.insertText(index, plainText)
+  const range = editor.getSelection(true);
+  if (!range) return;
+  const { index } = range;
+  const plainText = event.clipboardData?.getData('text/plain') ?? '';
+  editor.insertText(index, plainText);
   setTimeout(() => {
-    logger.i('selection', index + plainText.length)
-    editor.setSelection(index + plainText.length, 0)
-  }, 10)
-}
-
-defineExpose({
-  removeTriggerKey,
-})
+    logger.i('selection', index + plainText.length);
+    editor.setSelection(index + plainText.length, 0);
+  }, 10);
+};
 </script>
 
 <style lang="less" scoped>

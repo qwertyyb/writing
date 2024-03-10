@@ -1,9 +1,9 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '@prisma/client';
 
-export const prisma = new PrismaClient()
+export const prisma = new PrismaClient();
 
 const init = async () => {
-  const hasRoot = await prisma.document.findFirst({ where: { path: '' }, select: { id: true } })
+  const hasRoot = await prisma.document.findFirst({ where: { path: '' }, select: { id: true } });
   if (!hasRoot) {
     await prisma.document.create({
       data: {
@@ -17,15 +17,15 @@ const init = async () => {
               type: 'text',
               id: 'rootext',
               data: {
-                html: '这是根文档'
-              }
-            }
-          ]
+                html: '这是根文档',
+              },
+            },
+          ],
         }),
-        path: ''
-      }
-    })
+        path: '',
+      },
+    });
   }
-}
+};
 
-init()
+init();

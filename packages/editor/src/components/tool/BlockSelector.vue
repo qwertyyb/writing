@@ -24,100 +24,98 @@ import { VirtualElement, useFloating, shift, flip } from '@floating-ui/vue';
 import allBlocks from '../blocks';
 import { createLogger } from '@writing/utils/logger';
 
-const logger = createLogger('BlockSelector')
+const logger = createLogger('BlockSelector');
 
-const blocks = allBlocks.filter(item => item.visibleInSelector !== false)
+const blocks = allBlocks.filter(item => item.visibleInSelector !== false);
 
 const props = defineProps<{
   rect: { top: number, left: number, width: number, height: number },
   keyword: string
-}>()
+}>();
 
 const emits = defineEmits<{
   confirm: [command: any],
   close: []
-}>()
+}>();
 
 const reference = shallowRef<VirtualElement>({
   getBoundingClientRect() {
-    const { top, left, width, height } = props.rect
+    const { top, left, width, height } = props.rect;
     return {
       ...props.rect,
       x: left, y: top,
       right: left + width,
       bottom: top + height
-    }
+    };
   },
-  contextElement: document.body
-})
-const el = ref<HTMLDivElement>()
+});
+const el = ref<HTMLDivElement>();
 
 watch(() => props.rect, () => {
   reference.value = {
     getBoundingClientRect() {
-      const { top, left, width, height } = props.rect
+      const { top, left, width, height } = props.rect;
       return {
         ...props.rect,
         x: left, y: top,
         right: left + width,
         bottom: top + height
-      }
+      };
     },
-    contextElement: document.body
-  }
-})
+  };
+});
 
 const { floatingStyles, update: updatePopover } = useFloating(reference, el, {
   placement: 'bottom-start',
   strategy: 'absolute',
   middleware: [flip({ mainAxis: true, crossAxis: false, }), shift()]
-})
+});
 
-const selectedIndex = ref(0)
-let emptyTimes = 0
+const selectedIndex = ref(0);
+let emptyTimes = 0;
 
 const visibleBlocks = computed(() => {
   nextTick(() => {
-    updatePopover()
-  })
-  if (!props.keyword) return blocks
-  return blocks.filter(block => block.identifier.includes(props.keyword))
-})
+    updatePopover();
+  });
+  if (!props.keyword) return blocks;
+  return blocks.filter(block => block.identifier.includes(props.keyword));
+});
 
 watch(() => props.keyword, () => {
-  selectedIndex.value = 0
+  selectedIndex.value = 0;
   if (visibleBlocks.value.length) {
-    emptyTimes = 0
+    emptyTimes = 0;
   } else {
-    emptyTimes += 1
+    emptyTimes += 1;
   }
   if (emptyTimes >= 5) {
-    emits('close')
+    emits('close');
   }
-})
+});
 
 watch(selectedIndex, async () => {
-  await nextTick()
+  await nextTick();
   el.value?.querySelector<HTMLElement>('.block-selector-item.selected')?.scrollIntoView({
     block: 'nearest'
-  })
-})
+  });
+});
 
 defineExpose({
-  resetSelected() { selectedIndex.value = 0 },
+  resetSelected() { selectedIndex.value = 0; },
   selectNext() {
-    if (!visibleBlocks.value.length) return
-    selectedIndex.value = (selectedIndex.value + 1) % visibleBlocks.value.length
+    if (!visibleBlocks.value.length) return;
+    selectedIndex.value = (selectedIndex.value + 1) % visibleBlocks.value.length;
   },
   selectPrev() {
-    if (!visibleBlocks.value.length) return
-    selectedIndex.value = (selectedIndex.value - 1 + visibleBlocks.value.length) % visibleBlocks.value.length
+    if (!visibleBlocks.value.length) return;
+    selectedIndex.value = (selectedIndex.value - 1 + visibleBlocks.value.length) % visibleBlocks.value.length;
   },
   selected() {
-    logger.i('visibleBlocks', visibleBlocks.value, selectedIndex.value, props)
-    return visibleBlocks.value[selectedIndex.value]
+    logger.i('visibleBlocks', visibleBlocks.value, selectedIndex.value, props);
+    return visibleBlocks.value[selectedIndex.value];
   }
-})
+});
 
 </script>
 

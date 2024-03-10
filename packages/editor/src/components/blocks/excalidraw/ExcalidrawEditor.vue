@@ -11,19 +11,19 @@ const model = defineModel<{
   elements: any[],
   appState: any,
   files: any
-}>()
+}>();
 
-const { readonly } = useMode()
+const { readonly } = useMode();
 
-const el = ref<HTMLDivElement>()
+const el = ref<HTMLDivElement>();
 
-let reactRoot: any = null
+let reactRoot: any = null;
 
 const changeHandler = (elements: any[], appState: any, files: any[]) => {
   model.value = {
     elements, appState, files
-  }
-}
+  };
+};
 onMounted(() => {
   setTimeout(() => {
     const App = () => {
@@ -47,12 +47,12 @@ onMounted(() => {
 
     reactRoot = window.ReactDOM.createRoot(el.value!);
     reactRoot.render(window.React.createElement(App));
-  }, 100)
-})
+  }, 100);
+});
 
 onBeforeUnmount(() => {
-  reactRoot?.unmount()
-})
+  reactRoot?.unmount();
+});
 
 defineExpose({
   exportToBlob() {
@@ -60,9 +60,9 @@ defineExpose({
       elements: model.value?.elements,
       appState: model.value?.appState,
       files: model.value,
-    })
+    });
   }
-})
+});
 
 </script>
 

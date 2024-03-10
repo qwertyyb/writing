@@ -1,8 +1,8 @@
-import { createApp } from 'vue'
-import 'element-plus/dist/index.css'
+import { createApp } from 'vue';
+import 'element-plus/dist/index.css';
 
-import App from './Playground.vue'
+import App from './EditorPlayground.vue';
 
-const app = createApp(App)
+const app = createApp(App);
 
-app.mount('#app')
+app.mount('#app');

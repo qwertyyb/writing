@@ -23,7 +23,7 @@ import { type PropType } from 'vue';
 
 const children = defineModel<ReturnType<typeof createBlock>[]>({
   required: true
-})
+});
 
 defineProps({
   index: {
@@ -34,13 +34,13 @@ defineProps({
     type: Array as PropType<number[]>,
     default: () => [0]
   }
-})
+});
 
 defineEmits<{
   add: [index: number, options: Partial<BlockModel>],
   remove: [index: number],
   update: [index: number, options: Partial<BlockModel>]
-}>()
+}>();
 
 </script>
 

@@ -7,77 +7,77 @@
 </template>
 
 <script lang="ts" setup>
-import { useMode } from "../../../hooks/mode";
-import type { BlockModel, BlockOptions } from "../../../models/block";
-import { basicSetup, EditorView } from "codemirror";
-import { Compartment, EditorState } from "@codemirror/state"
-import { onBeforeUnmount, ref, onMounted, watch } from "vue";
+import { useMode } from '../../../hooks/mode';
+import type { BlockModel, BlockOptions } from '../../../models/block';
+import { basicSetup, EditorView } from 'codemirror';
+import { Compartment, EditorState } from '@codemirror/state';
+import { onBeforeUnmount, ref, onMounted, watch } from 'vue';
 
-const block = defineModel<BlockModel>({ required: true })
+const block = defineModel<BlockModel>({ required: true });
 
 const emits = defineEmits<{
   add: [options?: Partial<BlockOptions>],
   focusBefore: [],
   focusAfter: [],
-}>()
+}>();
 
-const codeMirrorWrapper = ref<HTMLDivElement>()
+const codeMirrorWrapper = ref<HTMLDivElement>();
 
-const { readonly } = useMode()
+const { readonly } = useMode();
 
-let readonlyConfig = new Compartment
+let readonlyConfig = new Compartment;
 
 watch(readonly, () => {
   viewer?.dispatch({
     effects: readonlyConfig.reconfigure(EditorView.editable.of(!readonly.value))
-  })
-})
+  });
+});
 
 interface CodeData {
   text: string
 }
 const data = ref<CodeData>({
   text: block.value?.data?.text ?? ''
-})
+});
 
-let viewer: EditorView | null = null
+let viewer: EditorView | null = null;
 
 const update = (newData: Partial<CodeData>) => {
   data.value = {
     ...data.value,
     ...newData
-  }
+  };
   block.value = {
     ...block.value,
     data: data.value
-  }
-}
+  };
+};
 
 let state: EditorState | null = null;
 
 const keydownHandler = (event: KeyboardEvent) => {
   if (event.key === 'Enter' && data.value.text.endsWith('\n\n')) {
-    event.preventDefault()
-    event.stopPropagation()
-    event.stopImmediatePropagation()
-    emits('add')
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    emits('add');
     viewer?.dispatch({changes: {
       from: 0,
       to: data.value.text.length,
       insert: data.value.text.replace(/\n\n$/, '')
-    }})
+    }});
   } else if (event.key === 'ArrowUp' && state?.selection.main.from === 0 && state.selection.main.to === 0) {
-    event.preventDefault()
-    event.stopImmediatePropagation()
-    event.stopPropagation()
-    emits('focusBefore')
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    event.stopPropagation();
+    emits('focusBefore');
   } else if (event.key === 'ArrowDown' && state?.selection.main.from === data.value.text.length && state.selection.main.to === data.value.text.length) {
-    event.preventDefault()
-    event.stopImmediatePropagation()
-    event.stopPropagation()
-    emits('focusAfter')
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    event.stopPropagation();
+    emits('focusAfter');
   }
-}
+};
 
 onMounted(() => {
   viewer = new EditorView({
@@ -87,28 +87,28 @@ onMounted(() => {
       basicSetup,
       EditorView.contentAttributes.of({ 'data-focusable': 'true' }),
       EditorView.updateListener.of(event => {
-        state = event.state
-        const newText = event.state.doc.toString()
+        state = event.state;
+        const newText = event.state.doc.toString();
         if (newText !== data.value.text) {
-          update({ text: newText })
+          update({ text: newText });
         }
       }),
       readonlyConfig.of(EditorView.editable.of(!readonly.value))
     ],
-  })
-})
+  });
+});
 
 onBeforeUnmount(() => {
-  viewer?.destroy()
-  viewer = null
-  state = null
-})
+  viewer?.destroy();
+  viewer = null;
+  state = null;
+});
 
 defineExpose({
   save() {
-    return data.value
+    return data.value;
   }
-})
+});
 </script>
 
 <style lang="less" scoped>

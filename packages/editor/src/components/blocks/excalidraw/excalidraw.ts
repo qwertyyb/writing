@@ -1,4 +1,4 @@
-import ExcalidrawBlockVue from "./ExcalidrawBlock.vue";
+import ExcalidrawBlockVue from './ExcalidrawBlock.vue';
 
 export const excalidraw = {
   identifier: 'excalidraw',
@@ -6,4 +6,4 @@ export const excalidraw = {
   icon: 'draw',
 
   component: ExcalidrawBlockVue
-}
+};

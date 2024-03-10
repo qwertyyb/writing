@@ -1,4 +1,4 @@
-import ImageBlockVue from "./ImageBlock.vue";
+import ImageBlockVue from './ImageBlock.vue';
 
 export const image = {
   identifier: 'image',
@@ -6,4 +6,4 @@ export const image = {
   icon: 'image',
 
   component: ImageBlockVue
-}
+};

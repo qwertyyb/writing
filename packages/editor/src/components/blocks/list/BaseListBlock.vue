@@ -25,14 +25,14 @@ import BlockEditor from '../../BlockEditor.vue';
 import { watch } from 'vue';
 import { useOperator } from '../../../hooks/operator';
 
-const block = defineModel<BlockModel>({ required: true })
+const block = defineModel<BlockModel>({ required: true });
 
 const props = withDefaults(defineProps<{
   index: number,
   parent?: BlockModel,
   path: number[],
   tag: string
-}>(), { tag: 'ul' })
+}>(), { tag: 'ul' });
 
 const emits = defineEmits<{
   added: [{ block: BlockModel, index: number, parent?: BlockModel }],
@@ -41,23 +41,23 @@ const emits = defineEmits<{
   change: [BlockModel],
   'update:modelValue': [BlockModel],
   remove: [],
-}>()
+}>();
 
-const { addBlock, updateBlock, removeBlock } = useOperator(props)
+const { addBlock, updateBlock, removeBlock } = useOperator(props);
 
 if (!block.value.children?.length) {
   addBlock(0, {
     type: 'text',
     id: Math.random().toString(16).substring(2)
-  })
+  });
 }
 
 watch(() => block.value.children?.length ?? 0, (newVal, oldVal) => {
   if (oldVal && !newVal) {
     // 所有的子节点已删除，把当前节点也删除
-    emits('remove')
+    emits('remove');
   }
-})
+});
 
 </script>
 

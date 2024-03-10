@@ -42,8 +42,8 @@
 <script lang="ts" setup>
 import { markRaw, ref, shallowRef, toRaw } from 'vue';
 import { ElDialog } from 'element-plus';
-import { useMode } from '../../../hooks/mode'
-import { createBlock, type BlockModel } from '../../../models/block'
+import { useMode } from '../../../hooks/mode';
+import { createBlock, type BlockModel } from '../../../models/block';
 import { ImageAlign, type ImageData } from '../../../components/schema';
 import BaseImage from '../BaseImage.vue';
 import ExcalidrawEditor from './ExcalidrawEditor.vue';
@@ -66,18 +66,18 @@ interface ExcalidrawData {
   cover: ImageData
 }
 
-const block = defineModel<BlockModel>({ required: true })
+const block = defineModel<BlockModel>({ required: true });
 
 defineEmits<{
   remove: [],
   add: [options?: Partial<BlockModel>]
-}>()
+}>();
 
-const editDialogVisible = ref(false)
-const editor = ref<InstanceType<typeof ExcalidrawEditor>>()
+const editDialogVisible = ref(false);
+const editor = ref<InstanceType<typeof ExcalidrawEditor>>();
 
-const { readonly } = useMode()
-const { state: uploadState, uploadBlob } = useUpload()
+const { readonly } = useMode();
+const { state: uploadState, uploadBlob } = useUpload();
 
 const data = ref<Partial<ExcalidrawData>>({
   excalidraw: block.value.data?.excalidraw ?? null,
@@ -93,32 +93,32 @@ const data = ref<Partial<ExcalidrawData>>({
       }
     })
   }
-})
+});
 
-const excalidrawData = shallowRef(markRaw(toRaw(block.value.data?.excalidraw ?? { elements: [], files: {} })))
+const excalidrawData = shallowRef(markRaw(toRaw(block.value.data?.excalidraw ?? { elements: [], files: {} })));
 
 const update = (newData: Partial<ExcalidrawData>) => {
   data.value = {
     ...data.value,
     ...newData
-  }
+  };
   block.value = {
     ...block.value,
     data: data.value
-  }
-}
+  };
+};
 
 const updateExcalidrawData = (newData: any) => {
   // appState不需要保存到数据库
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { appState, ...rest } = newData
-  excalidrawData.value = markRaw(newData)
-  data.value.excalidraw = markRaw(rest)
+  const { appState, ...rest } = newData;
+  excalidrawData.value = markRaw(newData);
+  data.value.excalidraw = markRaw(rest);
   block.value = {
     ...block.value,
     data: data.value
-  }
-}
+  };
+};
 
 const updateCover = async ({ url = '', ratio = 1 }) => {
   data.value.cover = {
@@ -126,23 +126,23 @@ const updateCover = async ({ url = '', ratio = 1 }) => {
     ...data.value.cover,
     src: url,
     ratio,
-  }
+  };
   block.value = {
     ...block.value,
     data: data.value
-  }
-}
+  };
+};
 
 const openEditDialog = () => {
-  editDialogVisible.value = true
-}
+  editDialogVisible.value = true;
+};
 
 const beforeCloseHandler = async (done: () => void) => {
-  const blob = await editor.value?.exportToBlob()
-  done()
-  const { url, ratio } = await uploadBlob(blob)
-  updateCover({ url, ratio })
-}
+  const blob = await editor.value?.exportToBlob();
+  done();
+  const { url, ratio } = await uploadBlob(blob);
+  updateCover({ url, ratio });
+};
 
 </script>
 

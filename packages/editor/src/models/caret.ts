@@ -1,6 +1,6 @@
-import { createLogger } from "@writing/utils/logger";
+import { createLogger } from '@writing/utils/logger';
 
-const logger = createLogger('caret')
+const logger = createLogger('caret');
 
 enum SelectionType {
   None = 'None',
@@ -9,137 +9,137 @@ enum SelectionType {
 }
 
 export const getCaretPosition = () => {
-  return window.getSelection()?.getRangeAt(0).getBoundingClientRect()
-}
+  return window.getSelection()?.getRangeAt(0).getBoundingClientRect();
+};
 
-export const isCaret = () => window.getSelection()?.type === SelectionType.Caret
+export const isCaret = () => window.getSelection()?.type === SelectionType.Caret;
 
 /**
  * 当前光标是否在最开头
  */
 export const isInHeading = (element: Node) => {
-  if (!isCaret()) return false
+  if (!isCaret()) return false;
 
-  const selection = window.getSelection()!
-  if (selection.anchorOffset !== 0 || selection.rangeCount < 1) return false
+  const selection = window.getSelection()!;
+  if (selection.anchorOffset !== 0 || selection.rangeCount < 1) return false;
 
-  const srange = selection.getRangeAt(0)
-  const range = document.createRange()
-  range.setStart(element, 0)
-  range.setEnd(srange.endContainer, srange.endOffset)
-  return range.toString().length === 0
-}
+  const srange = selection.getRangeAt(0);
+  const range = document.createRange();
+  range.setStart(element, 0);
+  range.setEnd(srange.endContainer, srange.endOffset);
+  return range.toString().length === 0;
+};
 
 /**
  * 当前光标是否在结尾
  * @param element 
  */
 export const isInTailing = (element: Node) => {
-  if (!isCaret()) return false
+  if (!isCaret()) return false;
 
-  const selection = window.getSelection()!
-  if (selection.rangeCount < 1) return false
+  const selection = window.getSelection()!;
+  if (selection.rangeCount < 1) return false;
 
-  const srange = selection.getRangeAt(0)
-  const range = document.createRange()
-  range.setStart(srange.startContainer, srange.startOffset)
-  range.setEnd(element, 0)
-  return range.toString().length === 0
-}
+  const srange = selection.getRangeAt(0);
+  const range = document.createRange();
+  range.setStart(srange.startContainer, srange.startOffset);
+  range.setEnd(element, 0);
+  return range.toString().length === 0;
+};
 
 export const splitWithCaret = (element: HTMLElement) => {
-  logger.i('splitWithCaret', element)
-  const selection = window.getSelection()
-  if ((selection?.rangeCount ?? 0) < 1) return null
-  const { startContainer, startOffset } = selection!.getRangeAt(0)
+  logger.i('splitWithCaret', element);
+  const selection = window.getSelection();
+  if ((selection?.rangeCount ?? 0) < 1) return null;
+  const { startContainer, startOffset } = selection!.getRangeAt(0);
   if (startContainer === element) {
     if (startOffset === 0) {
-      return ['', element.textContent]
+      return ['', element.textContent];
     } else if (startOffset === 1) {
-      return [element.textContent, '']
+      return [element.textContent, ''];
     }
   }
-  logger.i('splitWithCaret startContainer', startContainer, startOffset)
-  if (!element.contains(startContainer)) return null
+  logger.i('splitWithCaret startContainer', startContainer, startOffset);
+  if (!element.contains(startContainer)) return null;
 
-  const iterator = document.createNodeIterator(element, NodeFilter.SHOW_TEXT)
-  let offset = 0
+  const iterator = document.createNodeIterator(element, NodeFilter.SHOW_TEXT);
+  let offset = 0;
   while(iterator.nextNode()) {
-    const node = iterator.referenceNode
+    const node = iterator.referenceNode;
     if (node === startContainer) {
-      break
+      break;
     }
-    offset += (node.textContent?.length ?? 0)
+    offset += (node.textContent?.length ?? 0);
   }
-  offset += startOffset
-  const before = element.textContent?.substring(0, offset) ?? ''
-  const after = element.textContent?.substring(offset) ?? ''
-  logger.i('splitWithCaret before: ', before, 'after: ', after)
-  return [ before, after ]
-}
+  offset += startOffset;
+  const before = element.textContent?.substring(0, offset) ?? '';
+  const after = element.textContent?.substring(offset) ?? '';
+  logger.i('splitWithCaret before: ', before, 'after: ', after);
+  return [ before, after ];
+};
 
 export const moveCaret = (element: HTMLElement, offset: number) => {
-  logger.i('moveCaret', element, offset)
+  logger.i('moveCaret', element, offset);
   if (offset === 0) {
-    return moveCaretToStart(element)
+    return moveCaretToStart(element);
   }
-  const nodeIterator = document.createNodeIterator(element, NodeFilter.SHOW_TEXT)
+  const nodeIterator = document.createNodeIterator(element, NodeFilter.SHOW_TEXT);
 
-  let focusNode: Node | null = null
-  let lastNode: Node | null = null
+  let focusNode: Node | null = null;
+  let lastNode: Node | null = null;
   while(!focusNode && nodeIterator.nextNode()) {
-    lastNode = nodeIterator.referenceNode
+    lastNode = nodeIterator.referenceNode;
     if ((nodeIterator.referenceNode.nodeValue?.length ?? 0) >= offset) {
-      focusNode = nodeIterator.referenceNode
+      focusNode = nodeIterator.referenceNode;
     } else {
-      offset -= (nodeIterator.referenceNode.nodeValue?.length ?? 0)
+      offset -= (nodeIterator.referenceNode.nodeValue?.length ?? 0);
     }
   }
   if (!focusNode) {
-    focusNode = lastNode || element
-    offset = focusNode?.nodeValue?.length ?? 0
+    focusNode = lastNode || element;
+    offset = focusNode?.nodeValue?.length ?? 0;
   }
-  logger.i('focusNode', focusNode, offset)
-  const selection = window.getSelection()
-  selection?.setPosition(focusNode, offset)
-}
+  logger.i('focusNode', focusNode, offset);
+  const selection = window.getSelection();
+  selection?.setPosition(focusNode, offset);
+};
 
 export const moveCaretToEnd = (element: HTMLElement) => {
-  logger.i('moveCaretToEnd', element)
-  moveCaret(element, element.textContent?.length ?? 0)
-}
+  logger.i('moveCaretToEnd', element);
+  moveCaret(element, element.textContent?.length ?? 0);
+};
 
 export const moveCaretToStart = (element: HTMLElement) => {
-  logger.i('moveCaretToStart', element)
-  const selection = window.getSelection()!
-  selection.setPosition(element, 0)
-}
+  logger.i('moveCaretToStart', element);
+  const selection = window.getSelection()!;
+  selection.setPosition(element, 0);
+};
 
 export const getCaretOffset = (element: HTMLElement) => {
-  logger.i('getCaretPosition', element)
-  const selection = window.getSelection()
-  if (!selection || !element.contains(selection.anchorNode) || selection.anchorNode?.nodeType !== Node.TEXT_NODE) return 0
+  logger.i('getCaretPosition', element);
+  const selection = window.getSelection();
+  if (!selection || !element.contains(selection.anchorNode) || selection.anchorNode?.nodeType !== Node.TEXT_NODE) return 0;
 
-  const iterator = document.createNodeIterator(element, NodeFilter.SHOW_TEXT)
+  const iterator = document.createNodeIterator(element, NodeFilter.SHOW_TEXT);
   
-  let offset = 0
+  let offset = 0;
   while(iterator.nextNode() !== selection.anchorNode) {
-    offset += (iterator.referenceNode.nodeValue?.length ?? 0)
+    offset += (iterator.referenceNode.nodeValue?.length ?? 0);
   }
-  offset += selection.anchorOffset
-  logger.i('getCaretPosition offset', offset)
-  return offset
-}
+  offset += selection.anchorOffset;
+  logger.i('getCaretPosition offset', offset);
+  return offset;
+};
 
 export const getSelectionOffset = (element: HTMLElement, node: Node) => {
-  if (!element.contains(node) || node?.nodeType !== Node.TEXT_NODE) return 0
+  if (!element.contains(node) || node?.nodeType !== Node.TEXT_NODE) return 0;
 
-  const iterator = document.createNodeIterator(element, NodeFilter.SHOW_TEXT)
+  const iterator = document.createNodeIterator(element, NodeFilter.SHOW_TEXT);
   
-  let offset = 0
+  let offset = 0;
   while(iterator.nextNode() !== node) {
-    offset += (iterator.referenceNode.nodeValue?.length ?? 0)
+    offset += (iterator.referenceNode.nodeValue?.length ?? 0);
   }
-  logger.i('getSelectionPosition offset', offset)
-  return offset
-}
+  logger.i('getSelectionPosition offset', offset);
+  return offset;
+};

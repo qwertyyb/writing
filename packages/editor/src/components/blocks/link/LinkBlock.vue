@@ -31,56 +31,56 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
 import TextBlock from '../TextBlock.vue';
-import { createBlock, type BlockModel, type BlockOptions } from '../../../models/block';
+import { createBlock, type BlockModel } from '../../../models/block';
 import { ElInput, ElPopover } from 'element-plus';
 import { useMode } from '../../../hooks/mode';
 
-const block = defineModel<BlockModel>({ required: true })
+const block = defineModel<BlockModel>({ required: true });
 
 const emits = defineEmits<{
-  add: [options?: Partial<BlockOptions>],
-}>()
+  add: [options?: Partial<BlockModel>],
+}>();
 
-const { readonly, canEdit } = useMode()
+const { readonly, canEdit } = useMode();
 
 interface LinkData {
   href: string,
-  text: BlockModel<TextData>
+  text: BlockModel
 }
 const data = ref<LinkData>({
   href: block.value?.data?.href ?? '',
   text: block.value?.data.text ?? createBlock({ type: 'text' })
-})
+});
 
 const update = (newData: Partial<LinkData>) => {
   if (newData.text && newData.text?.type !== 'text') {
-    return emits('add', { type: newData.text!.type })
+    return emits('add', { type: newData.text!.type });
   }
   data.value = {
     ...data.value,
     ...newData,
-  }
+  };
   block.value = {
     ...block.value,
     data: data.value
-  }
-}
+  };
+};
 
 const clickHandler = (event: MouseEvent) => {
   if (canEdit.value) {
-    event.preventDefault()
+    event.preventDefault();
   }
-}
+};
 
 const openLink = () => {
-  window.open(data.value.href, '_blank', 'noreferrer')
-}
+  window.open(data.value.href, '_blank', 'noreferrer');
+};
 
 defineExpose({
   save() {
-    return data.value
+    return data.value;
   }
-})
+});
 </script>
 <style lang="less" scoped>
 .link-block {

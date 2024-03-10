@@ -1,4 +1,4 @@
-import TodoBlockVue from "./TodoBlock.vue";
+import TodoBlockVue from './TodoBlock.vue';
 
 export default {
   identifier: 'todo',
@@ -7,4 +7,4 @@ export default {
   renderChildren: true,
 
   component: TodoBlockVue
-}
+};

@@ -5,10 +5,10 @@
 </template>
 
 <script lang="ts" setup>
-import RichTextEditor from './RichTextEditor.vue'
-import { type BlockModel } from '../models/block'
+import RichTextEditor from './RichTextEditor.vue';
+import { type BlockModel } from '../models/block';
 
-const document = defineModel<BlockModel>({ required: true, })
+const document = defineModel<BlockModel>({ required: true, });
 </script>
 
 <style lang="less">

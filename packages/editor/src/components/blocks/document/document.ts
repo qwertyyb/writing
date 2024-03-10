@@ -1,4 +1,4 @@
-import DocumentBlockVue from "./DocumentBlock.vue";
+import DocumentBlockVue from './DocumentBlock.vue';
 
 export default {
   identifier: 'doc',
@@ -6,4 +6,4 @@ export default {
   visibleInSelector: false,
 
   component: DocumentBlockVue
-}
+};

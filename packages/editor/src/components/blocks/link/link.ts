@@ -1,4 +1,4 @@
-import LinkBlock from "./LinkBlock.vue";
+import LinkBlock from './LinkBlock.vue';
 
 const linkBlock = {
   identifier: 'link',
@@ -6,6 +6,6 @@ const linkBlock = {
   icon: 'link',
 
   component: LinkBlock
-}
+};
 
-export default linkBlock
+export default linkBlock;

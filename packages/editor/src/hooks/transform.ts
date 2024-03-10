@@ -3,16 +3,16 @@ import { toText } from '../models/delta';
 import { createLogger } from '@writing/utils/logger';
 import type { Op } from 'quill-delta';
 
-const logger = createLogger('transform')
+const logger = createLogger('transform');
 
 export const transformBlock = (trigger: string, origin: BlockModel, content: Op[]) => {
-  logger.i('transform', trigger, origin)
+  logger.i('transform', trigger, origin);
   if (/^#{1,6}/.test(trigger)) {
     return {
       id: origin.id,
       type: 'heading' + trigger.length,
       data: { ops: content } 
-    }
+    };
   }
   if (/^1\./.test(trigger)) {
     return {
@@ -26,7 +26,7 @@ export const transformBlock = (trigger: string, origin: BlockModel, content: Op[
           }
         })
       ]
-    }
+    };
   }
   if (['-', '*', '+'].includes(trigger)) {
     return {
@@ -40,7 +40,7 @@ export const transformBlock = (trigger: string, origin: BlockModel, content: Op[
           }
         })
       ]
-    }
+    };
   }
   if (['>', '&gt;'].includes(trigger)) {
     return {
@@ -54,7 +54,7 @@ export const transformBlock = (trigger: string, origin: BlockModel, content: Op[
           }
         })
       ]
-    }
+    };
   }
   if (trigger === '```') {
     return {
@@ -63,7 +63,7 @@ export const transformBlock = (trigger: string, origin: BlockModel, content: Op[
       data: {
         text: content
       }
-    }
+    };
   }
   if (trigger === '[]' || trigger === '[x]') {
     return {
@@ -77,10 +77,10 @@ export const transformBlock = (trigger: string, origin: BlockModel, content: Op[
           }
         })
       ]
-    }
+    };
   }
   if (['***', '---', '___'].includes(toText(origin.data.ops))) {
-    return { id: origin.id, type: 'divider' }
+    return { id: origin.id, type: 'divider' };
   }
-  return null
-}
+  return null;
+};

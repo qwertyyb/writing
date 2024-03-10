@@ -1,4 +1,4 @@
-import DividerBlockVue from "./DividerBlock.vue";
+import DividerBlockVue from './DividerBlock.vue';
 
 export default {
   identifier: 'divider',
@@ -6,4 +6,4 @@ export default {
   icon: 'remove',
 
   component: DividerBlockVue
-}
+};

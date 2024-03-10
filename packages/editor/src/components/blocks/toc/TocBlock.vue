@@ -15,12 +15,9 @@
 import { type ShallowRef, inject, onBeforeUnmount, onMounted, ref } from 'vue';
 import { BlockTree, rootSymbol } from '../../../models/BlockTree';
 import { BlockModel } from '../../../models/block';
-import { createLogger } from '@writing/utils/logger';
 import { toText } from '@writing/utils/delta';
 
-const logger = createLogger('TocBlock')
-
-const rootValue = inject<ShallowRef<BlockTree>>(rootSymbol)
+const rootValue = inject<ShallowRef<BlockTree>>(rootSymbol);
 
 const HeadingTypes = {
   'heading1': 1,
@@ -29,46 +26,46 @@ const HeadingTypes = {
   'heading4': 4,
   'heading5': 5,
   'heading6': 6
-}
+};
 
-const list = ref<{ id: string, text: string, level: number }[]>()
+const list = ref<{ id: string, text: string, level: number }[]>();
 
 const blockToText = (block: BlockModel) => {
   // 先简单处理纯文本内容
-  return toText(block.data?.ops || []) || '标题'
-}
+  return toText(block.data?.ops || []) || '标题';
+};
 
-const getTocTree = (model: BlockModel) => {
+const getTocTree = () => {
   rootValue.value.walkTree((path, block) => {
     if (HeadingTypes[block.type]) {
       list.value.push({
         id: block.id,
         level: HeadingTypes[block.type],
         text: blockToText(block)
-      })
+      });
     }
-  })
-}
+  });
+};
 
-const changeHandler = (model: BlockModel) => {
-  list.value = []
-  getTocTree(model)
-}
+const changeHandler = () => {
+  list.value = [];
+  getTocTree();
+};
 
 const clickHandler = (item: { id: string }) => {
   document.querySelector(`[data-block-id=${JSON.stringify(item.id)}]`).scrollIntoView({
     behavior: 'smooth'
-  })
-}
+  });
+};
 
 onMounted(() => {
-  changeHandler(rootValue.value.model)
-  rootValue.value.on('change', changeHandler)
-})
+  changeHandler();
+  rootValue.value.on('change', changeHandler);
+});
 
 onBeforeUnmount(() => {
-  rootValue.value.off('change', changeHandler)
-})
+  rootValue.value.off('change', changeHandler);
+});
 </script>
 
 <style lang="less" scoped>

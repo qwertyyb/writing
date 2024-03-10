@@ -1,4 +1,4 @@
-import TocBlockVue from "./TocBlock.vue";
+import TocBlockVue from './TocBlock.vue';
 
 export const toc = {
   identifier: 'toc',
@@ -6,4 +6,4 @@ export const toc = {
   icon: 'toc',
 
   component: TocBlockVue
-}
+};

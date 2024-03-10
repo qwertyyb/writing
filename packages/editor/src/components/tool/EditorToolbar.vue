@@ -129,53 +129,53 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from 'vue'
+import { ref, watch } from 'vue';
 import { ElPopover, ElInput, ElButton, ClickOutside as vClickOutside } from 'element-plus';
 import { type SelectionState } from '../../hooks/selection';
-import { ElColorPicker } from 'element-plus'
-import { VirtualElement, useFloating, flip, shift, arrow, offset } from '@floating-ui/vue'
+import { ElColorPicker } from 'element-plus';
+import { VirtualElement, useFloating, flip, shift, arrow, offset } from '@floating-ui/vue';
 import { useFormat } from '../../hooks/operator';
 
 const props = defineProps<{
   selection: SelectionState
-}>()
-const el = ref<HTMLElement>()
-const floatingArrow = ref<HTMLElement>()
-const linkPopoverVisible = ref(false)
+}>();
+const el = ref<HTMLElement>();
+const floatingArrow = ref<HTMLElement>();
+const linkPopoverVisible = ref(false);
 
 const {
   formats, link, selection,
   formatText, toggleFormat, setSizeFormat, setLinkFormat,
   saveSelection, clearSelection
-} = useFormat(props.selection)
+} = useFormat(props.selection);
 
 const onLinkTap = () => {
-  link.value = formats.value.link || ''
-  saveSelection()
-  linkPopoverVisible.value = true
-}
+  link.value = formats.value.link || '';
+  saveSelection();
+  linkPopoverVisible.value = true;
+};
 
 const onLinkSaveBtnTap = () => {
-  setLinkFormat()
-  linkPopoverVisible.value = false
-}
+  setLinkFormat();
+  linkPopoverVisible.value = false;
+};
 const onLinkClearBtnTap = () => {
-  link.value = ''
-  setLinkFormat()
-  linkPopoverVisible.value = false
-}
+  link.value = '';
+  setLinkFormat();
+  linkPopoverVisible.value = false;
+};
 const closeLinkPopover = () => {
-  linkPopoverVisible.value = false
-  clearSelection()
-}
+  linkPopoverVisible.value = false;
+  clearSelection();
+};
 
 
 const getRect = () => ({
   getBoundingClientRect: () => {
     if (!selection.value.rect) return {
       x: 0, y: 0, top: 0, left: 0, width: 0, height: 0, right: 0, bottom: 0
-    }
-    const { top, left, width, height  } = selection.value.rect
+    };
+    const { top, left, width, height  } = selection.value.rect;
     return {
       x: left,
       y: top,
@@ -185,20 +185,20 @@ const getRect = () => ({
       height: height,
       right: left + width,
       bottom: top + height
-    }
+    };
   }
-})
+});
 
-const reference = ref<VirtualElement>(getRect())
+const reference = ref<VirtualElement>(getRect());
 
 watch(() => selection.value.rect, () => {
-  reference.value = getRect()
-})
+  reference.value = getRect();
+});
 
 const { floatingStyles, middlewareData, placement } = useFloating(reference, el, {
   placement: 'bottom',
   middleware: [offset(10), flip({ mainAxis: true, crossAxis: false, }), shift(), arrow({ element: floatingArrow })]
-})
+});
 
 </script>
 

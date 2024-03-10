@@ -1,1 +1,1 @@
-export const uploadSymbol = Symbol('editorUploader')
+export const uploadSymbol = Symbol('editorUploader');

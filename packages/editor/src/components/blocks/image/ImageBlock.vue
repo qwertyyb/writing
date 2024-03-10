@@ -43,16 +43,16 @@ import { useMode } from '../../../hooks/mode';
 import type { ImageData } from '../../schema';
 import { useUpload } from '../../../hooks/upload';
 
-const block = defineModel<BlockModel>({ required: true })
+const block = defineModel<BlockModel>({ required: true });
 
-const { readonly } = useMode()
+const { readonly } = useMode();
 
 defineEmits<{
   remove: [],
   add: [options?: Partial<BlockModel>]
-}>()
+}>();
 
-const { state: uploadState, uploadImageFile } = useUpload()
+const { uploadImageFile } = useUpload();
 
 const data = ref<ImageData>({
   src: block.value.data?.src ?? '',
@@ -60,7 +60,7 @@ const data = ref<ImageData>({
   size: block.value.data?.size ?? 50,
   title: block.value.data?.title ?? createBlock({ type: 'text', data: { html: '图片描述' } }),
   ratio: block.value.data?.ratio ?? 1,
-})
+});
 
 watch(block, () => {
   data.value = {
@@ -69,24 +69,24 @@ watch(block, () => {
     size: block.value.data?.size ?? 50,
     title: block.value.data?.title ?? createBlock({ type: 'text', data: { html: '图片描述' } }),
     ratio: block.value.data?.ratio ?? 1,
-  }
-})
+  };
+});
 
 const update = (newData: Partial<ImageData>) => {
   data.value = {
     ...data.value,
     ...newData
-  }
+  };
   block.value = {
     ...block.value,
     data: data.value
-  }
-}
+  };
+};
 
 const uploadFile = async () => {
-  const { url, ratio } = await uploadImageFile()
-  update({ src: url, ratio })
-}
+  const { url, ratio } = await uploadImageFile();
+  update({ src: url, ratio });
+};
 
 </script>
 

@@ -1,4 +1,4 @@
-import BlockQuoteVue from "./BlockQuote.vue";
+import BlockQuoteVue from './BlockQuote.vue';
 
 export default {
   identifier: 'block-quote',
@@ -7,4 +7,4 @@ export default {
   renderChildren: true,
 
   component: BlockQuoteVue
-}
+};

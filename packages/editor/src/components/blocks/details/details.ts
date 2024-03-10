@@ -1,4 +1,4 @@
-import DetailsBlockVue from './DetailsBlock.vue'
+import DetailsBlockVue from './DetailsBlock.vue';
 
 export const details = {
   identifier: 'details',
@@ -8,4 +8,4 @@ export const details = {
   renderChildren: true,
 
   component: DetailsBlockVue
-}
+};

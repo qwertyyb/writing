@@ -1,4 +1,4 @@
-import CodeBlockVue from "./CodeBlock.vue";
+import CodeBlockVue from './CodeBlock.vue';
 
 export default {
   identifier: 'code',
@@ -6,4 +6,4 @@ export default {
   icon: 'code_blocks',
 
   component: CodeBlockVue
-}
+};

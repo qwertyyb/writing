@@ -28,13 +28,13 @@ import BlockEditor from '../../BlockEditor.vue';
 import { watch, ref } from 'vue';
 import { useOperator } from '../../../hooks/operator';
 
-const block = defineModel<BlockModel>({ required: true })
+const block = defineModel<BlockModel>({ required: true });
 
 const props = defineProps<{
   index: number,
   parent?: BlockModel,
   path: number[],
-}>()
+}>();
 
 const emits = defineEmits<{
   added: [{ block: BlockModel, index: number, parent?: BlockModel }],
@@ -43,40 +43,40 @@ const emits = defineEmits<{
   change: [BlockModel],
   'update:modelValue': [BlockModel],
   remove: [],
-}>()
+}>();
 
 const data = ref<{ checked: Record<string, boolean> }>({
   checked: block.value.data?.checked ?? {}
-})
+});
 
-const { addBlock, updateBlock, removeBlock } = useOperator(props)
+const { addBlock, updateBlock, removeBlock } = useOperator(props);
 
 const removeHandler = (child: BlockModel, index: number) => {
-  delete data.value.checked[child.id]
-  removeBlock(index)
-}
+  delete data.value.checked[child.id];
+  removeBlock(index);
+};
 
 const toggleChecked = (child: BlockModel) => {
-  data.value.checked[child.id] = !data.value.checked[child.id]
+  data.value.checked[child.id] = !data.value.checked[child.id];
   block.value = {
     ...block.value,
     data: data.value,
-  }
-}
+  };
+};
 
 if (!block.value.children?.length) {
   addBlock(0, {
     type: 'text',
     id: Math.random().toString(16).substring(2)
-  })
+  });
 }
 
 watch(() => block.value.children?.length ?? 0, (newVal, oldVal) => {
   if (oldVal && !newVal) {
     // 所有的子节点已删除，把当前节点也删除
-    emits('remove')
+    emits('remove');
   }
-})
+});
 
 </script>
 
