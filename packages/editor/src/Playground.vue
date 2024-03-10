@@ -589,7 +589,7 @@ const data = ref({
               "files": {}
           },
           "cover": {
-              "src": "/assets/excalidraw-cover.png",
+              "src": "./assets/excalidraw-cover.png",
               "ratio": 1.4695121951219512,
               "align": "Center",
               "title": {
