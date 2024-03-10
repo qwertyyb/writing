@@ -17,6 +17,7 @@ import { toc } from "./toc/toc";
 interface BlockConfig {
   identifier: string,
   label: string,
+  icon?: string,
   renderChildren?: boolean,
 
   component: Component,

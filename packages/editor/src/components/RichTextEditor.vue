@@ -1,8 +1,8 @@
 <template>
   <div class="rich-text-editor" ref="el">
     <div class="block-tool"
-      v-if="mode === Mode.Edit && blockToolState.visible"
-      :style="{left: blockToolState.left + 'px', top: blockToolState.top + 'px'}">
+      v-if="mode === Mode.Edit && selectorState.visible"
+      :style="{left: selectorState.left + 'px', top: selectorState.top + 'px'}">
       <span class="material-symbols-outlined block-tool-icon"> drag_indicator </span>
     </div>
     <editor-toolbar
@@ -31,7 +31,7 @@ import { focusBlock } from '../hooks/focus';
 import { provide, type PropType, computed, ref, shallowRef, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { Mode } from './schema';
 import { useHistory } from '../hooks/history';
-import { useBlockTool } from '../hooks/use-block-tool';
+import { useBlockSelectorOnPointermove } from '../hooks/blockSelector';
 import { setCaretPosition, useSelection } from '../hooks/selection';
 import EditorToolbar from './tool/EditorToolbar.vue';
 import { createLogger } from '@writing/utils/logger';
@@ -40,6 +40,7 @@ import { uploadSymbol } from '../utils/upload'
 import { JSONPatch } from '@writing/utils/patch';
 import * as R from 'ramda'
 import Delta from 'quill-delta';
+import { isTextBlock } from '../hooks/operator';
 
 const logger = createLogger('RichTextEditor')
 
@@ -78,7 +79,7 @@ provide(rootSymbol, rootValue)
 
 const { state: selectionState, pointermoveHandler: selectionTrigger, clear: clearSelection } = useSelection({ el: editorEl })
 
-const { state: blockToolState, pointermoveHandler: blockToolTrigger } = useBlockTool({
+const { state: selectorState, pointermoveHandler: selectorTrigger } = useBlockSelectorOnPointermove({
   el, mode
 })
 
@@ -94,7 +95,8 @@ const addedHandler = ({ block }: { block: BlockModel }, source) => {
     focusBlock(block.id, 'start')
   }
 }
-const updatedHandler = ({ oldBlock, block }: { oldBlock: BlockModel, block: BlockModel }) => {
+const updatedHandler = ({ oldBlock, block }: { oldBlock: BlockModel, block: BlockModel }, source) => {
+  if (source !== OperateSource.User) return
   if (oldBlock.type + oldBlock.id !== block.type + block.id) {
     focusBlock(block.id)
   }
@@ -131,7 +133,98 @@ watch(model, (value) => {
 const pointermoveHandler = (event: PointerEvent) => {
   if (props.mode === Mode.Readonly) return
   selectionTrigger(event)
-  blockToolTrigger(event)
+  selectorTrigger(event)
+}
+
+const multiSelectDeleteHandler = () => {
+  const { from, to } = selectionState.value.range
+  const blocksInRange: { path: number[], block: BlockModel }[] = []
+  rootValue.value.walkTreeBetween(from.path, to.path, (path, block) => {
+    blocksInRange.push({ path, block })
+  })
+  const firstBlock = R.head(blocksInRange)
+  const lastBlock = R.last(blocksInRange)
+  const needRemoveBlocks = R.takeLast(R.length(blocksInRange) - 1, blocksInRange)
+  let firstBlockValue = null
+  let prevPath = firstBlock.path
+  if (!isTextBlock(firstBlock.block) && !isTextBlock(lastBlock.block)) {
+    // 第一个选中块非文字块，最后一个也非文字块，则把选中范围内的所有块删除
+    needRemoveBlocks.unshift(firstBlock)
+    prevPath = rootValue.value.getPrev(firstBlock.path)?.path ?? null
+  } else if (!isTextBlock(firstBlock.block) && isTextBlock(lastBlock.block)) {
+    // 第一个选中块非文字块，最后一个块为文字块，则更新最后一个块为选中范围之后的文字
+    firstBlockValue = {
+      id: firstBlock.block.id,
+      type: lastBlock.block.type,
+      data: {
+        ops: new Delta(lastBlock.block.data.ops).slice(to.offset).ops
+      }
+    }
+  } else if (isTextBlock(firstBlock.block) && isTextBlock(lastBlock.block)) {
+    // 第一个选中块为文字块，并且最后一个也是文字块
+    // 把第一个选中块选中范围之前的文字和最后一个选中块选中范围之后的文字拼接
+    const firstBeforeText = new Delta(firstBlock.block.data.ops).slice(0, from.offset)
+    const lastAfterText = new Delta(lastBlock.block.data.ops).slice(to.offset)
+    firstBlockValue = {
+      data: {
+        ops: firstBeforeText.compose(new Delta().retain(from.offset).concat(lastAfterText)).ops
+      }
+    }
+  } else if (isTextBlock(firstBlock.block) && !isTextBlock(lastBlock.block)) {
+    // 第一个选中块为文字块，最后一个块非文字块
+    // 保留第一个块选中范围之前的文字
+    firstBlockValue = {
+      data: {
+        ops: new Delta(firstBlock.block.data.ops).slice(0, from.offset).ops
+      }
+    }
+  }
+
+  const leftBlocks: BlockModel[] = []
+  if (needRemoveBlocks.length) {
+    const blockIds = needRemoveBlocks.map(item => item.block.id)
+    needRemoveBlocks.forEach(item => {
+      BlockTree.walkTree(item.path, rootValue.value.getByPath(item.path), (childPath, block) => {
+        const needLeft = !blockIds.includes(block.id)
+        if (needLeft && leftBlocks.indexOf(block) === -1) {
+          leftBlocks.push(block)
+        }
+      })
+    })
+
+    // 把选中的组件删除
+    const result = BlockTree.filter(rootValue.value.model, (block) => {
+      return !blockIds.includes(block.id)
+    })
+    rootValue.value.updateModel(result)
+    logger.i('keydownHandler after filter', result)
+
+  }
+  rootValue.value.startTransaction(() => {
+    if (firstBlockValue) {
+      rootValue.value.update(
+        firstBlock.path,
+        firstBlockValue,
+        OperateSource.API
+      )
+    }
+    if (leftBlocks.length && prevPath) {
+      const baseIndex = R.last(firstBlock.path)
+      const parentPath = R.take(firstBlock.path.length - 1, firstBlock.path)
+      leftBlocks.forEach((block, index) => {
+        rootValue.value.addAfter([...parentPath, index + baseIndex], block, OperateSource.API)
+      })
+    }
+  }, OperateSource.API)
+
+  clearSelection()
+  nextTick(() => {
+    if (!R.equals(prevPath, firstBlock.path)) {
+      focusBlock(rootValue.value.getByPath(prevPath).id, 'end')
+    } else {
+      setCaretPosition({ path: firstBlock.path, offset: from.offset })
+    }
+  })
 }
 
 const keydownHandler = (event: KeyboardEvent) => {
@@ -162,58 +255,7 @@ const keydownHandler = (event: KeyboardEvent) => {
     event.stopImmediatePropagation()
     event.stopPropagation()
 
-    const blocksInRange: { path: number[], block: BlockModel }[] = []
-    rootValue.value.walkTreeBetween(from.path, to.path, (path, block) => {
-      blocksInRange.push({ path, block })
-    })
-    const firstBlock = R.head(blocksInRange)
-    const lastBlock = R.last(blocksInRange)
-    const needRemoveBlocks = R.takeLast(R.length(blocksInRange) - 1, blocksInRange)
-
-    // @todo 判断第一个块和最后一个块是文字块
-    // 把第一个选中块选中范围之前的文字和最后一个选中块选中范围之后的文字拼接
-    const firstBeforeText = new Delta(firstBlock.block.data.ops).slice(0, from.offset)
-    const lastAfterText = new Delta(lastBlock.block.data.ops).slice(to.offset)
-    const firstText = firstBeforeText.compose(new Delta().retain(from.offset).concat(lastAfterText))
-
-    const leftBlocks: BlockModel[] = []
-    if (needRemoveBlocks.length) {
-      const blockIds = needRemoveBlocks.map(item => item.block.id)
-      needRemoveBlocks.forEach(item => {
-        BlockTree.walkTree(item.path, rootValue.value.getByPath(item.path), (childPath, block) => {
-          const needLeft = !blockIds.includes(block.id)
-          if (needLeft && leftBlocks.indexOf(block) === -1) {
-            leftBlocks.push(block)
-          }
-        })
-      })
-
-      // 把选中的组件删除
-      const result = BlockTree.filter(rootValue.value.model, (block) => {
-        return !blockIds.includes(block.id)
-      })
-      rootValue.value.updateModel(result)
-      logger.i('keydownHandler after filter', result)
-
-    }
-    logger.i('firstText', JSON.stringify(firstText.ops))
-    rootValue.value.startTransaction(() => {
-      rootValue.value.update(
-        firstBlock.path,
-        { data: { ...firstBlock.block.data, ops: firstText.ops } }
-      )
-      if (leftBlocks.length) {
-        leftBlocks.forEach((block, index) => {
-          rootValue.value.addAfter([...firstBlock.path, index - 1], block, OperateSource.API)
-        })
-      }
-    }, OperateSource.API)
-    const firstPath = [...from.path]
-    const offset = from.offset
-    clearSelection()
-    nextTick(() => {
-      setCaretPosition({ path: firstPath, offset })
-    })
+    multiSelectDeleteHandler()
   }
 }
 </script>

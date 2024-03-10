@@ -84,7 +84,7 @@
           <template #reference>
             <span class="material-symbols-outlined">add_link</span>
           </template>
-          <div class="link-input-wrapper">
+          <div class="link-input-wrapper" v-click-outside="closeLinkPopover">
             <el-input size="small"
               class="link-input"
               v-model="link"
@@ -130,7 +130,7 @@
 
 <script lang="ts" setup>
 import { ref, watch } from 'vue'
-import { ElPopover, ElInput, ElButton } from 'element-plus';
+import { ElPopover, ElInput, ElButton, ClickOutside as vClickOutside } from 'element-plus';
 import { type SelectionState } from '../../hooks/selection';
 import { ElColorPicker } from 'element-plus'
 import { VirtualElement, useFloating, flip, shift, arrow, offset } from '@floating-ui/vue'
@@ -146,7 +146,7 @@ const linkPopoverVisible = ref(false)
 const {
   formats, link, selection,
   formatText, toggleFormat, setSizeFormat, setLinkFormat,
-  saveSelection
+  saveSelection, clearSelection
 } = useFormat(props.selection)
 
 const onLinkTap = () => {
@@ -164,7 +164,10 @@ const onLinkClearBtnTap = () => {
   setLinkFormat()
   linkPopoverVisible.value = false
 }
-
+const closeLinkPopover = () => {
+  linkPopoverVisible.value = false
+  clearSelection()
+}
 
 
 const getRect = () => ({

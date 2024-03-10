@@ -4,6 +4,7 @@ import EventEmitter from 'eventemitter3'
 import { createBlock, type BlockModel } from "./block"
 import { JSONPatch, PatchGenerator } from "@writing/utils/patch"
 import { toRaw } from "vue"
+import { isTextBlock } from "../hooks/operator"
 
 const logger = createLogger('BlockTree')
 
@@ -17,7 +18,7 @@ export enum OperateSource {
 
 interface BlockTreeEventTypes {
   added: [{ path: number[], block: BlockModel }, source: OperateSource],
-  updated: [{ path: number[], block: BlockModel, oldBlock: BlockModel }],
+  updated: [{ path: number[], block: BlockModel, oldBlock: BlockModel }, source: OperateSource],
   removed: [{ path: number[], block: BlockModel }],
   change: [root: BlockModel, patches: JSONPatch[], source: OperateSource]
 }
@@ -47,7 +48,7 @@ export class BlockTree extends EventEmitter<BlockTreeEventTypes> {
   updateModel(model: BlockModel, source = OperateSource.API) {
     const oldBlock = { ...model }
     this._model = model
-    this.emit('updated', { path: [], oldBlock, block: model })
+    this.emit('updated', { path: [], oldBlock, block: model }, source)
     this.emit('change', this.model, this.pg.patches, source)
   }
 
@@ -76,7 +77,7 @@ export class BlockTree extends EventEmitter<BlockTreeEventTypes> {
     return newBlock
   }
 
-  update(path: number[], data: Partial<BlockModel>) {
+  update(path: number[], data: Partial<BlockModel>, source = OperateSource.User) {
     const index = R.last(path)!
     const parent = this.getParentFromPath(path)
 
@@ -94,7 +95,7 @@ export class BlockTree extends EventEmitter<BlockTreeEventTypes> {
 
     this.pg.replace(path, parent.children[index])
 
-    this.emit('updated', { path, oldBlock, block: parent.children[index] })
+    this.emit('updated', { path, oldBlock, block: parent.children[index] }, source)
     return parent.children[index]
   }
 
@@ -122,6 +123,60 @@ export class BlockTree extends EventEmitter<BlockTreeEventTypes> {
     return BlockTree.filter(root, predicate)
   }
 
+  getByPath = (path: number[]) => {
+    return BlockTree.getByPath(this.model, path)
+  }
+
+  walkTree = (callback: (path: number[], block: BlockModel) => void) => {
+    return BlockTree.walkTree([], this.model, callback)
+  }
+
+  walkTreeBetween = (from: number[], to: number[], callback: (path: number[], block: BlockModel) => void) => {
+    return BlockTree.walkTreeBetween(this.model, from, to, callback)
+  }
+
+  getPrev = (
+    path: number[],
+    predicate: (path: number[], block: BlockModel) => boolean = (() => true)
+  ) => {
+    if (!path.length) return null
+  
+    const getMergablePathLast = (root: BlockModel, path: number[]): {
+      path: number[],
+      block: BlockModel
+    } | null => {
+      const block = BlockTree.getByPath(root, path)
+  
+      for(let i = (block.children?.length ?? 0) - 1; i >= 0; i -= 1) {
+        const mergablePath = getMergablePathLast(root, [...path, i])
+        if (mergablePath) return mergablePath
+      }
+  
+      if (predicate(path, block)) {
+        return { path, block }
+      }
+      return null
+    }
+  
+    const prevPath = [...path]
+    while(prevPath.length) {
+      let prevPathIndex = prevPath.pop()! - 1
+      while(prevPathIndex >= 0) {
+        const prevBlock = this.getByPath([...prevPath, prevPathIndex])
+        if (!prevBlock) break
+  
+        const mergable = getMergablePathLast(this.model, [...prevPath, prevPathIndex])
+        if (mergable) {
+          return mergable
+        }
+  
+        prevPathIndex -= 1
+      }
+    }
+    return null
+  }
+
+  // 静态方法
   static getByPath = (root: BlockModel, path: number[]) => {
     let node: BlockModel = root
     const restPath = [...path]
@@ -201,58 +256,5 @@ export class BlockTree extends EventEmitter<BlockTreeEventTypes> {
         ended = R.equals(end, path)
       }
     })
-  }
-
-  getByPath = (path: number[]) => {
-    return BlockTree.getByPath(this.model, path)
-  }
-
-  walkTree = (callback: (path: number[], block: BlockModel) => void) => {
-    return BlockTree.walkTree([], this.model, callback)
-  }
-
-  walkTreeBetween = (from: number[], to: number[], callback: (path: number[], block: BlockModel) => void) => {
-    return BlockTree.walkTreeBetween(this.model, from, to, callback)
-  }
-
-  getPrev = (
-    path: number[],
-    predicate: (path: number[], block: BlockModel) => boolean = (() => true)
-  ) => {
-    if (!path.length) return null
-  
-    const getMergablePathLast = (root: BlockModel, path: number[]): {
-      path: number[],
-      block: BlockModel
-    } | null => {
-      const block = BlockTree.getByPath(root, path)
-  
-      for(let i = (block.children?.length ?? 0) - 1; i >= 0; i -= 1) {
-        const mergablePath = getMergablePathLast(root, [...path, i])
-        if (mergablePath) return mergablePath
-      }
-  
-      if (predicate(path, block)) {
-        return { path, block }
-      }
-      return null
-    }
-  
-    const prevPath = [...path]
-    while(prevPath.length) {
-      let prevPathIndex = prevPath.pop()! - 1
-      while(prevPathIndex >= 0) {
-        const prevBlock = this.getByPath([...prevPath, prevPathIndex])
-        if (!prevBlock) break
-  
-        const mergable = getMergablePathLast(this.model, [...prevPath, prevPathIndex])
-        if (mergable) {
-          return mergable
-        }
-  
-        prevPathIndex -= 1
-      }
-    }
-    return null
   }
 }

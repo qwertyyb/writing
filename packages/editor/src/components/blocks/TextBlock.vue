@@ -3,35 +3,38 @@
     <text-editor :modelValue="data.ops"
       :readonly="readonly"
       :spellcheck="spellcheck"
+      trigger="/"
       @update:modelValue="updateModelValue"
       @keyEnter="enterKeyHandler"
-      @keyEsc="escapeKeyHandler"
+      @keyEsc="closeSelector"
       @keyTab="$emit('moveLower')"
       @keyShiftTab="$emit('moveUpper')"
       @backspace="backspaceKeyHandler"
-      @openTool="openToolHandler"
+      @keyTrigger="openSelector"
       @upload="uploadHandler"
       @keydown="keydownHandler"
+      @change="textChangeHandler"
       ref="textEditorEl"
     ></text-editor>
 
     <teleport to="body">
-      <block-tool v-if="commandToolVisible"
-        ref="commandTool"
+      <block-selector v-if="selectorState.visible"
+        v-click-outside="closeSelector"
+        ref="selector"
         @confirm="onCommand"
-        @exit="onExitTool"
-        :keyword="commandToolKeyword"
-        :style="{top: commandToolPoisition.top + 'px', left: commandToolPoisition.left + 'px'}"
-      ></block-tool>
+        @close="closeSelector"
+        :keyword="selectorState.keyword"
+        :rect="selectorState.rect"
+      ></block-selector>
     </teleport>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, watch, toRaw, inject } from 'vue';
-import BlockTool from '../tool/BlockTool.vue';
+import { ref, watch, inject } from 'vue';
+import { ClickOutside as vClickOutside } from 'element-plus';
+import BlockSelector from '../tool/BlockSelector.vue';
 import TextEditor from '@writing/inline-editor';
-import { moveCaretToEnd } from '../../models/caret';
 import { createBlock, type BlockModel } from '../../models/block';
 import { useMode } from '../../hooks/mode';
 import { useSpellcheck } from '../../hooks/spellcheck';
@@ -41,6 +44,9 @@ import { getImageRatio } from './image/utils';
 import { isEmpty, split, toText } from '@writing/utils/delta';
 import type { TextData } from '../schema';
 import { uploadSymbol } from '../../utils/upload';
+import { useBlockSelectorState } from '../../hooks/blockSelector';
+import Quill from 'quill';
+import Delta from 'quill-delta';
 
 const logger = createLogger('TextBlock')
 
@@ -78,29 +84,29 @@ watch(block, () => {
 
 const textEditorEl = ref<InstanceType<typeof TextEditor>>()
 
-const commandTool = ref<InstanceType<typeof BlockTool>>()
-const commandToolVisible = ref(false)
-const commandToolPoisition = reactive({ top: 0, left: 0 })
-const commandToolKeyword = ref('')
-
-watch(commandToolVisible, () => commandToolKeyword.value = '')
+const { state: selectorState, selector, open: openSelector, close: closeSelector, setKeyword: setSelectorKeyword } = useBlockSelectorState()
 
 const onCommand = (command: any) => {
-  textEditorEl.value?.removeTriggerKey()
-  commandToolVisible.value = false
-  logger.i('onCommand', JSON.parse(JSON.stringify({ ...block.value, type: command.identifier, data: toRaw(data.value) })))
-  block.value = { ...block.value, type: command.identifier, data: toRaw(data.value) }
-}
-
-const onExitTool = (options?: { autofocus: boolean }) => {
-  commandToolVisible.value = false
-  if (options?.autofocus) {
-    textEditorEl.value?.$el.focus()
-    textEditorEl.value?.$el && moveCaretToEnd(textEditorEl.value?.$el.querySelector('[contenteditable]'))
+  logger.i('onCommand', command, )
+  block.value = {
+    ...block.value, type: command.identifier,
+    data: {
+      ops: new Delta(block.value.data.ops)
+        .compose(new Delta().retain(selectorState.value.keywordOffset - 1).delete(selectorState.value.keyword.length + 1))
+        .ops as any
+    }
   }
+  selectorState.value.visible = false
 }
 
 const enterKeyHandler = async (offset: number) => {
+  if (selectorState.value.visible) {
+    const selected = selector.value.selected()
+    logger.i('visible', selected)
+    if (selected) {
+      return onCommand(selected)
+    }
+  }
   if (isEmpty(data.value.ops)) {
     // 没有输入字符时，回车，往上级移动
     const handled = moveUpper()
@@ -137,11 +143,26 @@ const backspaceKeyHandler = (offset: number) => {
   }
 }
 
-const escapeKeyHandler = () => {
-  commandToolVisible.value = false
+const textChangeHandler = (editor: Quill) => {
+  if (!selectorState.value.visible) return
+  const { index } = editor.getSelection()
+  if (index < selectorState.value.keywordOffset) {
+    return closeSelector()
+  }
+  const text = editor.getText(selectorState.value.keywordOffset, index - selectorState.value.keywordOffset)
+  setSelectorKeyword(text)
 }
 
 const keydownHandler = (event: KeyboardEvent, offset: number) => {
+  if (selectorState.value.visible) {
+    if (event.code === 'ArrowUp') {
+      event.preventDefault()
+      selector.value.selectPrev()
+    } else if (event.code === 'ArrowDown') {
+      event.preventDefault()
+      selector.value.selectNext()
+    }
+  }
   if (event.code !== 'Space') return
   const { before, after: content } = split(data.value.ops, offset)
   const trigger = toText(before)
@@ -151,13 +172,6 @@ const keydownHandler = (event: KeyboardEvent, offset: number) => {
     event.preventDefault()
     block.value = newBlock as any
   }
-}
-
-const openToolHandler = ({ x = 0, y = 0 }) => {
-  // 待输入字符上屏之后再获取位置信息
-  commandToolPoisition.top = y
-  commandToolPoisition.left = x
-  commandToolVisible.value = true
 }
 
 const uploadHandler = async (file: File) => {

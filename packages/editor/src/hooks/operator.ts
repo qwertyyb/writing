@@ -165,6 +165,7 @@ export const useFormat = (propsSelection: SelectionState) => {
   const savedSelection = shallowRef<SelectionState>()
 
   const selection = computed(() => {
+    // logger.i('selection', savedSelection.value || propsSelection)
     return savedSelection.value || propsSelection
   })
 
@@ -270,6 +271,10 @@ export const useFormat = (propsSelection: SelectionState) => {
     savedSelection.value = JSON.parse(JSON.stringify(selection.value))
   }
 
+  const clearSelection = () => {
+    savedSelection.value = null
+  }
+
   const restoreRange = () => {
     if (!savedSelection.value) return
     setSelectionRange(savedSelection.value.range)
@@ -287,6 +292,6 @@ export const useFormat = (propsSelection: SelectionState) => {
   return {
     formats, link, selection,
     toggleFormat, formatText, setSizeFormat, setLinkFormat,
-    saveSelection
+    saveSelection, clearSelection
   }
 }

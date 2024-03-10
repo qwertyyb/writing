@@ -28,6 +28,10 @@ const props = defineProps({
   spellcheck: {
     type: Boolean,
     default: false
+  },
+  trigger: {
+    type: String,
+    default: '/'
   }
 })
 
@@ -43,7 +47,8 @@ const emits = defineEmits<{
 
   upload: [file: File],
 
-  openTool: [{ x: number, y: number }],
+  keyTrigger: [{ top: number, left: number, width: number, height: number }, offset: number],
+  change: [editor: Quill]
 }>()
 
 const el = ref<HTMLDivElement>()
@@ -81,6 +86,7 @@ onMounted(() => {
     logger.i('text-change', delta, origin)
     const { ops } = editor!.getContents()
     model.value = markRaw(ops as DeltaOperation[])
+    emits('change', editor)
   })
   el.value!.querySelector<HTMLElement>('.ql-editor')!.dataset.focusable = 'true'
 })
@@ -93,16 +99,12 @@ watch(() => props.readonly, () => {
   editor.enable(!props.readonly)
 })
 
-const TRIGGER_KEY = '/'
 enum KeyCodes {
   Enter = 'Enter',
   Backspace = 'Backspace',
   Escape = 'Escape',
   Space = 'Space',
   Tab = 'Tab',
-
-  ArrowUp = 'ArrowUp',
-  ArrowDown = 'ArrowDown',
 }
 const keydownHandler = (event: KeyboardEvent) => {
   if (event.isComposing) return
@@ -123,7 +125,7 @@ const keydownHandler = (event: KeyboardEvent) => {
     escapeKeyHandler(event)
   } else if (event.code === KeyCodes.Backspace) {
     backspaceKeyHandler(event, offset)
-  } else if (event.key === TRIGGER_KEY) {
+  } else if (event.key === props.trigger) {
     // 打开命令选择
     triggerKeyHandler(event)
   } else if (event.code === KeyCodes.Tab && event.shiftKey) {
@@ -158,9 +160,12 @@ const triggerKeyHandler = (event: KeyboardEvent) => {
   // 待输入字符上屏之后再获取位置信息
   setTimeout(() => {
     const { index } = editor!.getSelection(true)
-    const { top, left, height } = editor!.getBounds(index) || { x: 0, y: 0, height: 24 }
-    const pRect = el.value!.getBoundingClientRect()
-    emits('openTool', { x: left + pRect.left, y: top + pRect.top + height })
+    const { top, left, height, width } = editor!.getBounds(index) || { x: 0, y: 0, height: 24 }
+    const pRect = el.value.getBoundingClientRect()
+    emits('keyTrigger',
+      { top: top + pRect.top, left: left + pRect.left, width, height },
+      index
+    )
   })
 }
 
@@ -190,7 +195,7 @@ const pasteHandler = (event: ClipboardEvent) => {
 }
 
 defineExpose({
-  removeTriggerKey
+  removeTriggerKey,
 })
 </script>
 
