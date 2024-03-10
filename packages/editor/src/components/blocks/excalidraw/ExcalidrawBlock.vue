@@ -41,6 +41,7 @@
 </template>
 <script lang="ts" setup>
 import { markRaw, ref, shallowRef, toRaw } from 'vue';
+import { ElDialog } from 'element-plus';
 import { useMode } from '../../../hooks/mode'
 import { createBlock, type BlockModel } from '../../../models/block'
 import { ImageAlign, type ImageData } from '../../../components/schema';

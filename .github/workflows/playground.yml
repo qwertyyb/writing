@@ -1,0 +1,31 @@
+name: playground
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Use Node.js 18.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18.x
+        cache: 'npm'
+    - name: build playground
+      run: |
+        cd packages/editor
+        pnpm install
+        pnpm run build
+    - name: upload to pages
+      uses: actions/upload-pages-artifact@v3.0.1
+      with:
+        path: 'packages/editor/dist'
+            
+

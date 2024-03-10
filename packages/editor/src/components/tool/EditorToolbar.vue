@@ -129,8 +129,9 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, inject, toRaw, type ShallowRef, ref, onMounted, onBeforeUnmount, watch, toRef } from 'vue'
-import { SelectionRange, type SelectionState } from '../../hooks/selection';
+import { ref, watch } from 'vue'
+import { ElPopover, ElInput, ElButton } from 'element-plus';
+import { type SelectionState } from '../../hooks/selection';
 import { ElColorPicker } from 'element-plus'
 import { VirtualElement, useFloating, flip, shift, arrow, offset } from '@floating-ui/vue'
 import { useFormat } from '../../hooks/operator';

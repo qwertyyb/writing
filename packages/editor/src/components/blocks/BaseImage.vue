@@ -103,6 +103,7 @@
 
 <script lang="ts" setup>
 import { ref } from 'vue';
+import { ElDropdown, ElDropdownMenu, ElDropdownItem, ClickOutside as vClickOutside } from 'element-plus';
 import TextBlock from './TextBlock.vue';
 import FocusableControl from '../FocusableControl.vue';
 import { ImageAlign } from '../schema';

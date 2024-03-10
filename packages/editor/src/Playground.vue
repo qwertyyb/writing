@@ -26,12 +26,6 @@ const data = ref({
     createBlock({
       type: 'heading2',
       data: {
-        ops: [{ insert: '文本' }]
-      }
-    }),
-    createBlock({
-      type: 'heading3',
-      data: {
         ops: [{ insert: '普通文本' }]
       }
     }),
@@ -44,7 +38,7 @@ const data = ref({
       children: []
     },
     createBlock({
-      type: 'heading3',
+      type: 'heading2',
       data: {
         ops: [{ insert: '引用' }]
       }
@@ -63,7 +57,7 @@ const data = ref({
       ]
     }),
     createBlock({
-      type: 'heading3',
+      type: 'heading2',
       data: {
         ops: [{ insert: '带格式的文本' }]
       }
@@ -90,7 +84,7 @@ const data = ref({
       children: []
     },
     createBlock({
-      type: 'heading3',
+      type: 'heading2',
       data: {
         ops: [{ insert: '代码块' }]
       }
@@ -102,14 +96,14 @@ const data = ref({
       }
     }),
     createBlock({
-      type: 'heading3',
+      type: 'heading2',
       data: { ops: [{insert: '分隔线\n' }] }
     }),
     createBlock({
       type: 'divider'
     }),
     createBlock({
-      type: 'heading3',
+      type: 'heading2',
       data: { ops: [{insert: '折叠内容\n' }] }
     }),
     createBlock({
@@ -595,13 +589,13 @@ const data = ref({
               "files": {}
           },
           "cover": {
-              "src": "/api/v1/file?name=a372e872cf5cf62f0205ada02",
+              "src": "/assets/excalidraw-cover.png",
               "ratio": 1.4695121951219512,
               "align": "Center",
               "title": {
                   "type": "text",
                   "data": {
-                      "ops": []
+                      "ops": [{insert: 'Excalidraw绘图标题'}]
                   },
                   "id": "b3b34138cf08",
                   "children": []
@@ -623,17 +617,8 @@ const uploadHandler = async (file: Blob | File) => {
 </script>
 
 <style lang="less" scoped>
-.document-view {
-  box-sizing: border-box;
-  padding: 16px;
-}
-.document-view-header {
-  display: flex;
-  justify-content: flex-end;
-  padding: 0 16px 8px 16px;
-}
-.document-editor-wrapper {
-  box-sizing: border-box;
-  padding: 0 36px;
+.playground {
+  width: 80vw;
+  margin: 0 auto;
 }
 </style>
