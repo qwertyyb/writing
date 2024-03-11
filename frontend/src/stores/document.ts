@@ -7,7 +7,7 @@ import { defineStore } from "pinia";
 
 const logger = createLogger('document-store')
 
-type ListItem = Omit<Document, 'content'>
+export type ListItem = Omit<Document, 'content'>
 
 export interface DocumentItem extends ListItem {
   children: DocumentItem[]

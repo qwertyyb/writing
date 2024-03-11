@@ -3,7 +3,7 @@ import { BlockModel } from './block';
 import { deltaToMarkdown } from 'quill-delta-to-markdown';
 import * as R from 'ramda';
 
-// 先简单处理，忽略 列表、todo、block-quote 的嵌套逻辑
+// 先简单处理，忽略 列表、todo、block-quote 的深层嵌套逻辑
 export const toMarkdown = (root: BlockModel) => {
   const rows: string[] = [];
   let ignorePath: number[] | null = null;

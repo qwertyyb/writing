@@ -10,7 +10,10 @@
       "import": "./src/DocumentEditor.vue",
       "require": "./src/DocumentEditor.vue"
     },
-    "./markdown": "./src/models/markdown"
+    "./markdown": {
+      "import": "./src/models/markdown",
+      "require": "./src/models/markdown"
+    }
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

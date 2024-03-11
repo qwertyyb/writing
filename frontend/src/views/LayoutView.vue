@@ -2,8 +2,13 @@
   <column-container class="layout-view" v-model="runtimeStore.settings.layout.siderWidth"
     @change="runtimeStore.updateSettings('layout', { ...runtimeStore.settings.layout, siderWidth: $event })">
     <template v-slot:side>
+      <search-by-title
+        :documents="documentStore.documents"
+        @search="treeVisible = false"
+        @clear="treeVisible = true"
+      ></search-by-title>
       <document-tree
-        v-if="documentStore.tree"
+        v-if="documentStore.tree && treeVisible"
         :tree="documentStore.tree"
         @move="documentStore.move"
         @add="documentStore.add"
@@ -27,14 +32,25 @@ import { createLogger } from '@/utils/logger';
 import router from '@/router';
 import { useRuntime } from '@/stores/runtime';
 import ColumnContainer from '@/components/ColumnContainer.vue';
+import SearchByTitle from '../components/SearchByTitle.vue';
+import { ref } from 'vue';
 
-const logger = createLogger('layout-view')
+const logger = createLogger('LayoutView')
+
+const treeVisible = ref(true)
 
 const runtimeStore = useRuntime()
 const documentStore = useDocumentStore()
 
-runtimeStore.refresh()
 documentStore.getList()
+
+runtimeStore.refresh()
+  .then(() => {
+    router.push({
+      name: 'document',
+      params: { id: runtimeStore.settings.recentDocumentId }
+    })
+  })
 
 const selectHandler = async (node: TreeNodeModel) => {
   logger.i('select tree node', node)
@@ -42,6 +58,7 @@ const selectHandler = async (node: TreeNodeModel) => {
     name: 'document',
     params: { id: node.id }
   })
+  runtimeStore.updateSettings('recentDocumentId', node.id)
 }
 
 </script>
@@ -52,19 +69,5 @@ const selectHandler = async (node: TreeNodeModel) => {
   height: 100%;
   overflow: auto;
   display: flex;
-  .layout-aside {
-    height: 100%;
-  }
-  .layout-spliter {
-    height: 100%;
-    width: 4px;
-    background: rgba(220, 220, 220, .8);
-    cursor: ew-resize;
-  }
-  .layout-main {
-    flex: 1;
-    height: 100%;
-    overflow: auto;
-  }
 }
 </style>

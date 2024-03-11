@@ -5,6 +5,7 @@ import { defineStore } from "pinia";
 
 interface RuntimeSettings {
   layout: { siderWidth: number }
+  recentDocumentId: number
 }
 
 interface Runtime {
@@ -19,7 +20,8 @@ export const useRuntime = defineStore('runtime', {
   state() {
     return {
       settings: {
-        layout: { siderWidth: 25 }
+        layout: { siderWidth: 25 },
+        recentDocumentId: 0
       }
     }
   },
@@ -30,7 +32,6 @@ export const useRuntime = defineStore('runtime', {
     },
     async refresh() {
       const value = await getValue('settings')
-      logger.i('refresh, settings: ', value)
       if (value) {
         this.settings = JSON.parse(value)
       }
