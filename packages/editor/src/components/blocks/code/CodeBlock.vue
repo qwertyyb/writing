@@ -80,8 +80,9 @@ const keydownHandler = (event: KeyboardEvent) => {
 };
 
 onMounted(() => {
+  console.log('data.value.text', data.value.text, typeof data.value.text);
   viewer = new EditorView({
-    doc: data.value.text,
+    doc: data.value.text || '',
     parent: codeMirrorWrapper.value,  
     extensions: [
       basicSetup,
@@ -102,12 +103,6 @@ onBeforeUnmount(() => {
   viewer?.destroy();
   viewer = null;
   state = null;
-});
-
-defineExpose({
-  save() {
-    return data.value;
-  }
 });
 </script>
 

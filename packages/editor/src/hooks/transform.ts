@@ -61,7 +61,7 @@ export const transformBlock = (trigger: string, origin: BlockModel, content: Op[
       id: origin.id,
       type: 'code',
       data: {
-        text: content
+        text: toText(content)
       }
     };
   }

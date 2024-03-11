@@ -1,6 +1,6 @@
 import { heading1, heading2, heading3, heading4, heading5, heading6 } from './heading';
-import TextBlock from './TextBlock';
-import ListBlocks from './list/list';
+import textBlock from './TextBlock';
+import listBlocks from './list/list';
 import link from './link/link';
 import blockQuote from './block-quote/block-quote';
 import divider from './divider/divider';
@@ -29,13 +29,13 @@ interface BlockConfig {
 }
 
 const commands: BlockConfig[] = [
-  TextBlock,
+  textBlock,
   heading1,
   heading2,
   heading3,
   details,
   link,
-  ...ListBlocks,
+  ...listBlocks,
   image,
   blockQuote,
   divider,
@@ -47,7 +47,7 @@ const commands: BlockConfig[] = [
   heading5,
   heading6,
   toc
-];
+] as const;
 
 export default commands;
 

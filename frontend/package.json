@@ -18,6 +18,7 @@
     "@simplewebauthn/browser": "^9.0.1",
     "@writing/editor": "workspace:^",
     "element-plus": "^2.5.3",
+    "file-saver": "^2.0.5",
     "pinia": "^2.1.7",
     "ramda": "^0.29.1",
     "vue": "^3.4.21",

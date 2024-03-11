@@ -78,6 +78,9 @@ importers:
       element-plus:
         specifier: ^2.5.3
         version: 2.6.0(vue@3.4.21)
+      file-saver:
+        specifier: ^2.0.5
+        version: 2.0.5
       pinia:
         specifier: ^2.1.7
         version: 2.1.7(typescript@5.3.3)(vue@3.4.21)
@@ -187,6 +190,9 @@ importers:
       quill-delta:
         specifier: ~5.1.0
         version: 5.1.0
+      quill-delta-to-markdown:
+        specifier: ^0.6.0
+        version: 0.6.0
       ramda:
         specifier: ^0.29.1
         version: 0.29.1
@@ -2902,6 +2908,10 @@ packages:
       flat-cache: 3.2.0
     dev: true
 
+  /file-saver@2.0.5:
+    resolution: {integrity: sha512-P9bmyZ3h/PRG+Nzga+rbdI4OEpNDzAVyy74uVO9ATgzLK6VtAsYybF/+TOCvrc0MO793d6+42lLyZTw7/ArVzA==}
+    dev: false
+
   /fill-range@7.0.1:
     resolution: {integrity: sha512-qOo9F+dMUmC2Lcb4BbVvnKJxTPjCm+RRpe4gDuGrzkL7mEVl/djYSu2OdQ2Pa302N4oqkSg9ir6jaLWJ2USVpQ==}
     engines: {node: '>=8'}
@@ -4307,6 +4317,13 @@ packages:
   /queue-microtask@1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
     dev: true
+
+  /quill-delta-to-markdown@0.6.0:
+    resolution: {integrity: sha512-GwNMwSvXsH8G2o6EhvoTnIwEcN8RMbtklSjuyXYdPAXAhseMiQfehngcTwVZCz/3Fn4iu1CxlpLIKoBA9AjgdQ==}
+    engines: {node: '>=6.4.0'}
+    dependencies:
+      lodash: 4.17.21
+    dev: false
 
   /quill-delta@3.6.3:
     resolution: {integrity: sha512-wdIGBlcX13tCHOXGMVnnTVFtGRLoP0imqxM696fIPwIf5ODIYUHIvHbZcyvGlZFiFhK5XzDC2lpjbxRhnM05Tg==}

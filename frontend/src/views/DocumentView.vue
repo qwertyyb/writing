@@ -1,7 +1,15 @@
 <template>
   <div class="document-view" :key="id">
     <div class="document-view-header" v-if="documentStore.editing">
-      <el-icon :size="20" class="setting-icon" @click="settingDialogVisible = true"><Setting /></el-icon>
+      <el-dropdown @command="commandHandler">
+        <el-icon :size="20" class="setting-icon"><MoreFilled /></el-icon>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="export.markdown">导出为 Markdown</el-dropdown-item>
+            <el-dropdown-item divided command="settings">设置</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
     </div>
     <el-dialog
       title="设置"
@@ -24,14 +32,16 @@
 </template>
 
 <script lang="ts" setup>
+import { saveAs } from 'file-saver';
 import type { BlockModel } from '@/models/block';
 import { useDocumentStore } from '@/stores/document';
-import { Setting } from '@element-plus/icons-vue';
+import { MoreFilled } from '@element-plus/icons-vue';
 import { ref, watchEffect } from 'vue';
 import DocumentAttribute from '@/components/DocumentAttribute.vue';
 import DocumentEditor from '@writing/editor';
 import { debounce } from '@/utils/utils';
 import { upload } from '@/services/upload';
+import { toMarkdown } from '@writing/editor/markdown';
 
 const props = defineProps<{
   id: number | string
@@ -54,6 +64,19 @@ const uploadHandler = async (file: Blob | File) => {
   if (data.url) return data.url
   throw new Error('上传失败')
 }
+
+const commandHandler = (command: string) => {
+  if (command === 'settings') {
+    settingDialogVisible.value = true
+    return
+  } else if (command === 'export.markdown') {
+    const markdown = toMarkdown(documentStore.editing.content)
+    const blob = new Blob([markdown], { type: 'text/plain;charset=utf-8' })
+    saveAs(blob, documentStore.editing.title + '.md')
+    console.log('markdown', markdown)
+  }
+}
+
 </script>
 
 <style lang="less" scoped>
@@ -65,6 +88,9 @@ const uploadHandler = async (file: Blob | File) => {
   display: flex;
   justify-content: flex-end;
   padding: 0 16px 8px 16px;
+  .setting-icon {
+    cursor: pointer;
+  }
 }
 .document-editor-wrapper {
   box-sizing: border-box;
