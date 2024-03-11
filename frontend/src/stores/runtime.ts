@@ -1,5 +1,4 @@
 import { getValue, setValue } from "@/services/config";
-import { createLogger } from "@/utils/logger";
 import { debounce } from "@/utils/utils";
 import { defineStore } from "pinia";
 
@@ -7,12 +6,6 @@ interface RuntimeSettings {
   layout: { siderWidth: number }
   recentDocumentId: number
 }
-
-interface Runtime {
-  settings: RuntimeSettings
-}
-
-const logger = createLogger('runtime')
 
 const debounceSetValue = debounce(setValue)
 

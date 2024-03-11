@@ -1,10 +1,6 @@
 <template>
   <div class="rich-text-editor" ref="el">
-    <div class="block-tool"
-      v-if="mode === Mode.Edit && selectorState.visible"
-      :style="{left: selectorState.left + 'px', top: selectorState.top + 'px'}">
-      <span class="material-symbols-outlined block-tool-icon"> drag_indicator </span>
-    </div>
+    <block-actions v-if="mode === Mode.Edit"></block-actions>
     <editor-toolbar
       v-if="mode === Mode.Edit"
       :root="model"
@@ -31,7 +27,6 @@ import { focusBlock } from '../hooks/focus';
 import { provide, type PropType, computed, ref, shallowRef, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { Mode } from './schema';
 import { useHistory } from '../hooks/history';
-import { useBlockSelectorOnPointermove } from '../hooks/blockSelector';
 import { setCaretPosition, useSelection } from '../hooks/selection';
 import EditorToolbar from './tool/EditorToolbar.vue';
 import { createLogger } from '@writing/utils/logger';
@@ -41,6 +36,7 @@ import { JSONPatch } from '@writing/utils/patch';
 import * as R from 'ramda';
 import Delta from 'quill-delta';
 import { isTextBlock } from '../hooks/operator';
+import BlockActions from './tool/BlockActions.vue';
 
 const logger = createLogger('RichTextEditor');
 
@@ -78,10 +74,6 @@ provide(uploadSymbol, props.upload);
 provide(rootSymbol, rootValue);
 
 const { state: selectionState, pointermoveHandler: selectionTrigger, clear: clearSelection } = useSelection({ el: editorEl });
-
-const { state: selectorState, pointermoveHandler: selectorTrigger } = useBlockSelectorOnPointermove({
-  el, mode
-});
 
 const { undo, redo, pushLatest } = useHistory(el, model);
 
@@ -133,7 +125,6 @@ watch(model, (value) => {
 const pointermoveHandler = (event: PointerEvent) => {
   if (props.mode === Mode.Readonly) return;
   selectionTrigger(event);
-  selectorTrigger(event);
 };
 
 const multiSelectDeleteHandler = () => {
@@ -265,32 +256,19 @@ const keydownHandler = (event: KeyboardEvent) => {
   min-width: 50vw;
   min-height: 50vh;
   position: relative;
-  .block-tool {
-    width: 24px;
-    height: 24px;
-    cursor: pointer;
-    opacity: 0.8;
-    position: absolute;
-    z-index: 1;
-    top: 0;
-    left: -28px;
-  }
-  .block-tool-icon {
-    font-size: 24px;
-    user-select: none;
-    color: rgb(190, 190, 190);
-    font-weight: 300;
-    border-radius: 4px;
-    transition: background .2s;
-    &:hover {
-      background: rgba(230, 230, 230);
-    }
-  }
   .rich-text-editor-wrapper {
     border: none;
     outline: none;
     padding-bottom: 40vh;
     user-select: text;
+
+    &:deep([data-block-id]) {
+      transition: background .3s;
+      &.actions-hover-highlight {
+        background: rgba(58, 142, 137, 0.2);
+        border-radius: 4px;
+      }
+    }
   }
 }
 </style>
