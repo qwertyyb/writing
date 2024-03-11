@@ -8,9 +8,24 @@
         @mouseout="mouseoutHandler"> drag_indicator </span>
       <template #dropdown>
         <el-dropdown-menu>
-          <el-dropdown-item command="add.before">在前面添加</el-dropdown-item>
-          <el-dropdown-item command="add.after">在后面添加</el-dropdown-item>
-          <el-dropdown-item divided command="remove">删除</el-dropdown-item>
+          <el-dropdown-item command="add.before">
+            <div class="command-item">
+              <span class="material-symbols-outlined command-icon">add</span>
+              在前面添加
+            </div>
+          </el-dropdown-item>
+          <el-dropdown-item command="add.after">
+            <div class="command-item">
+              <span class="material-symbols-outlined command-icon">add</span>
+              在后面添加
+            </div>
+          </el-dropdown-item>
+          <el-dropdown-item divided command="remove">
+            <div class="command-item">
+              <span class="material-symbols-outlined command-icon">delete</span>
+              删除
+            </div>
+          </el-dropdown-item>
         </el-dropdown-menu>
       </template>
     </el-dropdown>
@@ -150,6 +165,14 @@ onBeforeUnmount(() => {
   transition: background .2s;
   &:hover {
     background: rgba(230, 230, 230);
+  }
+}
+.command-item {
+  display: flex;
+  align-items: center;
+  .command-icon {
+    font-size: 20px;
+    margin-right: 6px;
   }
 }
 </style>
