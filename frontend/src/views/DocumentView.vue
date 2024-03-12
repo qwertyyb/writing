@@ -2,7 +2,7 @@
   <div class="document-view" :key="id">
     <div class="document-view-header" v-if="documentStore.editing">
       <el-dropdown @command="commandHandler">
-        <el-icon :size="20" class="setting-icon"><MoreFilled /></el-icon>
+        <el-icon :size="20" class="setting-icon action-icon"><MoreFilled /></el-icon>
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item command="export.markdown">导出为 Markdown</el-dropdown-item>
@@ -10,6 +10,8 @@
           </el-dropdown-menu>
         </template>
       </el-dropdown>
+      <span class="material-symbols-outlined fullscreen-icon action-icon" @click="fullscreen">fullscreen</span>
+      <span class="material-symbols-outlined fullscreen-icon action-icon" @click="exitFullscreen">fullscreen_exit</span>
     </div>
     <el-dialog
       title="设置"
@@ -33,7 +35,6 @@
 
 <script lang="ts" setup>
 import { saveAs } from 'file-saver';
-import type { BlockModel } from '@/models/block';
 import { useDocumentStore } from '@/stores/document';
 import { MoreFilled } from '@element-plus/icons-vue';
 import { ref, watchEffect } from 'vue';
@@ -42,6 +43,7 @@ import DocumentEditor from '@writing/editor';
 import { debounce } from '@/utils/utils';
 import { upload } from '@/services/upload';
 import { toMarkdown } from '@writing/editor/markdown';
+import type { BlockModel } from '@writing/editor/block';
 
 const props = defineProps<{
   id: number | string
@@ -70,11 +72,18 @@ const commandHandler = (command: string) => {
     settingDialogVisible.value = true
     return
   } else if (command === 'export.markdown') {
-    const markdown = toMarkdown(documentStore.editing.content)
+    const markdown = toMarkdown(documentStore.editing!.content)
     const blob = new Blob([markdown], { type: 'text/plain;charset=utf-8' })
-    saveAs(blob, documentStore.editing.title + '.md')
-    console.log('markdown', markdown)
+    saveAs(blob, documentStore.editing!.title + '.md')
   }
+}
+
+const fullscreen = () => {
+
+}
+
+const exitFullscreen = () => {
+  
 }
 
 </script>
@@ -88,8 +97,24 @@ const commandHandler = (command: string) => {
   display: flex;
   justify-content: flex-end;
   padding: 0 16px 8px 16px;
+  .action-icon {
+    transition: background .3s;
+    cursor: pointer;
+    padding: 4px;
+    &:hover {
+      background: #eee;
+      border-radius: 4px;
+    }
+  }
   .setting-icon {
     cursor: pointer;
+    outline: none;
+  }
+  .fullscreen-icon {
+    font-size: 20px;
+    margin: 0 8px;
+    font-weight: 600;
+    color: #444;
   }
 }
 .document-editor-wrapper {

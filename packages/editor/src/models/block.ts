@@ -5,7 +5,15 @@ export interface BlockModel<D = any> {
   data?: D;
 }
 
-export const createBlockId = (): string => Math.random().toString(16).substring(2);
+export const createBlockId = (): string => {
+  const len = 16;
+  const t = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678';
+  let result = '';
+  for (let i = 0; i < len; i += 1) {
+    result += t.charAt(Math.floor(Math.random() * t.length));
+  }
+  return result;
+};
 
 export const createBlock = (options: Partial<BlockModel>): BlockModel => {
   if (!options.id) {

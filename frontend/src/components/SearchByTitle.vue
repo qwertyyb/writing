@@ -108,8 +108,6 @@ const toResult = (result: ListItem) => {
   }
 }
 .search-result-item {
-  display: flex;
-  align-items: center;
   cursor: pointer;
   padding: 6px 12px;
   border-radius: 4px;
@@ -117,6 +115,11 @@ const toResult = (result: ListItem) => {
   box-sizing: border-box;
   position: relative;
   font-size: 16px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 100%;
+  box-sizing: border-box;
   &.empty {
     color: #bbb;
     justify-content: center;

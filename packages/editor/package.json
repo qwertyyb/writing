@@ -1,19 +1,12 @@
 {
   "name": "@writing/editor",
-  "type": "module",
   "version": "1.0.0",
   "description": "",
   "main": "src/DocumentEditor.vue",
-  "module": "src/DocumentEditor.vue",
   "exports": {
-    ".": {
-      "import": "./src/DocumentEditor.vue",
-      "require": "./src/DocumentEditor.vue"
-    },
-    "./markdown": {
-      "import": "./src/models/markdown",
-      "require": "./src/models/markdown"
-    }
+    ".": "./src/DocumentEditor.vue",
+    "./markdown": "./src/models/markdown.ts",
+    "./block": "./src/models/block.ts"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

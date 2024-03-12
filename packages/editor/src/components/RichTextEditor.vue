@@ -291,9 +291,14 @@ const keydownHandler = (event: KeyboardEvent) => {
       }
     }
     &:deep([data-block-path]) {
+      &.movable-source {
+        opacity: 0.4;
+        cursor: move;
+      }
       .block-content {
         position: relative;
         &.movable-selected {
+          transition: background .3s;
           &::before, &::after {
             content: " ";
             position: absolute;
