@@ -75,6 +75,9 @@ importers:
       '@writing/editor':
         specifier: workspace:^
         version: link:../packages/editor
+      '@writing/utils':
+        specifier: workspace:^
+        version: link:../packages/utils
       element-plus:
         specifier: ^2.5.3
         version: 2.6.0(vue@3.4.21)

@@ -79,7 +79,6 @@ const { merge } = useMerge();
   align-items: flex-start;
   justify-content: flex-start;
   flex-direction: column;
-  padding: 6px 0;
   box-sizing: border-box;
   & > * {
     width: 100%;
@@ -89,7 +88,8 @@ const { merge } = useMerge();
     box-sizing: border-box;
   }
   .block-content {
+    padding: 6px 0;
     flex: 1;
   }
 }
-</style>./blocks../models/block-operate
+</style>

@@ -34,7 +34,7 @@ export class BlockTree extends EventEmitter<BlockTreeEventTypes> {
   }
 
   private getParentFromPath(path: number[]) {
-    const parentPath = R.take(path.length - 1, path);
+    const parentPath = R.init(path);
     const parent = this.getByPath(parentPath);
     return parent;
   }
@@ -69,7 +69,7 @@ export class BlockTree extends EventEmitter<BlockTreeEventTypes> {
     const newBlock = createBlock(data);
     parent.children.splice(index + 1, 0, newBlock);
     
-    const newPath = [...R.take(path.length - 1, path), index + 1];
+    const newPath = [...R.init(path), index + 1];
     this.pg.add(newPath, newBlock);
 
     this.emit('added', { path: newPath, block: newBlock }, source);

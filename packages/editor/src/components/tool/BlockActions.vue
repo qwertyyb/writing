@@ -5,7 +5,8 @@
     <el-dropdown trigger="click" @command="commandHandler" @visible-change="popoverChangeHandler">
       <span class="material-symbols-outlined block-actions-icon"
         @mouseover="mouseoverHandler"
-        @mouseout="mouseoutHandler"> drag_indicator </span>
+        @mouseout="mouseoutHandler"
+        @pointerdown="pointerdownHandler"> drag_indicator </span>
       <template #dropdown>
         <el-dropdown-menu>
           <el-dropdown-item command="add.before">
@@ -39,10 +40,30 @@ import { ShallowRef, inject, onBeforeUnmount, onMounted, ref } from 'vue';
 import * as R from 'ramda';
 import { createBlock } from '../../models/block';
 import { createLogger } from '@writing/utils/logger';
+import { useMovable } from '@writing/utils/movable';
 
 const HighlightClassName = 'actions-hover-highlight';
 
 const logger = createLogger('BlockActions');
+
+const emits = defineEmits<{
+  move: [options: { sourcePath: number[], targetPath: number[], position: 'before' | 'after' | 'inside' }]
+}>();
+
+const { pointerdownHandler, pointermoveHandler: movablePointermoveHandler, pointerupHandler } = useMovable(({ source, target, position }) => {
+  const sourceBlockPath = source.dataset.blockPath.split(',').map(i => Number(i));
+  const targetBlockPath = target.dataset.blockPath.split(',').map(i => Number(i));
+
+  logger.i('movable callback', sourceBlockPath, targetBlockPath, position);
+  emits('move', { sourcePath: sourceBlockPath, targetPath: targetBlockPath, position });
+}, {
+  movableSelector: '[data-block-path]',
+  targetContentSelector: '.block-content',
+  getSourceEl: () => {
+    const sourceEl = document.querySelector<HTMLElement>(`[data-block-path=${JSON.stringify(state.value.blockPath.join(','))}]`);
+    return sourceEl;
+  }
+});
 
 const rootValue = inject<ShallowRef<BlockTree>>(rootSymbol);
 
@@ -89,7 +110,7 @@ const commandHandler = (command: string) => {
     });
   } else if (command === 'add.before') {
     const index = R.last(state.value.blockPath);
-    const parentPath = R.take(state.value.blockPath.length - 1, state.value.blockPath);
+    const parentPath = R.init(state.value.blockPath);
     rootValue.value.startTransaction(() => {
       rootValue.value.addAfter([...parentPath, index - 1], createBlock({
         type: 'text',
@@ -113,7 +134,7 @@ const hide = () => { state.value.visible = false; };
 
 const pointermoveHandler = (event: PointerEvent) => {
   if (state.value.isActing) return;
-  let blockEl = document.elementFromPoint(event.clientX + 18, event.clientY).closest<HTMLElement>('[data-block-id');
+  let blockEl = document.elementFromPoint(event.clientX + 18, event.clientY)?.closest<HTMLElement>('[data-block-id');
   if (!blockEl) {
     blockEl = (event.target as HTMLElement).closest('[data-block-id]');
   }
@@ -139,10 +160,15 @@ const pointermoveHandler = (event: PointerEvent) => {
 
 onMounted(() => {
   document.querySelector('.rich-text-editor-wrapper')?.addEventListener('pointermove', pointermoveHandler, { passive: true });
+  document.querySelector('.rich-text-editor-wrapper')?.addEventListener('pointermove', movablePointermoveHandler);
+  document.querySelector('.rich-text-editor-wrapper')?.addEventListener('pointerup', pointerupHandler, { passive: true });
 });
 
 onBeforeUnmount(() => {
   document.querySelector('.rich-text-editor-wrapper')?.removeEventListener('pointermove', pointermoveHandler);
+  document.querySelector('.rich-text-editor-wrapper')?.removeEventListener('pointermove', movablePointermoveHandler);
+  document.querySelector('.rich-text-editor-wrapper')?.removeEventListener('pointerup', pointerupHandler);
+
 });
 
 </script>

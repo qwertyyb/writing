@@ -13,7 +13,10 @@
 import { computed, provide } from 'vue';
 import DocTreeNode from './DocTreeNode.vue';
 import type { TreeNodeModel } from './types';
-import { useMove } from './useMove';
+import { useMovable } from '@writing/utils/movable';
+import { createLogger } from '@writing/utils/logger';
+
+const logger = createLogger('DocTree')
 
 const props = defineProps<{
   tree: TreeNodeModel,
@@ -26,6 +29,7 @@ const emits = defineEmits<{
   select: [node: TreeNodeModel],
   toggleExpand: [node: TreeNodeModel],
   remove: [node: TreeNodeModel],
+  move: [params: { sourceId: number, sourceIndexPath: number[], toId: number, toIndexPath: number[], position: 'before' | 'after' | 'inside' }],
   'update:tree': [TreeNodeModel],
 }>()
 
@@ -37,6 +41,17 @@ provide('treeSelectedId', computed(() => props.selectedId))
 provide('treeExpandedIdMap', computed(() => props.expandedIdMap))
 provide('tree', emits)
 
-const { pointerdownHandler, pointermoveHandler, pointerupHandler } = useMove()
+const { pointerdownHandler, pointermoveHandler, pointerupHandler } = useMovable(({ source, target, position }) => {
+  const toIndexPath = target.dataset.treeIndexPath?.split(',').filter(i => i).map(i => Number(i)) ?? []
+
+  const sourceIndexPath = source.dataset.treeIndexPath?.split(',').filter(i => i).map(i => Number(i)) ?? []
+  const sourceId = Number(source.dataset.treeNodeId)
+  const toId = Number(target.dataset.treeNodeId)
+
+  logger.i('move', { sourceId, sourceIndexPath, toIndexPath, toId, position }, toIndexPath.join(','), sourceIndexPath.join(','))
+  // 不能把自己移动到子节点内
+  if (toIndexPath.join(',').startsWith(sourceIndexPath.join(','))) return;
+  emits('move', { sourceId, sourceIndexPath, toIndexPath, toId, position })
+})
 
 </script>

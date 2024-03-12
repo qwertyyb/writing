@@ -10,11 +10,11 @@
       <document-tree
         v-if="documentStore.tree && treeVisible"
         :tree="documentStore.tree"
-        @move="documentStore.move"
         @add="documentStore.add"
         @select="selectHandler"
         @toggleExpand="documentStore.toggleExpand"
         @remove="documentStore.remove"
+        @move="documentStore.move"
         :selectedId="documentStore.editing?.id"
         :expandedIdMap="documentStore.expandedIdMap"
       ></document-tree>
@@ -59,6 +59,10 @@ const selectHandler = async (node: TreeNodeModel) => {
     params: { id: node.id }
   })
   runtimeStore.updateSettings('recentDocumentId', node.id)
+}
+
+const moveHandler = () => {
+  logger.i('moveHandler')
 }
 
 </script>

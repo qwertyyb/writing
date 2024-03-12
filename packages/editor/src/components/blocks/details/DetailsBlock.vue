@@ -3,9 +3,7 @@
     <div class="details-summary">
       <span class="material-symbols-outlined summary-icon"
         @click="contentVisible = !contentVisible"
-        :class="{ expanded: contentVisible }">
-      arrow_right
-      </span>
+        :class="{ expanded: contentVisible }">arrow_right</span>
       <text-block :model-value="block.data.summary"
         v-if="block.data.summary"
         @update:model-value="updateSummary"
@@ -47,6 +45,7 @@ const emits = defineEmits<{
   change: [BlockModel],
   'update:modelValue': [BlockModel],
   remove: [],
+  add: [],
 }>();
 
 const { addBlock, updateBlock, removeBlock } = useOperator(props);
@@ -100,6 +99,8 @@ const updateSummary = (summary: BlockModel) => {
   .summary-icon {
     cursor: pointer;
     transition: transform .2s;
+    width: 24px;
+    height: 24px;
     &.expanded {
       transform: rotateZ(90deg)
     }

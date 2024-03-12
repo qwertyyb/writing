@@ -6,7 +6,8 @@
   "exports": {
     "./logger": "./src/logger.ts",
     "./patch": "./src/patch.ts",
-    "./delta": "./src/delta.ts"
+    "./delta": "./src/delta.ts",
+    "./movable": "./src/movable.ts"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

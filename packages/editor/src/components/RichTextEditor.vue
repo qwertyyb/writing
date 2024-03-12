@@ -1,6 +1,8 @@
 <template>
   <div class="rich-text-editor" ref="el">
-    <block-actions v-if="mode === Mode.Edit"></block-actions>
+    <block-actions
+      @move="moveBlockHandler"
+      v-if="mode === Mode.Edit"></block-actions>
     <editor-toolbar
       v-if="mode === Mode.Edit"
       :root="model"
@@ -82,12 +84,12 @@ const changeHandler = (value: BlockModel, changes: JSONPatch[]) => {
   model.value = value;
   pushLatest();
 };
-const addedHandler = ({ block }: { block: BlockModel }, source) => {
+const addedHandler = ({ block }: { block: BlockModel }, source: OperateSource) => {
   if (source === OperateSource.User) {
     focusBlock(block.id, 'start');
   }
 };
-const updatedHandler = ({ oldBlock, block }: { oldBlock: BlockModel, block: BlockModel }, source) => {
+const updatedHandler = ({ oldBlock, block }: { oldBlock: BlockModel, block: BlockModel }, source: OperateSource) => {
   if (source !== OperateSource.User) return;
   if (oldBlock.type + oldBlock.id !== block.type + block.id) {
     focusBlock(block.id);
@@ -98,6 +100,28 @@ const removedHandler = ({ path }: { path: number[] }) => {
   if (prev) {
     focusBlock(prev.block.id);
   }
+};
+const moveBlockHandler = (params: { sourcePath: number[], targetPath: number[], position: 'before' | 'after' | 'inside' }) => {
+  const { sourcePath, targetPath, position } = params;
+  // 移动的原理是删除原位置的节点，把删除的节点插入到新的位置上
+  // 由于删除节点后，原插入节点的位置可能会变化，所以此处需要校正一下
+  let toPath = [...targetPath];
+  if (R.startsWith(R.init(sourcePath), targetPath) && R.last(sourcePath) < R.nth(sourcePath.length - 1, targetPath)) {
+    toPath = R.adjust(sourcePath.length - 1, R.dec, targetPath);
+  }
+  rootValue.value.startTransaction(() => {
+    const removed = rootValue.value.remove(sourcePath);
+    let path = toPath;
+    if (position === 'before') {
+      const index = R.last(targetPath);
+      path = [...R.init(targetPath), index - 1];
+    } else if (position === 'inside') {
+      const target = rootValue.value.getByPath(targetPath);
+      const index = target.children.length - 1;
+      path = [...targetPath, index];
+    }
+    rootValue.value.addAfter(path, removed);
+  });
 };
 
 onMounted(() => {
@@ -135,7 +159,7 @@ const multiSelectDeleteHandler = () => {
   });
   const firstBlock = R.head(blocksInRange);
   const lastBlock = R.last(blocksInRange);
-  const needRemoveBlocks = R.takeLast(R.length(blocksInRange) - 1, blocksInRange);
+  const needRemoveBlocks = R.tail(blocksInRange);
   let firstBlockValue = null;
   let prevPath = firstBlock.path;
   if (!isTextBlock(firstBlock.block) && !isTextBlock(lastBlock.block)) {
@@ -201,7 +225,7 @@ const multiSelectDeleteHandler = () => {
     }
     if (leftBlocks.length && prevPath) {
       const baseIndex = R.last(firstBlock.path);
-      const parentPath = R.take(firstBlock.path.length - 1, firstBlock.path);
+      const parentPath = R.init(firstBlock.path);
       leftBlocks.forEach((block, index) => {
         rootValue.value.addAfter([...parentPath, index + baseIndex], block, OperateSource.API);
       });
@@ -221,9 +245,6 @@ const multiSelectDeleteHandler = () => {
 const keydownHandler = (event: KeyboardEvent) => {
   if (props.mode === Mode.Readonly) return;
   // 仅用来处理多选和历史
-  // const selection = getSelectionPosition(el.value!)
-  // resetContenteditable()
-  // selection && setSelectionPosition(el.value!, selection)
   // 处理历史 undo/redo
   if (event.metaKey && event.key === 'z' && event.shiftKey) {
     event.preventDefault();
@@ -267,6 +288,37 @@ const keydownHandler = (event: KeyboardEvent) => {
       &.actions-hover-highlight {
         background: rgba(58, 142, 137, 0.2);
         border-radius: 4px;
+      }
+    }
+    &:deep([data-block-path]) {
+      .block-content {
+        position: relative;
+        &.movable-selected {
+          &::before, &::after {
+            content: " ";
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: rgb(227, 219, 5);
+            display: none;
+          }
+          &::before {
+            top: -1.5px;
+          }
+          &::after {
+            bottom: -1.5px;
+          }
+          &.movable-insert-before::before {
+            display: block;
+          }
+          &.movable-insert-after::after {
+            display: block;
+          }
+          &.movable-insert-children {
+            background: rgb(227, 219, 5);
+          }
+        }
       }
     }
   }

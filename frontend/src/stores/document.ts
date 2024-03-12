@@ -109,6 +109,7 @@ export const useDocumentStore = defineStore('document', {
         position: 'inside' | 'before' | 'after'
       }
     ) {
+      logger.i('move', sourceId, toId, position)
       const updates: { id: number, path: string, nextId: number | null }[] = []
 
       const source = this.documents.find(item => item.id === sourceId)

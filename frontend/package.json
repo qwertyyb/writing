@@ -17,6 +17,7 @@
     "@element-plus/icons-vue": "^2.3.1",
     "@simplewebauthn/browser": "^9.0.1",
     "@writing/editor": "workspace:^",
+    "@writing/utils": "workspace:^",
     "element-plus": "^2.5.3",
     "file-saver": "^2.0.5",
     "fuse.js": "^7.0.0",
