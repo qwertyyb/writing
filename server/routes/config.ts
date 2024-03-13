@@ -28,6 +28,22 @@ router
       where: { key },
     });
     ctx.body = createRes(result);
+  })
+  .get('/gets', async (ctx) => {
+    const param = ctx.request.query.keys as string;
+    if (!param) {
+      ctx.body = createRes(null, 400, '未传入keys');
+      return;
+    }
+    const keys = JSON.parse(param) as string[];
+    if (!keys.length) {
+      ctx.body = createRes(null, 400, '未传入keys');
+      return;
+    }
+    const result = await prisma.config.findMany({
+      where: { key: { in: keys } },
+    });
+    ctx.body = createRes(result);
   });
 
 export default router;

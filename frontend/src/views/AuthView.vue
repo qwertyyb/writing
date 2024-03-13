@@ -7,7 +7,6 @@
       <el-form-item>
         <el-button type="primary" @click="login">登录</el-button>
         <el-button type="success" @click="webAuthnLogin" v-if="supportsWebAuthn && !canRegisterWebAuthn">无密码登录</el-button>
-        <el-button @click="webAuthnRegister" v-if="supportsWebAuthn && canRegisterWebAuthn">无密码注册</el-button>
       </el-form-item>
     </el-form>
   </div>
@@ -17,12 +16,9 @@
 import { useAuthStore } from '@/stores/auth';
 import { ElMessage } from 'element-plus';
 import { ref } from 'vue';
-import { startRegistration, browserSupportsWebAuthn } from '@simplewebauthn/browser';
+import { browserSupportsWebAuthn } from '@simplewebauthn/browser';
 import router from '@/router';
-import { checkLogin as checkLoginApi, getCanRegisterWebAuthn, getRegisterOptions, verifyRegister } from '@/services/auth';
-import { createLogger } from '@/utils/logger';
-
-const logger = createLogger('AuthView')
+import { checkLogin as checkLoginApi, getCanRegisterWebAuthn} from '@/services/auth';
 
 const authStore = useAuthStore()
 
@@ -31,6 +27,7 @@ const supportsWebAuthn = ref(browserSupportsWebAuthn())
 const canRegisterWebAuthn = ref(false)
 
 const redirectAfterLogin = () => {
+  console.log(router.currentRoute.value, router.currentRoute.value.query.ru)
   router.replace(router.currentRoute.value.query.ru as string | undefined || '/admin')
 }
 
@@ -52,15 +49,6 @@ refreshCanRegisterWebAuthn()
 const webAuthnLogin = async () => {
   await authStore.webAuthnLogin()
   redirectAfterLogin()
-}
-
-const webAuthnRegister = async () => {
-  const { data } = await getRegisterOptions()
-  const result = await startRegistration(data)
-  const { data: regResult } = await verifyRegister(result)
-  logger.i('注册结果', regResult)
-
-  await refreshCanRegisterWebAuthn()
 }
 
 const checkLogin = async () => {

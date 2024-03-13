@@ -81,7 +81,7 @@ const unhighlightBlock = () => {
 
 const highlightBlock = () => {
   const needHighlightBlock = document.querySelector<HTMLElement>(`[data-block-id=${JSON.stringify(state.value.blockId)}]`);
-  if (!highlightBlock) return;
+  if (!needHighlightBlock?.classList) return;
   if (needHighlightBlock.classList.contains(HighlightClassName)) {
     return;
   }

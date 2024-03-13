@@ -10,8 +10,6 @@
           </el-dropdown-menu>
         </template>
       </el-dropdown>
-      <span class="material-symbols-outlined fullscreen-icon action-icon" @click="fullscreen">fullscreen</span>
-      <span class="material-symbols-outlined fullscreen-icon action-icon" @click="exitFullscreen">fullscreen_exit</span>
     </div>
     <el-dialog
       title="设置"
@@ -76,14 +74,6 @@ const commandHandler = (command: string) => {
     const blob = new Blob([markdown], { type: 'text/plain;charset=utf-8' })
     saveAs(blob, documentStore.editing!.title + '.md')
   }
-}
-
-const fullscreen = () => {
-
-}
-
-const exitFullscreen = () => {
-  
 }
 
 </script>

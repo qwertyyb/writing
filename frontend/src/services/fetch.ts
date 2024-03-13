@@ -35,7 +35,7 @@ export const apiFetch = async <D extends any>(...args: Parameters<typeof fetch>)
     throw new Error(errMsg)
   }
 
-  if (json?.errCode === 403) {
+  if (json?.errCode === 403 && router.currentRoute.value.name !== 'auth') {
     router.replace({
       name: 'auth',
       query: {

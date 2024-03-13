@@ -1,12 +1,23 @@
 <template>
   <div class="column-container" ref="container">
-    <div class="column-left" :style="{ width: leftWidth + '%' }">
-      <slot name="side"></slot>
-    </div>
-    <div class="column-divider" @pointerdown="pointerdownHandler"
-      @pointermove="pointermoveHandler"
-      @pointerup="pointerupHandler"></div>
+    <transition enter-active-class="animate__animated animate__slideInLeft"
+      leave-active-class="animate__animated animate__slideOutLeft"
+      appear-active-class="animate__animated animate__slideInLeft">
+      <div class="column-left-divider"
+        v-if="!sideHidden"
+        :style="{ width: leftWidth + '%' }">
+        <div class="column-left">
+          <slot name="side"></slot>
+        </div>
+        <div class="column-divider" @pointerdown="pointerdownHandler"
+          @pointermove="pointermoveHandler"
+          @pointerup="pointerupHandler"></div>
+      </div>
+    </transition>
     <div class="column-right">
+      <span class="material-symbols-outlined open-side-icon"
+        @click="$emit('openSide')"
+        v-if="sideHidden" title="打开侧边栏">start</span>
       <slot></slot>
     </div>
   </div>
@@ -18,8 +29,13 @@ import { ref } from 'vue';
 
 const leftWidth = defineModel<number>()
 
+defineProps<{
+  sideHidden: boolean
+}>()
+
 const emtis = defineEmits<{
-  change: [value: number]
+  change: [value: number],
+  openSide: []
 }>()
 
 const container = ref<HTMLElement>()
@@ -54,8 +70,13 @@ const pointerupHandler = (event: PointerEvent) => {
   height: 100%;
   overflow: auto;
   display: flex;
+  .column-left-divider {
+    height: 100%;
+    display: flex;
+  }
   .column-left {
     height: 100%;
+    flex: 1;
   }
   .column-divider {
     height: 100%;
@@ -67,6 +88,22 @@ const pointerupHandler = (event: PointerEvent) => {
     flex: 1;
     height: 100%;
     overflow: auto;
+    position: relative;
+    left: 0;
+    .open-side-icon {
+      position: absolute;
+      left: 0;
+      top: 20px;
+      padding: 0 10px;
+      cursor: pointer;
+      border-radius: 4px;
+      opacity: 0;
+      transition: background .3s, opacity 0.3s;;
+      &:hover {
+        background: #eee;
+        opacity: 1;
+      }
+    }
   }
 }
 </style>

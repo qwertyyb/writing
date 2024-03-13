@@ -23,7 +23,7 @@ export const getRegisterOptions = () => {
   })
 }
 
-export const verifyRegister = (data: RegistrationResponseJSON) => {
+export const verifyRegister = (data: { name: string, body: RegistrationResponseJSON }) => {
   return apiFetch<{ verified: boolean }>('/api/v1/auth/webauthn/verify-register', {
     method: 'POST',
     headers: {

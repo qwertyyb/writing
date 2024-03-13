@@ -116,7 +116,7 @@ authRouter.post('/webauthn/register-options', async (ctx) => {
 });
 
 authRouter.post('/webauthn/verify-register', async (ctx) => {
-  const { body } = ctx.request;
+  const { name, body } = ctx.request.body;
 
   const expectedChallenge: string = await prisma.config.findFirst({ where: { key: ConfigKey.WebAuthnChallenge } })
     .then((row) => row.value);
@@ -147,6 +147,8 @@ authRouter.post('/webauthn/verify-register', async (ctx) => {
   } = registrationInfo;
 
   const newAuthenticator = {
+    name,
+    createdAt: Date.now(),
     credentialID: base64url.encode(credentialID),
     credentialPublicKey: base64url.encode(credentialPublicKey),
     counter,

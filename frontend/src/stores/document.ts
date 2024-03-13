@@ -1,7 +1,8 @@
-import { createEditingDocument, type BlockModel } from "@/models/block";
+import { createEditingDocument } from "@/models/block";
 import { setAttributes, type Attribute } from "@/services/attribute";
 import { getList, type Document, getDocument, updateDocument, addDocument, removeDocument, moveDocument } from "@/services/document";
 import { createLogger } from "@/utils/logger";
+import type { BlockModel } from "@writing/editor/block";
 import { ElMessageBox } from "element-plus";
 import { defineStore } from "pinia";
 
@@ -34,7 +35,7 @@ const buildTree = (list: ListItem[], path: string, id: number | null): DocumentI
 }
 
 const transformContent = (model: BlockModel): BlockModel => {
-  const children = (model.children ?? []).map(item => transformContent(item))
+  const children = (model.children ?? []).map((item: BlockModel) => transformContent(item))
   if (model.type === 'text' && !model.data?.ops && model.data?.html) {
     const ops = [{ insert: model.data.html }]
     return {
@@ -234,17 +235,21 @@ export const useDocumentStore = defineStore('document', {
         this.editing!.attributes = newAttributes
       }
     },
-    expandAll() {
+    expandAll(expanded = true) {
       this.expandedIdMap = this.documents.reduce<Record<number, boolean>>((acc, doc) => {
         return {
           ...acc,
-          [doc.id]: true
+          [doc.id]: expanded
         }
       }, {})
     },
-    toggleExpand(node: DocumentItem) {
-      logger.i('toggleExpand', node)
-      this.expandedIdMap[node.id] = !this.expandedIdMap[node.id]
+    toggleExpand(id: number, expanded?: boolean) {
+      logger.i('toggleExpand', id)
+      if (expanded === null || expanded === undefined) {
+        this.expandedIdMap[id] = !this.expandedIdMap[id]
+      } else {
+        this.expandedIdMap[id] = expanded
+      }
     }
   }
 })

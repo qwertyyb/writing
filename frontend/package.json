@@ -18,6 +18,7 @@
     "@simplewebauthn/browser": "^9.0.1",
     "@writing/editor": "workspace:^",
     "@writing/utils": "workspace:^",
+    "animate.css": "^4.1.1",
     "element-plus": "^2.5.3",
     "file-saver": "^2.0.5",
     "fuse.js": "^7.0.0",
