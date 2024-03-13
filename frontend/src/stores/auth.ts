@@ -25,7 +25,7 @@ export const useAuthStore = defineStore('auth', {
       }
       const result = await startAuthentication(data)
       const { data: loginResult } = await verifyAuth(result)
-      // localStorage.setItem('token', loginResult.token)
+      localStorage.setItem('token', loginResult.token)
       this.token = loginResult.token
     }
   }

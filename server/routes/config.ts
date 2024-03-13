@@ -1,10 +1,12 @@
 import KoaRouter from '@koa/router';
 import { createRes } from '../utils';
 import { prisma } from '../prisma';
+import { needAuth } from '../middlewares/auth';
 
 const router = new KoaRouter({ prefix: '/api/v1/config' });
 
 router
+  .use(needAuth)
   .post('/update', async (ctx) => {
     const { key, value } = ctx.request.body as { key: string, value: string };
     if (!key) {

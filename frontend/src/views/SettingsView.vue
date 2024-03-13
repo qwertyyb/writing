@@ -1,58 +1,54 @@
 <template>
   <div class="settings-view">
-    <div class="settings-side">
+    <!-- <div class="settings-side">
       <el-menu>
         <el-menu-item index="password">
           <el-icon><Avatar /></el-icon>
-          <template #title>密码</template>
+          <template #title>鉴权</template>
         </el-menu-item>
       </el-menu>
-    </div>
+    </div> -->
     <div class="settings-main">
-      <el-form label-width="100px">
-        <el-form-item>
-          <h3>重设密码</h3>
-        </el-form-item>
+      <el-form label-width="100px" @submit.prevent>
         <el-form-item label="禁用密码登录">
           <el-switch :model-value="settingValue.passwordDisabled"
             @change="setPasswordDisabled"></el-switch>
         </el-form-item>
-        <el-form-item label="密码">
-          <el-input type="password" v-model="settingValue.password"></el-input>
-        </el-form-item>
-        <el-form-item label="重复密码">
-          <el-input type="password" v-model="settingValue.passowrd2"></el-input>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary">重新设置密码</el-button>
-        </el-form-item>
+        <template v-if="!settingValue.passwordDisabled">
+          <el-form-item label="密码">
+            <el-input type="password" v-model="settingValue.password"></el-input>
+          </el-form-item>
+          <el-form-item label="重复密码">
+            <el-input type="password" v-model="settingValue.passowrd2"></el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary">重新设置密码</el-button>
+          </el-form-item>
+        </template>
       </el-form>
-      <el-table :data="settingValue.authenticators">
-        <el-table-column type="index" width="50" />
+      <h4>无密码登录管理</h4>
+      <el-table :data="settingValue.authenticators" class="authenticator-table">
         <el-table-column prop="name" label="名字" width="100"></el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" :formatter="formatRowTime"></el-table-column>
-        <el-table-column label="操作">
+        <el-table-column prop="createdAt" label="创建时间" :formatter="formatRowTime" width="120"></el-table-column>
+        <el-table-column label="操作" width="80">
           <template #default="scope">
             <el-button size="small"
               type="danger"
               @click="removeAuthenticator(scope.$index)">删除</el-button>
           </template>
         </el-table-column>
-        <template #append v-if="supportsWebAuthn">
-          <div class="authenticator-add-row">
-            <el-button type="primary" @click="addAuthenticator">添加新的设备</el-button>
-          </div>
-        </template>
       </el-table>
+      <div class="authenticator-add-row" v-if="supportsWebAuthn">
+        <el-button type="primary" @click="addAuthenticator">添加新的设备</el-button>
+      </div>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { Avatar } from '@element-plus/icons-vue';
 import { ref } from 'vue';
 import * as R from 'ramda'
-import { ElMessageBox } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import { getRegisterOptions, verifyRegister } from '@/services/auth';
 import { startRegistration, browserSupportsWebAuthn } from '@simplewebauthn/browser';
 import { getValues, setValue } from '@/services/config';
@@ -62,9 +58,7 @@ const settingValue = ref<Record<string, any>>({
   password: '',
   password2: '',
 
-  authenticators: [
-    { name: 'MacOS', createdAt: '2024-02-14 14:00:00' }
-  ]
+  authenticators: []
 })
 const supportsWebAuthn = ref(browserSupportsWebAuthn())
 
@@ -86,6 +80,9 @@ const getSettingValue = async () => {
 }
 
 const setPasswordDisabled = async (value: boolean) => {
+  if (!settingValue.value.authenticators.length) {
+    return ElMessage.error('需要先添加无密码登录设备才能禁用密码登录')
+  }
   await setValue('PasswordDisabled', value ? 'true' : '')
   settingValue.value.passwordDisabled = value
 }
@@ -125,16 +122,20 @@ getSettingValue()
 <style lang="less" scoped>
 .settings-view {
   display: flex;
+  width: 80%;
+  margin: 0 auto;
   .settings-side {
     flex: 1;
   }
   .settings-main {
-    flex: 4;
+    // flex: 4;
+    padding: 20px;
+    width: 300px;
+    margin: 0 auto;
   }
 }
 .authenticator-add-row {
   display: flex;
   margin: 12px 0;
-  justify-content: center;
 }
 </style>

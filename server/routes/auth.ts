@@ -1,3 +1,4 @@
+import type Koa from 'koa';
 import KoaRouter from '@koa/router';
 import { base64url, EncryptJWT } from 'jose';
 import {
@@ -5,9 +6,19 @@ import {
   type VerifiedRegistrationResponse, type VerifiedAuthenticationResponse,
 } from '@simplewebauthn/server';
 import { createRes } from '../utils';
-import { JWT_SECRET, TOKEN } from '../config';
+import { JWT_SECRET } from '../config';
 import { prisma } from '../prisma';
 import { checkLogin } from '../middlewares/auth';
+
+const rpName = 'writing webauthn';
+const rpID = 'localhost';
+const origin = `http://${rpID}`;
+
+const userId = 'root';
+const userName = 'root';
+
+const PasswordConfigKey = 'Password';
+const PasswordDisabledConfigKey = 'PasswordDisabled';
 
 const authRouter = new KoaRouter({ prefix: '/api/v1/auth' });
 
@@ -23,9 +34,45 @@ const createJWT = async () => {
   return jwt;
 };
 
+const canRegister = async (ctx: Koa.Context) => {
+  if (await checkLogin(ctx)) {
+    return true;
+  }
+  const row = await prisma.config.findUnique({ where: { key: PasswordConfigKey }});
+  if (row) {
+    return false;
+  }
+  const authenticators = await prisma.config.findFirst({ where: { key: ConfigKey.WebauthnAuthenticators } })
+    .then((record) => {
+      if (!record) return [];
+      return JSON.parse(record.value);
+    });
+  if (authenticators.length) {
+    return false;
+  }
+  return true;
+};
+
 authRouter.get('/check', async (ctx) => {
   const isLogin = await checkLogin(ctx);
   ctx.body = createRes({ isLogin });
+});
+
+authRouter.post('/register', async (ctx) => {
+  const canDo = canRegister(ctx);
+  if (!canDo) {
+    return ctx.body = createRes(null, 403, '此操作不可用');
+  }
+  const password = ctx.request.body.password as string;
+  if (!password) {
+    return ctx.body = createRes(null, 400, '未输入密码');
+  }
+  await prisma.config.upsert({
+    where: { key: PasswordConfigKey },
+    create: { key: PasswordConfigKey, value: password },
+    update: { value: password }
+  });
+  ctx.body = createRes({ success: true });
 });
 
 authRouter.post('/login', async (ctx) => {
@@ -34,7 +81,25 @@ authRouter.post('/login', async (ctx) => {
     ctx.body = createRes(null, 400, '未传入密码');
     return;
   }
-  if (password !== TOKEN) {
+  const rows = await prisma.config.findMany({
+    where: {
+      key: {
+        in: [PasswordDisabledConfigKey, PasswordConfigKey]
+      }
+    }
+  });
+  const disabledRow = rows.find(row => row.key === PasswordDisabledConfigKey);
+  const disabled = !!disabledRow?.value;
+  if (disabled) {
+    ctx.body = createRes(null, 500, '已禁用密码登录');
+    return;
+  }
+  const token = rows.find(row => row.key === PasswordConfigKey)?.value;
+  if (!token) {
+    ctx.body = createRes(null, 500, '密码未设置');
+    return;
+  }
+  if (password !== token) {
     ctx.body = createRes(null, 400, '密码不正确');
     return;
   }
@@ -43,38 +108,14 @@ authRouter.post('/login', async (ctx) => {
   ctx.body = createRes({ token: jwt });
 });
 
-const rpName = 'writing webauthn';
-const rpID = 'localhost';
-const origin = `http://${rpID}`;
-
-const userId = 'root';
-const userName = 'root';
-
 enum ConfigKey {
   WebAuthnChallenge = 'WebAuthnChallenge',
   WebauthnAuthenticators = 'WebAuthnAuthenticators',
 }
 
-authRouter.get('/webauthn/can-register', async (ctx) => {
-  // 在未登录情况下，只有未设置密码，且没有注册过webAuthn时才可以注册
-  if (await checkLogin(ctx)) {
-    ctx.body = createRes({ canRegister: true });
-    return;
-  }
-  if (TOKEN) {
-    ctx.body = createRes({ canRegister: false });
-    return;
-  }
-  const authenticators = await prisma.config.findFirst({ where: { key: ConfigKey.WebauthnAuthenticators } })
-    .then((record) => {
-      if (!record) return [];
-      return JSON.parse(record.value);
-    });
-  if (authenticators.length) {
-    ctx.body = createRes({ canRegister: false });
-    return;
-  }
-  ctx.body = createRes({ canRegister: true });
+authRouter.get('/can-register', async (ctx) => {
+  const canDo = await canRegister(ctx);
+  ctx.body = createRes({ canRegister: canDo });
 });
 
 authRouter.post('/webauthn/register-options', async (ctx) => {

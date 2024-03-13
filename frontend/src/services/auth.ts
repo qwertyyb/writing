@@ -1,6 +1,16 @@
 import { apiFetch } from "./fetch"
 import type { RegistrationResponseJSON, PublicKeyCredentialCreationOptionsJSON, PublicKeyCredentialRequestOptionsJSON, AuthenticationResponseJSON } from "@simplewebauthn/types";
 
+export const register = ({ password = '' }) => {
+  return apiFetch<{ token: string }>('/api/v1/auth/register', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify({ password })
+  })
+}
+
 export const login = ({ password = '' }) => {
   return apiFetch<{ token: string }>('/api/v1/auth/login', {
     method: 'POST',
@@ -13,8 +23,8 @@ export const login = ({ password = '' }) => {
 
 export const checkLogin = () => apiFetch<{ isLogin: boolean }>('/api/v1/auth/check')
 
-export const getCanRegisterWebAuthn = () => {
-  return apiFetch<{ canRegister: boolean }>('/api/v1/auth/webauthn/can-register')
+export const getCanRegister = () => {
+  return apiFetch<{ canRegister: boolean }>('/api/v1/auth/can-register')
 }
 
 export const getRegisterOptions = () => {

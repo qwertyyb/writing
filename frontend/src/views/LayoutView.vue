@@ -5,27 +5,33 @@
     @openSide="sideHidden = false"
     @change="runtimeStore.updateSettings('layout', { ...runtimeStore.settings.layout, siderWidth: $event })">
     <template v-slot:side>
-      <div class="side-actions">
-        <span class="material-symbols-outlined action-item" title="折叠" @click="unExpandAll">unfold_less</span>
-        <span class="material-symbols-outlined action-item" title="定位打开的文档" @click="locateEditing">my_location</span>
-        <span class="material-symbols-outlined action-item close-action" title="关闭侧边栏" @click="closeSide">start</span>
+      <div class="layout-side-wrapper">
+        <search-by-title
+          :documents="documentStore.documents"
+          @search="treeVisible = false"
+          @clear="treeVisible = true"
+        ></search-by-title>
+        <template v-if="documentStore.tree && treeVisible">
+          <document-tree
+            :tree="documentStore.tree"
+            @add="documentStore.add"
+            @select="selectHandler"
+            @toggleExpand="node => documentStore.toggleExpand(node.id)"
+            @remove="documentStore.remove"
+            @move="documentStore.move"
+            :selectedId="documentStore.editing?.id"
+            :expandedIdMap="documentStore.expandedIdMap"
+          ></document-tree>
+          <div class="side-actions">
+            <span class="material-symbols-outlined action-item"
+              title="折叠"
+              @click="$router.push({ name: 'settings' })">settings</span>
+            <span class="material-symbols-outlined action-item" title="折叠" @click="unExpandAll">unfold_less</span>
+            <span class="material-symbols-outlined action-item" title="定位打开的文档" @click="locateEditing">my_location</span>
+            <span class="material-symbols-outlined action-item close-action" title="关闭侧边栏" @click="closeSide">start</span>
+          </div>
+        </template>
       </div>
-      <search-by-title
-        :documents="documentStore.documents"
-        @search="treeVisible = false"
-        @clear="treeVisible = true"
-      ></search-by-title>
-      <document-tree
-        v-if="documentStore.tree && treeVisible"
-        :tree="documentStore.tree"
-        @add="documentStore.add"
-        @select="selectHandler"
-        @toggleExpand="node => documentStore.toggleExpand(node.id)"
-        @remove="documentStore.remove"
-        @move="documentStore.move"
-        :selectedId="documentStore.editing?.id"
-        :expandedIdMap="documentStore.expandedIdMap"
-      ></document-tree>
     </template>
     <router-view></router-view>
   </column-container>
@@ -98,10 +104,15 @@ const closeSide = () => {
   height: 100%;
   overflow: auto;
   display: flex;
-  .side-actions {
+  .layout-side-wrapper {
+    height: 100%;
     display: flex;
-    justify-content: flex-end;
-    opacity: 0;
+    flex-direction: column;
+  }
+  .side-actions {
+    margin-top: auto;
+    display: flex;
+    // opacity: 0;
     transition: opacity .2s;
     &:hover {
       opacity: 1;
@@ -118,6 +129,7 @@ const closeSide = () => {
       }
       &.close-action {
         transform: rotate(180deg);
+        margin-left: auto;
       }
     }
   }
