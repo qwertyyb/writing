@@ -24,10 +24,11 @@
           ></document-tree>
           <div class="side-actions">
             <span class="material-symbols-outlined action-item"
-              title="折叠"
+              title="设置"
               @click="$router.push({ name: 'settings' })">settings</span>
             <span class="material-symbols-outlined action-item" title="折叠" @click="unExpandAll">unfold_less</span>
             <span class="material-symbols-outlined action-item" title="定位打开的文档" @click="locateEditing">my_location</span>
+            <span class="material-symbols-outlined action-item logout-action" title="退出登录" @click="logout">logout</span>
             <span class="material-symbols-outlined action-item close-action" title="关闭侧边栏" @click="closeSide">start</span>
           </div>
         </template>
@@ -49,6 +50,7 @@ import ColumnContainer from '@/components/ColumnContainer.vue';
 import SearchByTitle from '../components/SearchByTitle.vue';
 import { ref } from 'vue';
 import { useRoute } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
 
 const logger = createLogger('LayoutView')
 
@@ -58,6 +60,7 @@ const sideHidden = ref(false)
 const runtimeStore = useRuntime()
 const documentStore = useDocumentStore()
 const route = useRoute()
+const authStore = useAuthStore()
 
 documentStore.getList()
 
@@ -91,6 +94,10 @@ const locateEditing = () => {
   ids.forEach(id => {
     documentStore.toggleExpand(id, true)
   })
+}
+const logout = () => {
+  authStore.logout()
+  router.push({ name: 'auth' })
 }
 const closeSide = () => {
   sideHidden.value = true
@@ -127,9 +134,11 @@ const closeSide = () => {
         background: #eee;
         border-radius: 4px;
       }
+      &.logout-action {
+        margin-left: auto;
+      }
       &.close-action {
         transform: rotate(180deg);
-        margin-left: auto;
       }
     }
   }

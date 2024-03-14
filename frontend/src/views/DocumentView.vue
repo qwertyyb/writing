@@ -35,7 +35,7 @@
 import { saveAs } from 'file-saver';
 import { useDocumentStore } from '@/stores/document';
 import { MoreFilled } from '@element-plus/icons-vue';
-import { ref, watchEffect } from 'vue';
+import { ref, watch } from 'vue';
 import DocumentAttribute from '@/components/DocumentAttribute.vue';
 import DocumentEditor from '@writing/editor';
 import { debounce } from '@/utils/utils';
@@ -55,9 +55,13 @@ const updateHandler = debounce(async (content: BlockModel) => {
 
 const settingDialogVisible = ref(false)
 
-watchEffect(() => {
-  return documentStore.activeEditing(Number(props.id))
-})
+watch(
+  () => props.id,
+  () => {
+    return documentStore.activeEditing(Number(props.id))
+  },
+  { immediate: true }
+)
 
 const uploadHandler = async (file: Blob | File) => {
   const { data } = await upload(file)

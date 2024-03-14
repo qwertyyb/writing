@@ -10,6 +10,7 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     logout() {
       this.token = ''
+      localStorage.removeItem('token')
     },
     async login({ password = '' }) {
       const { data } = await login({ password })
