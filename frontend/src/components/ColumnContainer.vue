@@ -83,6 +83,7 @@ const pointerupHandler = (event: PointerEvent) => {
     width: 4px;
     background: rgba(220, 220, 220, .8);
     cursor: ew-resize;
+    flex-shrink: 0;
   }
   .column-right {
     flex: 1;

@@ -1,5 +1,3 @@
-import jsonpatch from 'jsonpatch'
-
 interface JSONPatch {
   op: 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test',
   path: (string | number)[],
@@ -57,8 +55,4 @@ export class PatchGenerator {
   clear() {
     this.patches = []
   }
-}
-
-export const applyPatch = (doc: any, patches: JSONPatch[]) => {
-  return jsonpatch.apply_patch(doc, patches.map(item => ({ ...item, path: '/' + item.path.join('/') })));
 }

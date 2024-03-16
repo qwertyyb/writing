@@ -16,3 +16,5 @@ app.use(ElementPlus)
 app.use(router)
 
 app.mount('#app')
+
+console.log('main app')
