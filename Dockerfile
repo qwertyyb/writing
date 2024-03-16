@@ -20,6 +20,10 @@ COPY --from=build /app/prisma /app/prisma
 COPY --from=build /app/entrypoint.sh /app/entrypoint.sh
 COPY --from=build /app/package.json /app/package.json
 
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD wget --spider http://localhost:4000 || exit 1
+
 EXPOSE 4000
+
+VOLUME [ "/data" ]
 
 ENTRYPOINT [ "/app/entrypoint.sh" ]
