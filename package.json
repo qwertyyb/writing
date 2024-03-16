@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node dist/index.js",
     "build": "ncc build server/app.ts -o dist && mv dist/client/* dist/",
     "lint": "eslint --ext .js,.vue,.ts --fix server packages"
   },

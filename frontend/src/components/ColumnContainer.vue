@@ -1,8 +1,7 @@
 <template>
   <div class="column-container" ref="container">
     <transition enter-active-class="animate__animated animate__slideInLeft"
-      leave-active-class="animate__animated animate__slideOutLeft"
-      appear-active-class="animate__animated animate__slideInLeft">
+      leave-active-class="animate__animated animate__slideOutLeft">
       <div class="column-left-divider"
         v-if="!sideHidden"
         :style="{ width: leftWidth + '%' }">

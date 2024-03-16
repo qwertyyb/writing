@@ -11,6 +11,7 @@ const router = createRouter({
     {
       path: '/',
       component: RouterView,
+      redirect: 'admin',
       children: [
         {
           path: 'admin',

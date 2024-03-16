@@ -15,21 +15,30 @@ const defaultSettings = () => ({
   recentDocumentId: 1
 })
 
+const localSettgings = () => {
+  try {
+    return JSON.parse(localStorage.getItem('runtime') || '{}')
+  } catch(_) {
+    return {}
+  }
+}
+
 export const useRuntime = defineStore('runtime', {
   state() {
     return {
-      settings: defaultSettings()
+      settings: R.mergeDeepLeft(localSettgings(), defaultSettings())
     }
   },
   actions: {
     updateSettings<K extends keyof RuntimeSettings>(key: K, value: RuntimeSettings[K]) {
       this.settings[key] = value
+      localStorage.setItem('runtime', JSON.stringify(this.settings))
       return debounceSetValue('settings', JSON.stringify(this.settings))
     },
     async refresh() {
       const value = await getValue('settings')
       if (value) {
-        this.settings = R.mergeDeepRight<RuntimeSettings, RuntimeSettings>(JSON.parse(value), defaultSettings())
+        this.settings = R.mergeDeepLeft<RuntimeSettings, RuntimeSettings>(this.settings, JSON.parse(value))
       }
     }
   }
