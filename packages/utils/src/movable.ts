@@ -49,6 +49,7 @@ export const useMovable = (callback: (params: { source: HTMLElement, target: HTM
   let dragging = false;
   let dragStartTimeout: ReturnType<typeof setTimeout>;
   const clear = () => {
+    dragStartTimeout && clearTimeout(dragStartTimeout);
     Array.from(document.getElementsByClassName(targetClassName))
       .forEach(d => d.classList
         .remove(targetClassName, willInsertBeforeClassName, willInsertAfterClassName, willInsertChildrenClassName)

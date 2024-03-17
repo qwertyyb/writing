@@ -67,7 +67,7 @@ export const transformBlock = (trigger: string, origin: BlockModel, content: Op[
       }
     };
   }
-  if (trigger === '[]' || trigger === '[x]') {
+  if (['[]', '[ ]'].includes(trigger)) {
     return {
       id: origin.id,
       type: 'todo',
@@ -78,6 +78,24 @@ export const transformBlock = (trigger: string, origin: BlockModel, content: Op[
             ops: content
           }
         })
+      ]
+    };
+  }
+  if (trigger === '[x]') {
+    const first = createBlock({
+      type: 'text',
+      data: {
+        ops: content
+      }
+    });
+    return {
+      id: origin.id,
+      type: 'todo',
+      data: {
+        checked: { [first.id]: true }
+      },
+      children: [
+        first
       ]
     };
   }

@@ -160,14 +160,14 @@ const pointermoveHandler = (event: PointerEvent) => {
 
 onMounted(() => {
   document.querySelector('.rich-text-editor-wrapper')?.addEventListener('pointermove', pointermoveHandler, { passive: true });
-  document.querySelector('.rich-text-editor-wrapper')?.addEventListener('pointermove', movablePointermoveHandler);
-  document.querySelector('.rich-text-editor-wrapper')?.addEventListener('pointerup', pointerupHandler, { passive: true });
+  document.querySelector('.rich-text-editor')?.addEventListener('pointermove', movablePointermoveHandler);
+  document.querySelector('.rich-text-editor')?.addEventListener('pointerup', pointerupHandler, { passive: true });
 });
 
 onBeforeUnmount(() => {
   document.querySelector('.rich-text-editor-wrapper')?.removeEventListener('pointermove', pointermoveHandler);
-  document.querySelector('.rich-text-editor-wrapper')?.removeEventListener('pointermove', movablePointermoveHandler);
-  document.querySelector('.rich-text-editor-wrapper')?.removeEventListener('pointerup', pointerupHandler);
+  document.querySelector('.rich-text-editor')?.removeEventListener('pointermove', movablePointermoveHandler);
+  document.querySelector('.rich-text-editor')?.removeEventListener('pointerup', pointerupHandler);
 
 });
 
