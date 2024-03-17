@@ -17,7 +17,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@codemirror/language": "^6.10.1",
+    "@codemirror/language-data": "^6.4.1",
     "@codemirror/state": "^6.4.1",
+    "@codemirror/theme-one-dark": "^6.1.2",
     "@floating-ui/vue": "^1.0.6",
     "@writing/inline-editor": "workspace:^",
     "@writing/utils": "workspace:^",

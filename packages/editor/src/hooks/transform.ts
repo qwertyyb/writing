@@ -56,11 +56,13 @@ export const transformBlock = (trigger: string, origin: BlockModel, content: Op[
       ]
     };
   }
-  if (trigger === '```') {
+  if (trigger.startsWith('```')) {
+    const language = trigger.substring(3);
     return {
       id: origin.id,
       type: 'code',
       data: {
+        language,
         text: toText(content)
       }
     };

@@ -1,22 +1,35 @@
 <template>
   <div class="code-block">
     <div class="code-mirror-container">
+      <el-select :model-value="data.language"
+        @update:model-value="update({ language: $event })"
+        class="language-selector"
+        size="small"
+        @change="languageChangeHandler">
+        <el-option v-for="language in languages"
+          :value="language.name"
+          :key="language.name">{{ language.name }}</el-option>
+      </el-select>
       <div class="code-mirror-wrapper" ref="codeMirrorWrapper" tabindex="0" @keydown.capture="keydownHandler"></div>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
+import { ElSelect, ElOption } from 'element-plus';
 import { useMode } from '../../../hooks/mode';
-import type { BlockModel, BlockOptions } from '../../../models/block';
+import type { BlockModel } from '../../../models/block';
 import { basicSetup, EditorView } from 'codemirror';
 import { Compartment, EditorState } from '@codemirror/state';
-import { onBeforeUnmount, ref, onMounted, watch } from 'vue';
+import { LanguageDescription } from '@codemirror/language';
+import { oneDark } from '@codemirror/theme-one-dark';
+import { languages } from '@codemirror/language-data';
+import { onBeforeUnmount, ref, onMounted, watch, markRaw } from 'vue';
 
 const block = defineModel<BlockModel>({ required: true });
 
 const emits = defineEmits<{
-  add: [options?: Partial<BlockOptions>],
+  add: [options?: Partial<BlockModel>],
   focusBefore: [],
   focusAfter: [],
 }>();
@@ -34,13 +47,17 @@ watch(readonly, () => {
 });
 
 interface CodeData {
+  language?: string,
   text: string
 }
 const data = ref<CodeData>({
+  language: block.value.data.language ?? '',
   text: block.value?.data?.text ?? ''
 });
 
 let viewer: EditorView | null = null;
+
+const languageConfig = markRaw(new Compartment());
 
 const update = (newData: Partial<CodeData>) => {
   data.value = {
@@ -79,9 +96,26 @@ const keydownHandler = (event: KeyboardEvent) => {
   }
 };
 
+const languageChangeHandler = (value: string) => {
+  if (!value) return;
+  const matched = LanguageDescription.matchLanguageName(languages, value);
+  if (!matched) {
+    return viewer.dispatch({
+      effects: languageConfig.reconfigure([])
+    });
+  }
+  matched.load().then(() => {
+    viewer.dispatch({
+      effects: languageConfig.reconfigure(matched.support)
+    });
+  });
+  if (value !== matched.name) {
+    update({ language: matched.name });
+  }
+};
+
 onMounted(() => {
-  console.log('data.value.text', data.value.text, typeof data.value.text);
-  viewer = new EditorView({
+  viewer = markRaw(new EditorView({
     doc: data.value.text || '',
     parent: codeMirrorWrapper.value,  
     extensions: [
@@ -94,9 +128,12 @@ onMounted(() => {
           update({ text: newText });
         }
       }),
-      readonlyConfig.of(EditorView.editable.of(!readonly.value))
+      languageConfig.of([]),
+      readonlyConfig.of(EditorView.editable.of(!readonly.value)),
+      oneDark
     ],
-  });
+  }));
+  languageChangeHandler(data.value.language);
 });
 
 onBeforeUnmount(() => {
@@ -107,6 +144,21 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="less" scoped>
+.code-mirror-container {
+  position: relative;
+  .language-selector {
+    position: absolute;
+    right: 0;
+    top: 12px;
+    width: 160px;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity .3s;
+    &:hover, &:focus-within {
+      opacity: 1;
+    }
+  }
+}
 .code-block .code-mirror-wrapper {
   padding: 12px 0;
 }
