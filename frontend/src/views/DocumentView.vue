@@ -90,7 +90,7 @@ const commandHandler = (command: string) => {
 .document-view-header {
   display: flex;
   justify-content: flex-end;
-  padding: 0 16px 8px 16px;
+  padding: 0 0 8px 0;
   .action-icon {
     transition: background .3s;
     cursor: pointer;
@@ -113,6 +113,13 @@ const commandHandler = (command: string) => {
 }
 .document-editor-wrapper {
   box-sizing: border-box;
-  padding: 0 36px;
+  padding: 0 36px 0 12px;
+}
+
+@media screen and (max-width: 540px) {
+  .document-editor-wrapper {
+    padding: 0;
+    margin: 0 12px 0 -16px;
+  }
 }
 </style>

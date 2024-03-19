@@ -3,6 +3,7 @@
     v-model="runtimeStore.settings.layout.siderWidth"
     :side-hidden="sideHidden"
     @openSide="sideHidden = false"
+    @closeSide="sideHidden = true"
     @change="runtimeStore.updateSettings('layout', { ...runtimeStore.settings.layout, siderWidth: $event })">
     <template v-slot:side>
       <div class="layout-side-wrapper">
@@ -119,6 +120,7 @@ const closeSide = () => {
   .side-actions {
     margin-top: auto;
     display: flex;
+    flex-wrap: wrap;
     // opacity: 0;
     transition: opacity .2s;
     &:hover {
