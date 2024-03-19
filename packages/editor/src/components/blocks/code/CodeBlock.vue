@@ -2,6 +2,8 @@
   <div class="code-block">
     <div class="code-mirror-container">
       <el-select :model-value="data.language"
+        filterable
+        clearable
         @update:model-value="update({ language: $event })"
         class="language-selector"
         size="small"
@@ -97,7 +99,9 @@ const keydownHandler = (event: KeyboardEvent) => {
 };
 
 const languageChangeHandler = (value: string) => {
-  if (!value) return;
+  if (!value) return viewer.dispatch({
+    effects: languageConfig.reconfigure([])
+  });
   const matched = LanguageDescription.matchLanguageName(languages, value);
   if (!matched) {
     return viewer.dispatch({
