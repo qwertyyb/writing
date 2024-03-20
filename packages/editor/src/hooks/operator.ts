@@ -165,20 +165,21 @@ export const useFormat = (propsSelection: SelectionState) => {
   const savedSelection = shallowRef<SelectionState>();
 
   const selection = computed(() => {
-    // logger.i('selection', savedSelection.value || propsSelection)
     return savedSelection.value || propsSelection;
   });
 
-  const formats = computed<Record<string, any>>(() => {
-    logger.i('formats', selection.value.range);
+  const selectedInfo = computed<Record<string, any>>(() => {
     if (!selection.value.range) return {};
     return getFormats(selection.value.range);
   });
+
+  const formats = computed<Record<string, any>>(() => selectedInfo.value.formats || {});
 
   const getFormats = (selection: SelectionRange) => {
     if (!selection) return {
       bold: false, italic: false, link: false, code: false
     };
+    let textBlockSelected = false;
     const formats = {
       bold: [], italic: [], link: [], code: [], strike: [], underline: [],
       script: [],
@@ -190,6 +191,7 @@ export const useFormat = (propsSelection: SelectionState) => {
       selection.to.path,
       (path, block) => {
         if (!isTextBlock(block)) return;
+        textBlockSelected = true;
   
         const delta = new Delta(block.data.ops);
         const start = R.equals(path, selection.from.path) ? selection.from.offset : 0;
@@ -213,7 +215,7 @@ export const useFormat = (propsSelection: SelectionState) => {
       return uniqValue.length > 1 ? false : R.head(uniqValue);
     }, formats);
     logger.i('formats', result);
-    return result;
+    return { formats: result, textBlockSelected };
   };
 
   const setFormats = (formats: Record<string, any>) => {
@@ -290,6 +292,7 @@ export const useFormat = (propsSelection: SelectionState) => {
   };
 
   return {
+    selectedInfo,
     formats, link, selection,
     toggleFormat, formatText, setSizeFormat, setLinkFormat,
     saveSelection, clearSelection

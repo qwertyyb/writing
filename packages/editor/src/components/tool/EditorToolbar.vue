@@ -1,7 +1,7 @@
 <template>
   <div class="editor-toolbar" ref="el" :style="floatingStyles"
     :data-popper-placement="placement"
-    v-show="selection.rect">
+    v-show="selection.rect && selectedInfo.textBlockSelected">
     <ul class="editor-toolbar-item-list"
       @mousedown.prevent>
       <li class="toolbar-item" @click.capture="setSizeFormat('decrease')">
@@ -144,7 +144,7 @@ const floatingArrow = ref<HTMLElement>();
 const linkPopoverVisible = ref(false);
 
 const {
-  formats, link, selection,
+  formats, link, selection, selectedInfo,
   formatText, toggleFormat, setSizeFormat, setLinkFormat,
   saveSelection, clearSelection
 } = useFormat(props.selection);
