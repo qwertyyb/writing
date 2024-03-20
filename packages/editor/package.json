@@ -28,7 +28,6 @@
     "element-plus": "^2.6.0",
     "eventemitter3": "^5.0.1",
     "quill-delta": "~5.1.0",
-    "quill-delta-to-markdown": "^0.6.0",
     "ramda": "^0.29.1",
     "vue": "^3.4.21"
   },

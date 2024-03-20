@@ -1,7 +1,55 @@
+import { createLogger } from '@writing/utils/logger';
 import { BlockTree } from './BlockTree';
 import { BlockModel } from './block';
-import { deltaToMarkdown } from 'quill-delta-to-markdown';
 import * as R from 'ramda';
+import { Op } from 'quill-delta';
+
+const logger = createLogger('markdown');
+
+interface InlineFormats {
+  bold: boolean,
+  italic: boolean,
+  code: boolean,
+  strike: boolean,
+  underline: boolean,
+
+  script: 'sub' | 'super',
+
+  link: string,
+  background: string,
+  color: string,
+  size: string
+}
+
+const attrTrans = <K extends keyof InlineFormats>(text: string, key: K, value: InlineFormats[K]) => {
+  const map = {
+    bold: `**${text}**`,
+    italic: `*${text}*`,
+    code: '`' + text + '`',
+    strike: `~~${text}~~`,
+    underline: `<span style="text-decoration:underline">${text}</span>`,
+
+    script: value === 'sup' ? `<sup>${text}</sup>` : value === 'sub' ? `<sub>${text}</sub>` : text,
+
+    link: `[text](${value})`,
+    background: `<span style="background-color:${value}">${text}</span>`,
+    color: `<span style="color:${value}">${text}</span>`,
+    size: `<span style="font-size:${value}">${text}</span>`
+  };
+  return map[key] ?? '';
+};
+
+const deltaToMarkdown = (ops: Op[]) => {
+  return ops
+    .filter(op => typeof op.insert === 'string')
+    .map(op => {
+      const attrs = (op.attributes || {}) as Partial<InlineFormats> | undefined;
+      return Object.entries(attrs).reduce<string>((acc, [key, val]) => {
+        return attrTrans(acc, key as keyof InlineFormats, val);
+      }, op.insert as string || '');
+    })
+    .join('');
+};
 
 // 先简单处理，忽略 列表、todo、block-quote 的深层嵌套逻辑
 export const toMarkdown = (root: BlockModel) => {
@@ -27,6 +75,7 @@ export const toMarkdown = (root: BlockModel) => {
       break;
     case 'ordered-list':
       row = children.map((item, index) => {
+        logger.i(index, item.data.ops);
         return `${index+1}. ${deltaToMarkdown(item.data?.ops || [])}`;
       }).join('\n');
       ignorePath = path;
@@ -56,7 +105,7 @@ export const toMarkdown = (root: BlockModel) => {
       ignorePath = path;
       break;
     case 'code':
-      row = '```\n' + data.text + '\n```';
+      row = `\`\`\`${data.language || ''}\n${data.text}\n\`\`\``;
       break;
     case 'divider':
       row = '---';
