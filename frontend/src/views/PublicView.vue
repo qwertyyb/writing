@@ -15,10 +15,10 @@
 
 <script setup lang="ts">
 import DocumentEditor from '@writing/editor';
-import type { BlockModel } from '@/models/block';
 import { getDocumentByShareId } from '@/services/public';
 import { ref, watchEffect } from 'vue';
 import { useRoute } from 'vue-router';
+import type { BlockModel } from '@writing/editor/block';
 
 const document = ref<BlockModel>()
 

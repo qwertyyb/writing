@@ -16,13 +16,13 @@
         </el-form-item>
         <template v-if="!settingValue.passwordDisabled">
           <el-form-item label="密码">
-            <el-input type="password" v-model="settingValue.password"></el-input>
+            <el-input type="password" v-model="settingValue.password" autocomplete="new-password"></el-input>
           </el-form-item>
           <el-form-item label="重复密码">
             <el-input type="password" v-model="settingValue.passowrd2"></el-input>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary">重新设置密码</el-button>
+            <el-button type="primary" @click="setPassword" :disabled="!settingValue.password || !settingValue.passowrd2">重新设置密码</el-button>
           </el-form-item>
         </template>
       </el-form>
@@ -63,7 +63,7 @@ const settingValue = ref<Record<string, any>>({
 const supportsWebAuthn = ref(browserSupportsWebAuthn())
 
 const getSettingValue = async () => {
-  const values = await getValues(['PasswordDisabled', 'Password', 'WebAuthnAuthenticators'])
+  const values = await getValues(['PasswordDisabled', 'WebAuthnAuthenticators'])
   const obj = values.reduce<Record<string, any>>((acc, item) => {
     let value = item.value
     if (item.key === 'WebAuthnAuthenticators') {
@@ -76,7 +76,6 @@ const getSettingValue = async () => {
   }, {})
   settingValue.value.authenticators = obj.WebAuthnAuthenticators ?? settingValue.value.authenticators
   settingValue.value.passwordDisabled = !!(obj.PasswordDisabled ?? settingValue.value.passwordDisabled)
-  settingValue.value.password = obj.Password ?? settingValue.value.password
 }
 
 const setPasswordDisabled = async (value: boolean) => {
@@ -85,6 +84,18 @@ const setPasswordDisabled = async (value: boolean) => {
   }
   await setValue('PasswordDisabled', value ? 'true' : '')
   settingValue.value.passwordDisabled = value
+}
+
+const setPassword = async () => {
+  if (!settingValue.value.password) {
+    return ElMessage.error('未输入密码')
+  }
+  if (settingValue.value.password !== settingValue.value.passowrd2) {
+    return ElMessage.error('两次密码输入不一致')
+  }
+  await setValue('Password', settingValue.value.password)
+  settingValue.value.password = ''
+  settingValue.value.passowrd2 = ''
 }
 
 const removeAuthenticator = async (index: number) => {

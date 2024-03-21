@@ -20,7 +20,10 @@
       class="auth-form"
       @submit.prevent>
       <el-form-item label="密码">
-        <el-input placeholder="请输入密码" type="password" v-model="form.password" @keydown.enter="login"></el-input>
+        <el-input placeholder="请输入密码" type="password"
+          autocomplete="current-password webauthn"
+          v-model="form.password"
+          @keydown.enter="login"></el-input>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="login">登录</el-button>
@@ -34,7 +37,7 @@
 import { useAuthStore } from '@/stores/auth';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { ref } from 'vue';
-import { browserSupportsWebAuthn, startRegistration } from '@simplewebauthn/browser';
+import { browserSupportsWebAuthn, browserSupportsWebAuthnAutofill, startRegistration } from '@simplewebauthn/browser';
 import router from '@/router';
 import { checkLogin as checkLoginApi, getCanRegister, getRegisterOptions, verifyRegister, register as apiRegister } from '@/services/auth';
 
@@ -112,6 +115,15 @@ const checkLogin = async () => {
 }
 
 checkLogin()
+
+const autofill = async () => {
+  const support = await browserSupportsWebAuthnAutofill()
+  if (!support) return
+  await authStore.webAuthnLogin(true)
+  redirectAfterLogin()
+}
+
+autofill()
 
 </script>
 

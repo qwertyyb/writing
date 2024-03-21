@@ -9,16 +9,8 @@ import { createRes } from '../utils';
 import { JWT_SECRET } from '../config';
 import { prisma } from '../prisma';
 import { checkLogin } from '../middlewares/auth';
-
-const rpName = 'writing webauthn';
-const rpID = 'localhost';
-const origin = `http://${rpID}`;
-
-const userId = 'root';
-const userName = 'root';
-
-const PasswordConfigKey = 'Password';
-const PasswordDisabledConfigKey = 'PasswordDisabled';
+import { ConfigKey, ORIGIN, RP_ID, RP_NAME, USER_ID, USER_NAME } from '../const';
+import { createHash } from 'node:crypto';
 
 const authRouter = new KoaRouter({ prefix: '/api/v1/auth' });
 
@@ -38,7 +30,7 @@ const canRegister = async (ctx: Koa.Context) => {
   if (await checkLogin(ctx)) {
     return true;
   }
-  const row = await prisma.config.findUnique({ where: { key: PasswordConfigKey }});
+  const row = await prisma.config.findUnique({ where: { key: ConfigKey.Password }});
   if (row) {
     return false;
   }
@@ -67,9 +59,12 @@ authRouter.post('/register', async (ctx) => {
   if (!password) {
     return ctx.body = createRes(null, 400, '未输入密码');
   }
+  const hashedPassword = createHash('sha256')
+    .update(password)
+    .digest('base64');
   await prisma.config.upsert({
-    where: { key: PasswordConfigKey },
-    create: { key: PasswordConfigKey, value: password },
+    where: { key: ConfigKey.Password },
+    create: { key: ConfigKey.Password, value: hashedPassword },
     update: { value: password }
   });
   ctx.body = createRes({ success: true });
@@ -81,25 +76,28 @@ authRouter.post('/login', async (ctx) => {
     ctx.body = createRes(null, 400, '未传入密码');
     return;
   }
+  const hashedPassword = createHash('sha256')
+    .update(password)
+    .digest('base64');
   const rows = await prisma.config.findMany({
     where: {
       key: {
-        in: [PasswordDisabledConfigKey, PasswordConfigKey]
+        in: [ConfigKey.PasswordDisabled, ConfigKey.Password]
       }
     }
   });
-  const disabledRow = rows.find(row => row.key === PasswordDisabledConfigKey);
+  const disabledRow = rows.find(row => row.key === ConfigKey.PasswordDisabled);
   const disabled = !!disabledRow?.value;
   if (disabled) {
     ctx.body = createRes(null, 500, '已禁用密码登录');
     return;
   }
-  const token = rows.find(row => row.key === PasswordConfigKey)?.value;
+  const token = rows.find(row => row.key === ConfigKey.Password)?.value;
   if (!token) {
     ctx.body = createRes(null, 500, '密码未设置');
     return;
   }
-  if (password !== token) {
+  if (hashedPassword !== token) {
     ctx.body = createRes(null, 400, '密码不正确');
     return;
   }
@@ -107,11 +105,6 @@ authRouter.post('/login', async (ctx) => {
 
   ctx.body = createRes({ token: jwt });
 });
-
-enum ConfigKey {
-  WebAuthnChallenge = 'WebAuthnChallenge',
-  WebauthnAuthenticators = 'WebAuthnAuthenticators',
-}
 
 authRouter.get('/can-register', async (ctx) => {
   const canDo = await canRegister(ctx);
@@ -125,10 +118,10 @@ authRouter.post('/webauthn/register-options', async (ctx) => {
       return JSON.parse(record.value);
     });
   const options = await generateRegistrationOptions({
-    rpName,
-    rpID,
-    userID: userId,
-    userName,
+    rpName: RP_NAME,
+    rpID: RP_ID,
+    userID: USER_ID,
+    userName: USER_NAME,
     // Don't prompt users for additional information about the authenticator
     // (Recommended for smoother UX)
     attestationType: 'none',
@@ -145,7 +138,7 @@ authRouter.post('/webauthn/register-options', async (ctx) => {
       residentKey: 'preferred',
       userVerification: 'preferred',
       // Optional
-      authenticatorAttachment: 'cross-platform',
+      authenticatorAttachment: 'platform',
     },
   });
   await prisma.config.upsert({
@@ -167,8 +160,8 @@ authRouter.post('/webauthn/verify-register', async (ctx) => {
     verification = await verifyRegistrationResponse({
       response: body,
       expectedChallenge,
-      expectedOrigin: [origin, 'http://localhost:5173'],
-      expectedRPID: rpID,
+      expectedOrigin: [ORIGIN, 'http://localhost:5173'],
+      expectedRPID: RP_ID,
       requireUserVerification: false,
     });
   } catch (error) {
@@ -222,7 +215,7 @@ authRouter.post('/webauthn/auth-options', async (ctx) => {
   }).then((row) => (row ? JSON.parse(row.value) : []));
 
   const options = await generateAuthenticationOptions({
-    rpID,
+    rpID: RP_ID,
     // Require users to use a previously-registered authenticator
     allowCredentials: userAuthenticators.map((authenticator) => ({
       id: base64url.decode(authenticator.credentialID),
@@ -272,8 +265,8 @@ authRouter.post('/webauthn/auth-verify', async (ctx) => {
     verification = await verifyAuthenticationResponse({
       response: body,
       expectedChallenge,
-      expectedOrigin: [origin, 'http://localhost:5173'],
-      expectedRPID: rpID,
+      expectedOrigin: [ORIGIN, 'http://localhost:5173'],
+      expectedRPID: RP_ID,
       authenticator: {
         ...authenticator,
         credentialID: base64url.decode(authenticator.credentialID),

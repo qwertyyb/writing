@@ -17,14 +17,14 @@ export const useAuthStore = defineStore('auth', {
       localStorage.setItem('token', data.token)
       this.token = data.token
     },
-    async webAuthnLogin() {
+    async webAuthnLogin(browserAutofill = false) {
       const { data } = await getAuthOptions()
       if (!data.allowCredentials?.length) {
         return ElMessage.error({
           message: '尚未注册无密码登录'
         })
       }
-      const result = await startAuthentication(data)
+      const result = await startAuthentication(data, browserAutofill)
       const { data: loginResult } = await verifyAuth(result)
       localStorage.setItem('token', loginResult.token)
       this.token = loginResult.token
