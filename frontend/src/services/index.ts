@@ -1,11 +1,27 @@
-// import { documentService } from './backend/document'
-// import { configService } from './backend/config'
+import router from '@/router'
+import { AuthError } from './types'
 
-// export { documentService, configService }
+let service = null
+if (import.meta.env.MODE === 'indexeddb') {
+  service = await import('./indexeddb')
+} else {
+  service = await import('./server/index')
+}
 
-import { documentService } from "./indexeddb/document";
-import { configService } from "./indexeddb/config";
-import { attributeService } from "./indexeddb/attribute";
-import { fileService } from "./indexeddb/file";
+export const documentService = service.documentService
+export const configService = service.configService
+export const attributeService = service.configService
+export const fileService = service.fileService
 
-export { documentService, configService, attributeService, fileService }
+window.addEventListener('error', (event) => {
+  if (event.error instanceof AuthError) {
+    if (router.currentRoute.value.name !== 'auth') {
+      router.replace({
+        name: 'auth',
+        query: {
+          ru: router.currentRoute.value.fullPath || ''
+        }
+      })
+    }
+  }
+})

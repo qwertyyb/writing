@@ -1,4 +1,4 @@
-import { getAuthOptions, login, verifyAuth } from "@/services/backend/auth";
+import { getAuthOptions, login, verifyAuth } from "@/services/server/auth";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { defineStore } from "pinia";
 import { ElMessage } from'element-plus'

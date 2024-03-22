@@ -26,10 +26,11 @@
           <div class="side-actions">
             <span class="material-symbols-outlined action-item"
               title="设置"
+              v-if="hasAuth"
               @click="$router.push({ name: 'settings' })">settings</span>
             <span class="material-symbols-outlined action-item" title="折叠" @click="unExpandAll">unfold_less</span>
-            <span class="material-symbols-outlined action-item" title="定位打开的文档" @click="locateEditing">my_location</span>
-            <span class="material-symbols-outlined action-item logout-action" title="退出登录" @click="logout">logout</span>
+            <span class="material-symbols-outlined action-item location-opened" title="定位打开的文档" @click="locateEditing">my_location</span>
+            <span class="material-symbols-outlined action-item logout-action" title="退出登录" @click="logout" v-if="hasAuth">logout</span>
             <span class="material-symbols-outlined action-item close-action" title="关闭侧边栏" @click="closeSide">start</span>
           </div>
         </template>
@@ -51,17 +52,16 @@ import ColumnContainer from '@/components/ColumnContainer.vue';
 import SearchByTitle from '../components/SearchByTitle.vue';
 import { ref } from 'vue';
 import { useRoute } from 'vue-router';
-import { useAuthStore } from '@/stores/auth';
 
 const logger = createLogger('LayoutView')
 
 const treeVisible = ref(true)
 const sideHidden = ref(false)
+const hasAuth = ref(import.meta.env.MODE !== 'indexeddb')
 
 const runtimeStore = useRuntime()
 const documentStore = useDocumentStore()
 const route = useRoute()
-const authStore = useAuthStore()
 
 documentStore.getList()
 
@@ -96,8 +96,9 @@ const locateEditing = () => {
     documentStore.toggleExpand(id, true)
   })
 }
-const logout = () => {
-  authStore.logout()
+const logout = async () => {
+  const { useAuthStore } = await import('@/stores/auth')
+  useAuthStore().logout()
   router.push({ name: 'auth' })
 }
 const closeSide = () => {
@@ -136,8 +137,8 @@ const closeSide = () => {
         background: #eee;
         border-radius: 4px;
       }
-      &.logout-action {
-        margin-left: auto;
+      &.location-opened {
+        margin-right: auto;
       }
       &.close-action {
         transform: rotate(180deg);

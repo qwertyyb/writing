@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:indexeddb": "vite --mode indexeddb",
+    "dev:server": "vite --mode server",
     "build": "run-p type-check \"build-only {@}\" --",
+    "build:indexeddb": "vite build --mode indexeddb",
+    "build:server": "vite build --mode server",
     "preview": "vite preview",
     "test:unit": "vitest",
     "build-only": "vite build",

@@ -19,3 +19,11 @@ export interface Document {
   updatedAt: string,
   attributes: Attribute[]
 }
+
+class ServiceError extends Error {
+  constructor(public errCode: number, public errMsg: string, message?: string, options?: ErrorOptions) {
+    super(message, options)
+  }
+}
+
+export class AuthError extends ServiceError {}

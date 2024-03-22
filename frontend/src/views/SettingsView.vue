@@ -49,9 +49,9 @@
 import { ref } from 'vue';
 import * as R from 'ramda'
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { getRegisterOptions, verifyRegister } from '@/services/backend/auth';
+import { getRegisterOptions, verifyRegister } from '@/services/server/auth';
 import { startRegistration, browserSupportsWebAuthn } from '@simplewebauthn/browser';
-import { configService } from '@/services/backend/config';
+import { configService } from '@/services/server/config';
 
 const settingValue = ref<Record<string, any>>({
   passwordDisabled: false,
@@ -149,4 +149,4 @@ getSettingValue()
   display: flex;
   margin: 12px 0;
 }
-</style>
+</style>@/services/server/auth@/services/server/config

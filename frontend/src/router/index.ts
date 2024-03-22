@@ -1,9 +1,7 @@
 import { RouterView, createRouter, createWebHistory } from 'vue-router'
 import PublicView from '@/views/PublicView.vue'
-import AuthViewVue from '@/views/AuthView.vue'
 import LayoutViewVue from '@/views/LayoutView.vue'
 import DocumentViewVue from '@/views/DocumentView.vue'
-import SettingsView from '@/views/SettingsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -24,20 +22,26 @@ const router = createRouter({
               component: DocumentViewVue,
               props: true,
             },
-            {
-              path: 'settings',
-              name: 'settings',
-              component: SettingsView,
-            }
+            ...(
+              // 使用前端indexed模式时，不需要鉴权
+              import.meta.env.MODE !== 'indexeddb' ? [{
+                path: 'settings',
+                name: 'settings',
+                component: () => import('@/views/SettingsView.vue'),
+              }] : []
+            )
           ]
         },
       ]
     },
-    {
-      path: '/auth',
-      name: 'auth',
-      component: AuthViewVue,
-    },
+    ...(
+      // 使用前端indexed模式时，不需要鉴权
+      import.meta.env.MODE !== 'indexeddb' ? [{
+        path: '/auth',
+        name: 'auth',
+        component: () => import('@/views/AuthView.vue'),
+      }] : []
+    ),
     {
       path: '/public/:id',
       name: 'public',
