@@ -19,11 +19,13 @@
     "@writing/editor": "workspace:^",
     "@writing/utils": "workspace:^",
     "animate.css": "^4.1.1",
+    "dexie": "^3.2.7",
     "element-plus": "^2.5.3",
     "file-saver": "^2.0.5",
     "fuse.js": "^7.0.0",
     "pinia": "^2.1.7",
     "ramda": "^0.29.1",
+    "universal-base64url": "^1.1.0",
     "vue": "^3.4.21",
     "vue-router": "^4.2.5"
   },

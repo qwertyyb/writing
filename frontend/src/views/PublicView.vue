@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import DocumentEditor from '@writing/editor';
-import { getDocumentByShareId } from '@/services/public';
+import { documentService } from '@/services';
 import { ref, watchEffect } from 'vue';
 import { useRoute } from 'vue-router';
 import type { BlockModel } from '@writing/editor/block';
@@ -27,9 +27,9 @@ const route = useRoute()
 watchEffect(async () => {
   const id = route.params.id as string
   if (!id) return
-  const { data } = await getDocumentByShareId({ id })
+  const { data } = await documentService.findByShareId({ id })
   
-  document.value = JSON.parse(data.doc.content)
+  document.value = JSON.parse(data.doc!.content)
 })
 
 </script>

@@ -1,5 +1,5 @@
 <template>
-  <div class="document-view" :key="id">
+  <div class="document-view">
     <div class="document-view-header" v-if="documentStore.editing">
       <el-dropdown @command="commandHandler">
         <el-icon :size="20" class="setting-icon action-icon"><MoreFilled /></el-icon>
@@ -23,6 +23,7 @@
     <div class="document-editor-wrapper">
       <document-editor
         v-if="documentStore.editing"
+        :key="documentStore.editing.id"
         v-model="documentStore.editing.content"
         @update:model-value="updateHandler"
         :upload="uploadHandler"
@@ -39,9 +40,12 @@ import { ref, watch } from 'vue';
 import DocumentAttribute from '@/components/DocumentAttribute.vue';
 import DocumentEditor from '@writing/editor';
 import { debounce } from '@/utils/utils';
-import { upload } from '@/services/upload';
 import { toMarkdown } from '@writing/editor/markdown';
 import type { BlockModel } from '@writing/editor/block';
+import { createLogger } from '@writing/utils/logger';
+import { fileService } from '@/services';
+
+const logger = createLogger('DocumentView')
 
 const props = defineProps<{
   id: number | string
@@ -64,7 +68,7 @@ watch(
 )
 
 const uploadHandler = async (file: Blob | File) => {
-  const { data } = await upload(file)
+  const { data } = await fileService.upload(file)
   if (data.url) return data.url
   throw new Error('上传失败')
 }
@@ -75,9 +79,9 @@ const commandHandler = (command: string) => {
     return
   } else if (command === 'export.markdown') {
     const markdown = toMarkdown(documentStore.editing!.content)
-    console.log('markdown', markdown)
-    // const blob = new Blob([markdown], { type: 'text/plain;charset=utf-8' })
-    // saveAs(blob, documentStore.editing!.title + '.md')
+    logger.i('commandHandler', command, markdown)
+    const blob = new Blob([markdown], { type: 'text/plain;charset=utf-8' })
+    saveAs(blob, documentStore.editing!.title + '.md')
   }
 }
 

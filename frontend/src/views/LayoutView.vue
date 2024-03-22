@@ -44,7 +44,7 @@ import { RouterView } from 'vue-router';
 import DocumentTree from '@/components/DocumentTree.vue';
 import type { TreeNodeModel } from '@/components/tree/types';
 import { useDocumentStore } from '@/stores/document';
-import { createLogger } from '@/utils/logger';
+import { createLogger } from '@writing/utils/logger';
 import router from '@/router';
 import { useRuntime } from '@/stores/runtime';
 import ColumnContainer from '@/components/ColumnContainer.vue';

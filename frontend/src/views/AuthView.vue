@@ -39,7 +39,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { ref } from 'vue';
 import { browserSupportsWebAuthn, browserSupportsWebAuthnAutofill, startRegistration } from '@simplewebauthn/browser';
 import router from '@/router';
-import { checkLogin as checkLoginApi, getCanRegister, getRegisterOptions, verifyRegister, register as apiRegister } from '@/services/auth';
+import { checkLogin as checkLoginApi, getCanRegister, getRegisterOptions, verifyRegister, register as apiRegister } from '@/services/backend/auth';
 
 const authStore = useAuthStore()
 

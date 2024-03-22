@@ -49,9 +49,9 @@
 import { ref } from 'vue';
 import * as R from 'ramda'
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { getRegisterOptions, verifyRegister } from '@/services/auth';
+import { getRegisterOptions, verifyRegister } from '@/services/backend/auth';
 import { startRegistration, browserSupportsWebAuthn } from '@simplewebauthn/browser';
-import { getValues, setValue } from '@/services/config';
+import { configService } from '@/services/backend/config';
 
 const settingValue = ref<Record<string, any>>({
   passwordDisabled: false,
@@ -63,7 +63,7 @@ const settingValue = ref<Record<string, any>>({
 const supportsWebAuthn = ref(browserSupportsWebAuthn())
 
 const getSettingValue = async () => {
-  const values = await getValues(['PasswordDisabled', 'WebAuthnAuthenticators'])
+  const values = await configService.getValues(['PasswordDisabled', 'WebAuthnAuthenticators'])
   const obj = values.reduce<Record<string, any>>((acc, item) => {
     let value = item.value
     if (item.key === 'WebAuthnAuthenticators') {
@@ -82,7 +82,7 @@ const setPasswordDisabled = async (value: boolean) => {
   if (!settingValue.value.authenticators.length) {
     return ElMessage.error('需要先添加无密码登录设备才能禁用密码登录')
   }
-  await setValue('PasswordDisabled', value ? 'true' : '')
+  await configService.setValue('PasswordDisabled', value ? 'true' : '')
   settingValue.value.passwordDisabled = value
 }
 
@@ -93,14 +93,14 @@ const setPassword = async () => {
   if (settingValue.value.password !== settingValue.value.passowrd2) {
     return ElMessage.error('两次密码输入不一致')
   }
-  await setValue('Password', settingValue.value.password)
+  await configService.setValue('Password', settingValue.value.password)
   settingValue.value.password = ''
   settingValue.value.passowrd2 = ''
 }
 
 const removeAuthenticator = async (index: number) => {
   const value = R.remove(index, 1, settingValue.value.authenticators)
-  await setValue('WebAuthnAuthenticators', JSON.stringify(value))
+  await configService.setValue('WebAuthnAuthenticators', JSON.stringify(value))
   settingValue.value.authenticators = value
 }
 

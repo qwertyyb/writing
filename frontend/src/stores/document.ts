@@ -1,7 +1,7 @@
 import { createEditingDocument } from "@/models/block";
-import { setAttributes, type Attribute } from "@/services/attribute";
-import { getList, type Document, getDocument, updateDocument, addDocument, removeDocument, moveDocument } from "@/services/document";
-import { createLogger } from "@/utils/logger";
+import { documentService, attributeService } from "@/services";
+import { type Attribute, type Document } from '@/services/types';
+import { createLogger } from "@writing/utils/logger";
 import type { BlockModel } from "@writing/editor/block";
 import { ElMessageBox } from "element-plus";
 import { defineStore } from "pinia";
@@ -71,7 +71,7 @@ export const useDocumentStore = defineStore('document', {
   },
   actions: {
     async getList(): Promise<void> {
-      const { data: { list: documents } } = await getList()
+      const { data: { list: documents } } = await documentService.findMany()
       this.documents = documents
       this.expandAll()
     },
@@ -132,14 +132,14 @@ export const useDocumentStore = defineStore('document', {
 
       logger.i('move', updates)
       // 调用接口更新
-      await moveDocument(updates)
+      await documentService.updateMany(updates)
     },
     async add(current: DocumentItem, position: 'before' | 'after' | 'inside'): Promise<void> {
       logger.i('add', {...current}, position)
       const newDoc = createEditingDocument(current.path)
       const cur = this.documents.find(item => item.id === current.id)
       if (!cur) return
-      const { data } = await addDocument({
+      const { data } = await documentService.add({
         ...newDoc,
         content: JSON.stringify(newDoc.content)
       })
@@ -150,7 +150,7 @@ export const useDocumentStore = defineStore('document', {
       }
       const updates = this.moveToTarget(this.editing, cur, position)
       this.documents.push(this.editing)
-      updates.length && await moveDocument(updates)
+      updates.length && await documentService.updateMany(updates)
     },
     async remove(node: DocumentItem) {
       if (node.children.length) {
@@ -180,14 +180,14 @@ export const useDocumentStore = defineStore('document', {
         prev.nextId = node.nextId
       }
       const path = `${node.path}/${node.id}`
-      await removeDocument({ id: node.id })
+      await documentService.remove({ id: node.id })
       this.documents = this.documents.filter(item => {
         // 移除当前节点或者其子孙节点
         return item.id !== node.id && !item.path.startsWith(path)
       })
     },
     async activeEditing(id: number): Promise<void> {
-      const { data: document } = await getDocument({ id })
+      const { data: document } = await documentService.find({ id })
       this.editing = {
         ...document,
         content: transformContent(JSON.parse(document.content) as BlockModel)
@@ -203,7 +203,7 @@ export const useDocumentStore = defineStore('document', {
       if (doc) {
         doc.title = title
       }
-      await updateDocument({ id: this.editing.id, title, content: JSON.stringify(content) })
+      await documentService.update({ id: this.editing.id, title, content: JSON.stringify(content) })
     },
     async updateEditingTitle(title: string): Promise<void> {
       if (!this.editing) {
@@ -214,10 +214,10 @@ export const useDocumentStore = defineStore('document', {
         ...this.editing.content.data,
         title
       }
-      await updateDocument({ id: this.editing.id, title, content: JSON.stringify(this.editing.content) })
+      await documentService.update({ id: this.editing.id, title, content: JSON.stringify(this.editing.content) })
     },
-    async updateAttributes(id: number, attributes: Attribute[]) {
-      const { data } = await setAttributes(id, attributes)
+    async updateAttributes(id: number, attributes: Omit<Attribute, 'docId'>[]) {
+      const { data } = await attributeService.setAttributes(id, attributes)
       const target = this.documents.find(item => item.id === id)
       if (!target) return
       const newAttributes = target.attributes.map(item => {

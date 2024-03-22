@@ -84,6 +84,9 @@ importers:
       animate.css:
         specifier: ^4.1.1
         version: 4.1.1
+      dexie:
+        specifier: ^3.2.7
+        version: 3.2.7
       element-plus:
         specifier: ^2.5.3
         version: 2.6.0(vue@3.4.21)
@@ -99,6 +102,9 @@ importers:
       ramda:
         specifier: ^0.29.1
         version: 0.29.1
+      universal-base64url:
+        specifier: ^1.1.0
+        version: 1.1.0
       vue:
         specifier: ^3.4.21
         version: 3.4.21(typescript@5.3.3)
@@ -2024,7 +2030,7 @@ packages:
       vite: ^5.0.0
       vue: ^3.2.25
     dependencies:
-      vite: 5.1.5(@types/node@20.11.7)
+      vite: 5.1.5(@types/node@18.19.21)(less@4.2.0)
       vue: 3.4.21(typescript@5.3.3)
     dev: true
 
@@ -2780,6 +2786,11 @@ packages:
   /destroy@1.2.0:
     resolution: {integrity: sha512-2sJGJTaXIIaR1w4iJSNoN0hnMY7Gpc/n8D4qSCJw8QqFWXf7cuAgnEHxBpweaVcPevC2l3KpjYCx3NypQQgaJg==}
     engines: {node: '>= 0.8', npm: 1.2.8000 || >= 1.4.16}
+    dev: false
+
+  /dexie@3.2.7:
+    resolution: {integrity: sha512-2a+BXvVhY5op+smDRLxeBAivE7YcYaneXJ1la3HOkUfX9zKkE/AJ8CNgjiXbtXepFyFmJNGSbmjOwqbT749r/w==}
+    engines: {node: '>=6.0'}
     dev: false
 
   /dezalgo@1.0.4:
@@ -4871,6 +4882,16 @@ packages:
 
   /undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
+
+  /universal-base64@2.1.0:
+    resolution: {integrity: sha512-WeOkACVnIXJZr/qlv7++Rl1zuZOHN96v2yS5oleUuv8eJOs5j9M5U3xQEIoWqn1OzIuIcgw0fswxWnUVGDfW6g==}
+    dev: false
+
+  /universal-base64url@1.1.0:
+    resolution: {integrity: sha512-qWv2+8KCaAWdpqqXwU8W0Yj9pflYDXP37/a3kec6Y4Je7bYzgIfxEVRjZWeLR67be7iot1lGCy5Nuo+xB0fojA==}
+    dependencies:
+      universal-base64: 2.1.0
+    dev: false
 
   /universalify@0.2.0:
     resolution: {integrity: sha512-CJ1QgKmNg3CwvAv/kOFmtnEN05f0D/cn9QntgNOQlQF9dgvVTHj3t+8JPdjqawCHk7V/KA+fbUqzZ9XWhcqPUg==}

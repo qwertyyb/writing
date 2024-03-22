@@ -13,9 +13,10 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { type Attribute } from '@/services/attribute'
 import { computed } from 'vue';
-import base62 from '@/utils/base62';
+import { encode } from 'universal-base64url';
+import { randomString } from '@/utils/utils';
+import type { Attribute } from '@/services/types';
 
 const props = defineProps<{
   docId: number,
@@ -23,7 +24,7 @@ const props = defineProps<{
 }>()
 
 const emits = defineEmits<{
-  change: [attributes: Attribute[]]
+  change: [attributes: Omit<Attribute, 'docId'>[]]
 }>()
 
 const shareId = computed(() => props.attributes.find(attr => attr.key === 'share')?.value)
@@ -32,7 +33,7 @@ const shareLink = computed(() => location.origin + '/public/' + shareId.value)
 const changeHandler = async (shared: boolean) => {
   let value = ''
   if (shared) {
-    value = base62.encode(new TextEncoder().encode(props.docId.toString().padStart(8, '0')))
+    value = encode(props.docId.toString() + randomString(8))
   }
   emits('change', [{ key: 'share', value }])
 }
