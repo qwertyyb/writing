@@ -7,10 +7,11 @@ import {
 } from '@simplewebauthn/server';
 import { createRes } from '../utils';
 import { JWT_SECRET } from '../config';
-import { prisma } from '../prisma';
 import { checkLogin } from '../middlewares/auth';
 import { ConfigKey, ORIGIN, RP_ID, RP_NAME, USER_ID, USER_NAME } from '../const';
 import { createHash } from 'node:crypto';
+import { orm } from '../typeorm/schema';
+import { In } from 'typeorm';
 
 const authRouter = new KoaRouter({ prefix: '/api/v1/auth' });
 
@@ -30,11 +31,11 @@ const canRegister = async (ctx: Koa.Context) => {
   if (await checkLogin(ctx)) {
     return true;
   }
-  const row = await prisma.config.findUnique({ where: { key: ConfigKey.Password }});
+  const row = await orm.config.findOne({ where: { key: ConfigKey.Password }});
   if (row) {
     return false;
   }
-  const authenticators = await prisma.config.findFirst({ where: { key: ConfigKey.WebauthnAuthenticators } })
+  const authenticators = await orm.config.findOne({ where: { key: ConfigKey.WebauthnAuthenticators } })
     .then((record) => {
       if (!record) return [];
       return JSON.parse(record.value);
@@ -62,11 +63,10 @@ authRouter.post('/register', async (ctx) => {
   const hashedPassword = createHash('sha256')
     .update(password)
     .digest('base64');
-  await prisma.config.upsert({
-    where: { key: ConfigKey.Password },
-    create: { key: ConfigKey.Password, value: hashedPassword },
-    update: { value: password }
-  });
+  await orm.config.upsert(
+    { key: ConfigKey.Password, value: hashedPassword },
+    ['key']
+  );
   ctx.body = createRes({ success: true });
 });
 
@@ -79,11 +79,9 @@ authRouter.post('/login', async (ctx) => {
   const hashedPassword = createHash('sha256')
     .update(password)
     .digest('base64');
-  const rows = await prisma.config.findMany({
+  const rows = await orm.config.find({
     where: {
-      key: {
-        in: [ConfigKey.PasswordDisabled, ConfigKey.Password]
-      }
+      key: In([ConfigKey.PasswordDisabled, ConfigKey.Password])
     }
   });
   const disabledRow = rows.find(row => row.key === ConfigKey.PasswordDisabled);
@@ -112,7 +110,7 @@ authRouter.get('/can-register', async (ctx) => {
 });
 
 authRouter.post('/webauthn/register-options', async (ctx) => {
-  const authenticators = await prisma.config.findFirst({ where: { key: ConfigKey.WebauthnAuthenticators } })
+  const authenticators = await orm.config.findOne({ where: { key: ConfigKey.WebauthnAuthenticators } })
     .then((record) => {
       if (!record) return [];
       return JSON.parse(record.value);
@@ -141,18 +139,17 @@ authRouter.post('/webauthn/register-options', async (ctx) => {
       authenticatorAttachment: 'platform',
     },
   });
-  await prisma.config.upsert({
-    where: { key: ConfigKey.WebAuthnChallenge },
-    update: { value: options.challenge },
-    create: { key: ConfigKey.WebAuthnChallenge, value: options.challenge },
-  });
+  await orm.config.upsert(
+    { key: ConfigKey.WebAuthnChallenge, value: options.challenge },
+    ['key']
+  );
   ctx.body = createRes(options);
 });
 
 authRouter.post('/webauthn/verify-register', async (ctx) => {
   const { name, body } = ctx.request.body;
 
-  const expectedChallenge: string = await prisma.config.findFirst({ where: { key: ConfigKey.WebAuthnChallenge } })
+  const expectedChallenge: string = await orm.config.findOne({ where: { key: ConfigKey.WebAuthnChallenge } })
     .then((row) => row.value);
 
   let verification: VerifiedRegistrationResponse | null = null;
@@ -192,17 +189,16 @@ authRouter.post('/webauthn/verify-register', async (ctx) => {
     transports: body.response.transports,
   };
 
-  const authenticators = await prisma.config.findFirst({ where: { key: ConfigKey.WebauthnAuthenticators } })
+  const authenticators = await orm.config.findOne({ where: { key: ConfigKey.WebauthnAuthenticators } })
     .then((row) => {
       if (!row) return [];
       return JSON.parse(row.value);
     });
   authenticators.push(newAuthenticator);
-  await prisma.config.upsert({
-    where: { key: ConfigKey.WebauthnAuthenticators },
-    update: { value: JSON.stringify(authenticators) },
-    create: { key: ConfigKey.WebauthnAuthenticators, value: JSON.stringify(authenticators) },
-  });
+  await orm.config.upsert(
+    { key: ConfigKey.WebauthnAuthenticators, value: JSON.stringify(authenticators) },
+    ['key']
+  );
 
   ctx.body = createRes({ verified });
 });
@@ -210,7 +206,7 @@ authRouter.post('/webauthn/verify-register', async (ctx) => {
 authRouter.post('/webauthn/auth-options', async (ctx) => {
   // (Pseudocode) Retrieve any of the user's previously-
   // registered authenticators
-  const userAuthenticators = await prisma.config.findFirst({
+  const userAuthenticators = await orm.config.findOne({
     where: { key: ConfigKey.WebauthnAuthenticators },
   }).then((row) => (row ? JSON.parse(row.value) : []));
 
@@ -226,11 +222,10 @@ authRouter.post('/webauthn/auth-options', async (ctx) => {
   });
 
   // (Pseudocode) Remember this challenge for this user
-  await prisma.config.upsert({
-    where: { key: ConfigKey.WebAuthnChallenge },
-    create: { key: ConfigKey.WebAuthnChallenge, value: options.challenge },
-    update: { value: options.challenge },
-  });
+  await orm.config.upsert(
+    { key: ConfigKey.WebAuthnChallenge, value: options.challenge },
+    ['key']
+  );
 
   ctx.body = createRes(options);
 });
@@ -240,9 +235,9 @@ authRouter.post('/webauthn/auth-verify', async (ctx) => {
 
   // (Pseudocode) Get `options.challenge` that was saved above
   const [expectedChallenge, authenticator] = await Promise.all([
-    prisma.config.findFirst({ where: { key: ConfigKey.WebAuthnChallenge } })
+    orm.config.findOne({ where: { key: ConfigKey.WebAuthnChallenge } })
       .then((row) => row.value),
-    prisma.config.findFirst({ where: { key: ConfigKey.WebauthnAuthenticators } })
+    orm.config.findOne({ where: { key: ConfigKey.WebauthnAuthenticators } })
       .then((record) => {
         if (!record) return null;
         const authenticators = JSON.parse(record.value);
@@ -288,7 +283,7 @@ authRouter.post('/webauthn/auth-verify', async (ctx) => {
 
   const { newCounter } = authenticationInfo;
 
-  const authenticators = await prisma.config.findFirst({ where: { key: ConfigKey.WebauthnAuthenticators } })
+  const authenticators = await orm.config.findOne({ where: { key: ConfigKey.WebauthnAuthenticators } })
     .then((row) => {
       if (!row) return [];
       return JSON.parse(row.value);
@@ -297,11 +292,10 @@ authRouter.post('/webauthn/auth-verify', async (ctx) => {
   if (target) {
     target.counter = newCounter;
   }
-  prisma.config.upsert({
-    where: { key: ConfigKey.WebauthnAuthenticators },
-    update: { value: JSON.stringify(authenticators) },
-    create: { key: ConfigKey.WebauthnAuthenticators, value: JSON.stringify(authenticators) },
-  });
+  orm.config.upsert(
+    { key: ConfigKey.WebauthnAuthenticators, value: JSON.stringify(authenticators) },
+    ['key']
+  );
 
   ctx.body = createRes({ verified, token: await createJWT() });
 });

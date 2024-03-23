@@ -1,9 +1,10 @@
 import KoaRouter from '@koa/router';
 import { createRes } from '../utils';
-import { prisma } from '../prisma';
 import { needAuth } from '../middlewares/auth';
 import { ConfigKey } from '../const';
 import { createHash } from 'crypto';
+import { orm } from '../typeorm/schema';
+import { In } from 'typeorm';
 
 const router = new KoaRouter({ prefix: '/api/v1/config' });
 
@@ -19,11 +20,10 @@ router
     if (key === ConfigKey.Password && origin) {
       value = createHash('sha256').update(origin).digest('base64');
     }
-    const result = await prisma.config.upsert({
-      where: { key },
-      update: { value },
-      create: { key, value },
-    });
+    const result = await orm.config.upsert(
+      { key, value },
+      ['key']
+    );
     ctx.body = createRes(result);
   })
   .get('/get', async (ctx) => {
@@ -32,7 +32,7 @@ router
       ctx.body = createRes(null, 400, '未传入key');
       return;
     }
-    const result = await prisma.config.findUnique({
+    const result = await orm.config.findOne({
       where: { key },
     });
     ctx.body = createRes(result);
@@ -48,8 +48,8 @@ router
       ctx.body = createRes(null, 400, '未传入keys');
       return;
     }
-    const result = await prisma.config.findMany({
-      where: { key: { in: keys } },
+    const result = await orm.config.find({
+      where: { key: In(keys) },
     });
     ctx.body = createRes(result);
   });

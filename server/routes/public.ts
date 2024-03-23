@@ -1,6 +1,6 @@
 import KoaRouter from '@koa/router';
 import { createRes } from '../utils';
-import { prisma } from '../prisma';
+import { orm } from '../typeorm/schema';
 
 const router = new KoaRouter({ prefix: '/api/v1/public' });
 
@@ -11,9 +11,9 @@ router.get('/get', async (ctx) => {
     return;
   }
   // 判断权限
-  const record = await prisma.attribute.findFirst({
+  const record = await orm.attribute.findOne({
     where: { value: id, key: 'share' },
-    include: { doc: true },
+    relations: { doc: true },
   });
   if (!record) {
     ctx.body = createRes(null, 404, '未找到此id');

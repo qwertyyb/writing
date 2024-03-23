@@ -1,7 +1,8 @@
 import KoaRouter from '@koa/router';
 import { needAuth } from '../middlewares/auth';
 import { createRes } from '../utils';
-import { prisma } from '../prisma';
+import { orm } from '../typeorm/schema';
+import { In } from 'typeorm';
 
 const router = new KoaRouter({ prefix: '/api/v1/attribute' });
 
@@ -14,11 +15,16 @@ router
       ctx.body = createRes(null, 400, '未传入id或key');
       return;
     }
-    const results = await Promise.all(attributes.map((attr) => prisma.attribute.upsert({
-      where: { docId_key: { docId, key: attr.key } },
-      create: { docId, key: attr.key, value: attr.value },
-      update: { value: attr.value },
-    })));
+    await Promise.all(attributes.map((attr) => orm.attribute.upsert(
+      { docId, key: attr.key, value: attr.value },
+      ['docId', 'key']
+    )));
+    const results = await orm.attribute.find({
+      where: {
+        docId: docId,
+        key: In(attributes.map(item => item.key))
+      }
+    });
     ctx.body = createRes(results);
   });
 

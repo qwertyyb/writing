@@ -1,7 +1,7 @@
 import KoaRouter from '@koa/router';
 import { readFileSync } from 'node:fs';
-import { prisma } from '../prisma';
 import { needAuth } from '../middlewares/auth';
+import { orm } from '../typeorm/schema';
 
 const router = new KoaRouter();
 
@@ -14,24 +14,17 @@ router.post('/api/v1/upload', needAuth, async (ctx) => {
     };
     return;
   }
-  const data = await prisma.file.create({
-    data: {
-      name: file.newFilename,
-      mimetype: file.mimetype,
-      content: readFileSync(file.filepath),
-      createdAt: new Date(),
-    },
-    select: {
-      name: true,
-      mimetype: true,
-      createdAt: true,
-    },
+  await orm.file.insert({
+    name: file.newFilename,
+    mimetype: file.mimetype,
+    content: readFileSync(file.filepath),
+    createdAt: new Date(),
   });
+  const data = await orm.file.findOne({ where: { name: file.newFilename }, select: ['name'] });
   ctx.body = {
     errCode: 0,
     errMsg: 'ok',
     data: {
-      ...data,
       url: `/api/v1/file?name=${encodeURIComponent(data.name)}`,
     },
   };
@@ -46,7 +39,7 @@ router.get('/api/v1/file', async (ctx) => {
     };
     return;
   }
-  const record = await prisma.file.findUnique({
+  const record = await orm.file.findOne({
     where: {
       name,
     },

@@ -1,8 +1,15 @@
 {
+  "ts-node": {
+    "esm": true,
+    "experimentalSpecifierResolution": "node",
+  },
   "compilerOptions": {
     "esModuleInterop": true,
     "moduleResolution": "Node",
+    // "module": "ESNext",
     "outDir": "dist",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
   },
   "include": [
     "./server"
