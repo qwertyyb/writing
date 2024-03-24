@@ -15,10 +15,12 @@ router
       ctx.body = createRes(null, 400, '未传入id或key');
       return;
     }
-    await Promise.all(attributes.map((attr) => orm.attribute.upsert(
-      { docId, key: attr.key, value: attr.value },
-      ['docId', 'key']
-    )));
+    await Promise.all(attributes.map((attr) => {
+      return orm.attribute.upsert(
+        { docId, key: attr.key, value: attr.value },
+        ['docId', 'key']
+      );
+    }));
     const results = await orm.attribute.find({
       where: {
         docId: docId,

@@ -1,7 +1,7 @@
 import KoaRouter from '@koa/router';
 import { createRes } from '../utils';
 import { needAuth } from '../middlewares/auth';
-import { Document, orm } from '../typeorm/schema';
+import { entities, orm } from '../typeorm/schema';
 import { Like } from 'typeorm';
 
 const router = new KoaRouter({ prefix: '/api/v1/document' });
@@ -64,7 +64,7 @@ router
     const result = await orm.$transaction(async (manager) => {
       await Promise.all([...resetList, ...updates]
         .map((item) => manager
-          .update(Document, { id: item.id }, { path: item.path, nextId: item.nextId })
+          .update(entities.Document, { id: item.id }, { path: item.path, nextId: item.nextId })
         ));
     });
     ctx.body = createRes(result);
@@ -81,7 +81,7 @@ router
 
     const result = await orm.$transaction(async (manager) => {
       await manager.update(
-        Document,
+        entities.Document,
         [
           { path: Like(`${path}%`) },
           { id }
@@ -89,7 +89,7 @@ router
         { deleted: true, deletedAt: new Date(), nextId: null }
       );
       await manager.update(
-        Document,
+        entities.Document,
         { nextId: id },
         { nextId: node.nextId }
       );
@@ -98,9 +98,10 @@ router
   })
   .post('/add', async (ctx) => {
     const { title, content, path } = await ctx.request.body;
-    const record = await orm.document.insert({
+    const result = await orm.document.insert({
       title, content, path,
     });
+    const record = await orm.document.findOneBy({ id: result.raw });
     ctx.body = createRes(record);
   });
 
