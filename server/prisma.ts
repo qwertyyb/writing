@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-// import { SqliteAdapter } from './prisma/adapter';
 import path from 'node:path';
 
 const dbPath = path.join(__dirname, process.env.DATABASE_URL.replace(/^file:/, ''));
@@ -7,15 +6,13 @@ const dbPath = path.join(__dirname, process.env.DATABASE_URL.replace(/^file:/, '
 console.log('prisma dbPath', dbPath);
 
 export const prisma = new PrismaClient({
-  log: [{ level: 'query', emit: 'stdout' }],
-}).$extends({
-  name: 'query',
-  query: {
-    $allOperations({ model, operation, args, query }) {
-      console.log('aaaa', args, model, operation);
-      return query(args);
-    }
-  }
+  log: [
+    { level: 'query', emit: 'event' },
+  ],
+});
+
+prisma.$on('query', (event) => {
+  console.log('query', event);
 });
 
 const init = async () => {
