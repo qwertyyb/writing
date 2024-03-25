@@ -124,7 +124,7 @@ export class SqliteAdapter extends EventEmitter implements DriverAdapter, Transa
       return result.changes;
     });
     Promise.resolve().then(() => {
-      this.emit('query', { ...params, sucess: result.ok });
+      this.emit('query', { ...params, success: result.ok });
     });
     return result;
   }

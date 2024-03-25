@@ -1,18 +1,24 @@
 import { PrismaClient } from '@prisma/client';
-import path from 'node:path';
 import { SqliteAdapter } from './prisma/adapter';
 import { createLogger } from './utils/logger';
+import { dbPath } from './const';
 
 const logger = createLogger('prisma');
 
-const dbPath = path.join(__dirname, process.env.DATABASE_URL.replace(/^file:/, ''));
 
 console.log('prisma dbPath', dbPath);
 
 const adapter = new SqliteAdapter(dbPath);
 
 adapter.on('query', (event) => {
-  logger.i('query', event.sql, event.args, event.success);
+  if (!event.success) return;
+  if (event.sql.includes('`SQLHistory`')) return;
+  logger.i('query', event);
+  // @todo buffer数据的存储需要再瞅瞅
+  prisma.sQLHistory.create({ data: { sql: event.sql, params: JSON.stringify(event.args) } })
+    .then(res => {
+      console.log(res);
+    });
 });
 
 export const prisma = new PrismaClient({
@@ -21,28 +27,28 @@ export const prisma = new PrismaClient({
 
 const init = async () => {
   const hasRoot = await prisma.document.findFirst({ where: { path: '' }, select: { id: true } });
-  if (!hasRoot) {
-    await prisma.document.create({
-      data: {
-        title: 'root',
-        content: JSON.stringify({
-          id: 'root',
-          type: 'doc',
-          data: { title: 'root' },
-          children: [
-            {
-              type: 'text',
-              id: 'rootext',
-              data: {
-                html: '这是根文档',
-              },
+  if (hasRoot) return;
+  await prisma.document.create({
+    data: {
+      id: 1,
+      title: 'root',
+      content: JSON.stringify({
+        id: 'root',
+        type: 'doc',
+        data: { title: 'root' },
+        children: [
+          {
+            type: 'text',
+            id: 'rootext',
+            data: {
+              html: '这是根文档',
             },
-          ],
-        }),
-        path: '',
-      },
-    });
-  }
+          },
+        ],
+      }),
+      path: '',
+    },
+  });
 };
 
 init();

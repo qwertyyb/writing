@@ -16,6 +16,7 @@
     "@koa/router": "^12.0.1",
     "@prisma/driver-adapter-utils": "^5.11.0",
     "@simplewebauthn/server": "^9.0.3",
+    "axios": "^1.6.8",
     "better-sqlite3": "^9.4.3",
     "jose": "^5.2.2",
     "koa": "^2.15.0",

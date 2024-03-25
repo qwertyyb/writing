@@ -54,3 +54,15 @@ model Config {
   value   String
   comment String?
 }
+
+model SQLHistory {
+  id Int @id @default(autoincrement())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sql      String
+  params   String?
+  checksum String?
+  comment  String?
+}
