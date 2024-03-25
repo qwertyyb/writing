@@ -3,6 +3,8 @@ import { prisma } from '../prisma';
 import { SQLHistory } from '@prisma/client';
 import Database from 'better-sqlite3';
 import { dbPath } from '../const';
+import { dbhash } from '../utils';
+import { openAsBlob } from 'fs';
 
 enum SyncState {
   Idle = 0,
@@ -19,33 +21,22 @@ export class SyncService {
     this.db = new Database(dbPath);
   }
 
-  getRecordsBetween = async (from: Omit<SQLHistory, 'params'>, to: Omit<SQLHistory, 'params'>) => {
-    const records = await prisma.sQLHistory.findMany({
-      where: {
-        createdAt: {
-          lte: from.createdAt,
-          gte: to.createdAt
-        }
-      }
+  getLatest = () => {
+    return prisma.sQLHistory.findFirst({
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, createdAt: true, updatedAt: true, sql: true, checksum: true }
     });
-    if (records[0]?.checksum !== from.checksum || records[records.length - 1]?.checksum !== to.checksum) {
-      // 不匹配的checksum，返回空数组
-      return [];
-    }
-    return records;
   };
 
   check = async () => {
     this.checkState();
-    const latest = await prisma.sQLHistory.findFirst({
-      orderBy: { createdAt: 'desc' },
-    });
+    const latest = await this.getLatest();
     const lastOperateTime = latest?.createdAt.getTime() ?? 0;
     // 检查远端最新记录
     // @todo 鉴权
     const response = await axios.get(this.endPoint);
     const { data: remoteRecord } = response.data;
-    const { createdAt: remoteLatestCreatedAt, id: remoteLatestId } = remoteRecord;
+    const { createdAt: remoteLatestCreatedAt } = remoteRecord;
     if (remoteLatestCreatedAt > lastOperateTime) {
       // 远端最后操作时间比本地最后时间大，则说明远端比较新
       // 把本地的最新记录和远端记录发给远端，获取这之间的所有变更
@@ -59,7 +50,7 @@ export class SyncService {
         await this.sendFileToRemote();
         return;
       }
-      // @todo 本地执行这些sql语句，并更新SQLHistory历史
+      this.recv(records);
     } else if (remoteLatestCreatedAt < lastOperateTime) {
       // 本地最后操作时间比远端最后操作时间大，说明本地比较新
       // 把本地的 records 传给远端,让远端进行同步
@@ -67,11 +58,13 @@ export class SyncService {
 
       if (records.length) {
         // 把records发给远端，让远端执行并同步
-      } else {
-        // 不匹配的数据，备份远端数据，然后把本地文件同步到远端
-        await this.backupRemote();
-        await this.sendFileToRemote();
+        this.send(records);
+        return;
       }
+
+      // 不匹配的数据，备份远端数据，然后把本地文件同步到远端
+      await this.backupRemote();
+      await this.sendFileToRemote();
     }
   };
   send = async (records: SQLHistory[]) => {
@@ -88,16 +81,42 @@ export class SyncService {
       this.db.prepare(sql).run(JSON.stringify(params));
       const resultsum = dbhash();
       if (resultsum !== checksum) {
-        throw new Error('同步失败，hash不一致');
+        throw new Error(`同步失败, hash不一致, expect: ${checksum}, received: ${resultsum}`);
       }
       this.db.prepare('INSERT INTO SQLHistory(id, createdAt, updatedAt, sql, params, checksum) VALUES(:id, :createdAt, :updatedAt, :sql, :params, :checksum)')
         .run(records[i]);
     }
   };
   
-  private backupRemote() {}
-  private sendFileToRemote() {}
-
+  private backupRemote = () => {
+    return axios.post(this.endPoint, {
+      type: 'backup',
+    });
+  };
+  private sendFileToRemote = async () => {
+    const formData = new FormData();
+    formData.append('type', 'file');
+    formData.append('file', await openAsBlob(dbPath));
+    return axios.post(this.endPoint, formData);
+  };
+  private getRecordsBetween = async (
+    from: Omit<SQLHistory, 'params' | 'comment'>,
+    to: Omit<SQLHistory, 'params' | 'comment'>
+  ) => {
+    const records = await prisma.sQLHistory.findMany({
+      where: {
+        createdAt: {
+          lte: from.createdAt,
+          gte: to.createdAt
+        }
+      }
+    });
+    if (records[0]?.checksum !== from.checksum || records[records.length - 1]?.checksum !== to.checksum) {
+      // 不匹配的checksum，返回空数组
+      return [];
+    }
+    return records;
+  };
   private checkState = () => {
     if (this.state !== SyncState.Idle) {
       throw new Error('cant check when state is ' + this.state);
