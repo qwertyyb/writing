@@ -9,6 +9,10 @@ import type {
 } from '@prisma/driver-adapter-utils';
 import { err, ok, ColumnTypeEnum } from '@prisma/driver-adapter-utils';
 import SQLite from 'better-sqlite3';
+import { EventEmitter } from 'node:events';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('adapter');
 
 type SQLiteType = 'REAL' | 'INTEGER' | 'BOOLEAN' | 'DECIMAL' | 'NUMERIC' | 'TEXT' | 'BLOB' | 'DATETIME' | 'NULL'
 type SQLiteValue = number | string | number[] | null
@@ -48,46 +52,37 @@ const convertValue = (type: SQLiteType | null, value: SQLiteValue): SQLiteValue 
   return value;
 };
 
-export class SqliteAdapter implements DriverAdapter, Transaction {
+const convertArg = (arg: number | boolean | string | null) => {
+  if (typeof arg === 'boolean') return +arg;
+  return arg;
+};
+
+export class SqliteAdapter extends EventEmitter implements DriverAdapter, Transaction {
   readonly provider: 'mysql' | 'postgres' | 'sqlite' = 'sqlite';
   readonly db: SQLite.Database;
   options: TransactionOptions = {
-    usePhantomQuery: true
+    usePhantomQuery: false
   };
   constructor(filename: string, options?: SQLite.Options) {
+    super();
     this.db = new SQLite(filename, options);
   }
 
   commit(): Promise<Result<void>> {
-    try {
-      this.db.prepare('COMMIT').run();
-      return Promise.resolve(ok(undefined));
-    } catch (err) {
-      console.error(err);
-      return Promise.resolve(err(err));
-    }
+    logger.i('driver commit');
+    return Promise.resolve(ok(undefined));
   }
   rollback(): Promise<Result<void>> {
-    try {
-      this.db.prepare('ROLLBACK').run();
-      return Promise.resolve(ok(undefined));
-    } catch (err) {
-      console.error(err);
-      return Promise.resolve(err(err));
-    }
+    logger.i('driver rollback');
+    return Promise.resolve(ok(undefined));
   }
 
   startTransaction(): Promise<Result<Transaction>> {
-    try {
-      this.db.prepare('BEGIN').run();
-      return Promise.resolve(ok(this));
-    } catch (error) {
-      console.error(error);
-      return Promise.resolve(err(error));
-    }
+    logger.i('driver startTransaction');
+    return Promise.resolve(ok(this));
   }
 
-  private async exec<T>(callback: () => Promise<T> | T): Promise<Result<T>> {
+  private async tryExec<T>(callback: () => Promise<T> | T): Promise<Result<T>> {
     try {
       return ok(await callback());
     } catch (error) {
@@ -95,15 +90,9 @@ export class SqliteAdapter implements DriverAdapter, Transaction {
     }
   }
 
-  queryRaw(params: Query): Promise<Result<ResultSet>> {
-    console.log('queryRaw', params);
-    return this.exec(() => {
-      const formatArgs = params.args.map(item => {
-        if (typeof item === 'boolean') {
-          return +item;
-        }
-        return item;
-      });
+  async queryRaw(params: Query): Promise<Result<ResultSet>> {
+    const result = await this.tryExec(() => {
+      const formatArgs = params.args.map(convertArg);
       const stm = this.db.prepare(params.sql).bind(formatArgs);
       const results = stm.raw().all() as any[][];
       const columns = stm.columns();
@@ -122,17 +111,21 @@ export class SqliteAdapter implements DriverAdapter, Transaction {
         rows
       };
     });
+    Promise.resolve().then(() => {
+      this.emit('query', { ...params, success: result.ok });
+    });
+    return result;
   }
-  executeRaw(params: Query): Promise<Result<number>> {
-    return this.exec(() => {
-      const formatArgs = params.args.map(item => {
-        if (typeof item === 'boolean') {
-          return +item;
-        }
-        return item;
-      });
+
+  async executeRaw(params: Query): Promise<Result<number>> {
+    const result = await this.tryExec(() => {
+      const formatArgs = params.args.map(convertArg);
       const result = this.db.prepare(params.sql).run(formatArgs);
       return result.changes;
     });
+    Promise.resolve().then(() => {
+      this.emit('query', { ...params, sucess: result.ok });
+    });
+    return result;
   }
 }

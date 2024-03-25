@@ -10,7 +10,7 @@ if (import.meta.env.MODE === 'indexeddb') {
 
 export const documentService = service.documentService
 export const configService = service.configService
-export const attributeService = service.configService
+export const attributeService = service.attributeService
 export const fileService = service.fileService
 
 window.addEventListener('error', (event) => {

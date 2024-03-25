@@ -1,18 +1,22 @@
 import { PrismaClient } from '@prisma/client';
 import path from 'node:path';
+import { SqliteAdapter } from './prisma/adapter';
+import { createLogger } from './utils/logger';
+
+const logger = createLogger('prisma');
 
 const dbPath = path.join(__dirname, process.env.DATABASE_URL.replace(/^file:/, ''));
 
 console.log('prisma dbPath', dbPath);
 
-export const prisma = new PrismaClient({
-  log: [
-    { level: 'query', emit: 'event' },
-  ],
+const adapter = new SqliteAdapter(dbPath);
+
+adapter.on('query', (event) => {
+  logger.i('query', event.sql, event.args, event.success);
 });
 
-prisma.$on('query', (event) => {
-  console.log('query', event);
+export const prisma = new PrismaClient({
+  adapter,
 });
 
 const init = async () => {
