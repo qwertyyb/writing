@@ -8,4 +8,4 @@ export const createRes = <D>(data: D, errCode = 0, errMsg = 'ok') => ({
   data,
 });
 
-export const dbhash = () => execSync(path.join(__filename, '../../bin/dbhash') + ' ' + dbPath, { encoding: 'utf-8' });
+export const dbhash = () => execSync(path.join(__filename, '../../../bin/dbhash') + ' ' + dbPath, { encoding: 'utf-8' }).split(' ')?.[0] || '';

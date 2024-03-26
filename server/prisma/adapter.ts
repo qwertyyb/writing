@@ -11,6 +11,7 @@ import { err, ok, ColumnTypeEnum } from '@prisma/driver-adapter-utils';
 import SQLite from 'better-sqlite3';
 import { EventEmitter } from 'node:events';
 import { createLogger } from '../utils/logger';
+import { dbPath } from '../const';
 
 const logger = createLogger('adapter');
 
@@ -59,14 +60,23 @@ const convertArg = (arg: number | boolean | string | null) => {
 
 export class SqliteAdapter extends EventEmitter implements DriverAdapter, Transaction {
   readonly provider: 'mysql' | 'postgres' | 'sqlite' = 'sqlite';
-  readonly db: SQLite.Database;
+  db: SQLite.Database;
   options: TransactionOptions = {
     usePhantomQuery: false
   };
-  constructor(filename: string, options?: SQLite.Options) {
+  constructor(private filename: string, private sqliteOptions?: SQLite.Options) {
     super();
-    this.db = new SQLite(filename, options);
+    this.db = new SQLite(filename, sqliteOptions);
   }
+
+  connect = () => {
+    this.disconnect();
+    this.db = new SQLite(this.filename, this.sqliteOptions);
+  };
+
+  disconnect = () => {
+    this.db.close();
+  };
 
   commit(): Promise<Result<void>> {
     logger.i('driver commit');
@@ -111,9 +121,7 @@ export class SqliteAdapter extends EventEmitter implements DriverAdapter, Transa
         rows
       };
     });
-    Promise.resolve().then(() => {
-      this.emit('query', { ...params, success: result.ok });
-    });
+    this.emit('query', { ...params, success: result.ok });
     return result;
   }
 
@@ -123,9 +131,9 @@ export class SqliteAdapter extends EventEmitter implements DriverAdapter, Transa
       const result = this.db.prepare(params.sql).run(formatArgs);
       return result.changes;
     });
-    Promise.resolve().then(() => {
-      this.emit('query', { ...params, success: result.ok });
-    });
+    this.emit('query', { ...params, success: result.ok });
     return result;
   }
 }
+
+export const adapter = new SqliteAdapter(dbPath);

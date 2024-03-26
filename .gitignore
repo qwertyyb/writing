@@ -1,4 +1,6 @@
 node_modules
 dist
+data
+remote-data
 .DS_Store
 .vscode

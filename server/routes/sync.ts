@@ -1,36 +1,37 @@
 import KoaRouter from '@koa/router';
-import { needAuth } from '../middlewares/auth';
+// import { needAuth } from '../middlewares/auth';
 import { createRes } from '../utils';
-import { SyncService } from '../service/sync';
 import { SQLHistory } from '@prisma/client';
-
-const syncService = new SyncService();
+import type { File } from 'formidable';
+import { localService } from '../service/sync';
 
 const router = new KoaRouter({ prefix: '/api/v1/sync' });
 
-router.use(needAuth);
+// router.use(needAuth);
 
 interface PostBody {
-  type: 'send' | 'backup' | 'file',
+  type: 'push' | 'backup' | 'file',
   records?: SQLHistory[],
   file?: File
 }
 
 router
   .get('/endpoint', async (ctx) => {
-    ctx.body = createRes(await syncService.getLatest());
+    ctx.body = createRes(await localService.getLatest());
   })
   .post('/endpoint', async (ctx) => {
-    const { type, records, file } = ctx.body as PostBody;
+    const { type, records } = ctx.request.body as PostBody;
     if (type === 'backup') {
-      // @todo 备份当前数据库
+      ctx.body = createRes(await localService.backup());
       return;
     }
     if (type === 'file') {
-      // @todo 替换当前数据文件
+      ctx.body = createRes(await localService.replace(ctx.request.files?.file as File));
       return;
     }
-    if (type === 'send' && records) {
-      await syncService.recv(records);
+    if (type === 'push' && records) {
+      ctx.body = createRes(await localService.recv(records));
     }
   });
+
+export default router;

@@ -1,4 +1,7 @@
 import path from 'path';
+import { createLogger } from './utils/logger';
+
+const logger = createLogger('const');
 
 export const RP_NAME = 'writing webauthn';
 export const RP_ID = 'localhost';
@@ -14,4 +17,16 @@ export enum ConfigKey {
   WebauthnAuthenticators = 'WebAuthnAuthenticators',
 }
 
-export const dbPath = path.join(__dirname, process.env.DATABASE_URL.replace(/^file:/, ''));
+export const PORT = process.env.PORT || 4000;
+
+export const rootPath = path.resolve(__dirname, '../');
+
+export const schemaPath = path.join(rootPath, './prisma');
+
+export const dbPath = path.join(schemaPath, process.env.DATABASE_URL.replace(/^file:/, ''));
+
+export const backupPath = path.join(rootPath, process.env.BACKUP_PATH);
+
+export const ENDPOINT = process.env.ENDPOINT;
+
+logger.i('path', { rootPath, dbPath, backupPath });

@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node dist/index.js",
     "build": "ncc build server/app.ts -o dist && mv dist/client/* dist/",
-    "lint": "eslint --ext .js,.vue,.ts --fix server packages"
+    "lint": "eslint --ext .js,.vue,.ts --fix server packages",
+    "migrate:remote": "DATABASE_URL=file:../remote-data/sqlite.db prisma migrate dev"
   },
   "keywords": [],
   "author": "",
@@ -20,13 +21,16 @@
     "better-sqlite3": "^9.4.3",
     "jose": "^5.2.2",
     "koa": "^2.15.0",
+    "koa-accesslog": "^1.0.0",
     "koa-body": "^6.0.1",
     "koa-files": "^2.3.8",
+    "koa-logger": "^3.2.1",
     "koa-send": "^5.0.1"
   },
   "devDependencies": {
     "@prisma/client": "5.11.0",
     "@types/better-sqlite3": "^7.6.9",
+    "@types/formidable": "^3.4.5",
     "@types/koa": "^2.14.0",
     "@types/koa__router": "^12.0.4",
     "@types/node": "^20.11.7",
