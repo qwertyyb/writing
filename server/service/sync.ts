@@ -12,7 +12,9 @@ import type { File } from 'formidable';
 
 const logger = createLogger('endpoint');
 
-const request = axios.create();
+const request = axios.create({
+  url: ENDPOINT
+});
 
 request.interceptors.response.use(response => {
   const { data } = response;
@@ -54,18 +56,6 @@ class EndpointService {
     const { data: records } = await request.post(ENDPOINT, { type: 'between', from, to });
     return records;
   };
-  
-  // 把本地的records推到远程，让远程进行同步
-  push = async (records: {
-    id: number,
-    createdAt: string,
-    updatedAt: string,
-    sql: string,
-    params: string,
-    checksum: string
-  }[]) => {
-    return request.post(ENDPOINT, { type: 'push', records });
-  };
 }
 
 
@@ -100,8 +90,6 @@ class LocalService {
     // 检查远端最新记录
     // @todo 鉴权
     const remoteRecord = await endpointService.getLatest();
-    remoteRecord.createdAt = new Date(remoteRecord.createdAt);
-
     logger.i('local and remote: ', latest, remoteRecord);
 
     if (remoteRecord.createdAt.getTime() > lastOperateTime) {
@@ -128,7 +116,7 @@ class LocalService {
 
       if (records.length) {
         // 把records发给远端，让远端执行并同步
-        await endpointService.push(records);
+        await this.push(records);
         return;
       }
 
@@ -173,6 +161,17 @@ class LocalService {
       await prisma.$connect();
       this.db = new Database(dbPath);
     });
+  };
+  // 把本地的records推到远程，让远程进行同步
+  push = async (records: {
+    id: number,
+    createdAt: string,
+    updatedAt: string,
+    sql: string,
+    params: string,
+    checksum: string
+  }[]) => {
+    return request.post(ENDPOINT, { type: 'push', records });
   };
   private getRecordsBetween = async (
     from: Omit<SQLHistory, 'params' | 'sql'>,
@@ -220,12 +219,16 @@ class LocalService {
 class SyncTaskService {
   timeout: ReturnType<typeof setTimeout>;
 
-  constructor(private interval = 60 * 1000) { }
+  constructor(private interval = 10 * 1000) { }
 
   start = async () => {
     logger.i('start:', ENDPOINT);
     if (ENDPOINT) {
-      await localService.check();
+      try {
+        await localService.check();
+      } catch (err) {
+        logger.e('同步失败', err);
+      }
       this.timeout = setTimeout(
         () => {
           this.start();
