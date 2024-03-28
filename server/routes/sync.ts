@@ -4,15 +4,23 @@ import { createRes } from '../utils';
 import { SQLHistory } from '@prisma/client';
 import type { File } from 'formidable';
 import { localService } from '../service/sync';
+import { SYNC_KEY } from '../const';
 
 const router = new KoaRouter({ prefix: '/api/v1/sync' });
 
-// router.use(needAuth);
+router.use(async (ctx, next) => {
+  const { key } = ctx.request.query;
+  if (!key || key !== SYNC_KEY) {
+    ctx.body = createRes(null, 403, 'SYNC_KEY不正确,无法同步');
+    return;
+  }
+  await next();
+});
 
 interface PostBody {
-  type: 'push' | 'backup' | 'file',
+  type: 'push' | 'file',
   records?: SQLHistory[],
-  file?: File
+  file?: File,
 }
 
 router
@@ -21,16 +29,13 @@ router
   })
   .post('/endpoint', async (ctx) => {
     const { type, records } = ctx.request.body as PostBody;
-    if (type === 'backup') {
-      ctx.body = createRes(await localService.backup());
-      return;
-    }
-    if (type === 'file') {
+    if (type === 'file' && ctx.request.files?.file) {
       ctx.body = createRes(await localService.replace(ctx.request.files?.file as File));
       return;
     }
     if (type === 'push' && records) {
-      ctx.body = createRes(await localService.recv(records));
+      const success = await localService.recv(records);
+      ctx.body = createRes({ success });
     }
   });
 

@@ -29,4 +29,6 @@ export const backupPath = path.join(rootPath, process.env.BACKUP_PATH);
 
 export const ENDPOINT = process.env.ENDPOINT;
 
+export const SYNC_KEY = process.env.SYNC_KEY;
+
 logger.i('path', { rootPath, dbPath, backupPath });

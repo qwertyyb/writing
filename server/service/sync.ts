@@ -34,9 +34,6 @@ class EndpointService {
       updatedAt: new Date(record.updatedAt),
     };
   };
-  backup = async () => {
-    return request.post(ENDPOINT, { type: 'backup' });
-  };
   replace = async () => {
     const formData = new FormData();
     formData.append('type', 'file');
@@ -61,9 +58,7 @@ class EndpointService {
 
 enum SyncState {
   Idle = 0,
-  Sending = 1,
   Recving = 2,
-  Backuping = 3,
   Replacing = 4
 }
 
@@ -103,8 +98,7 @@ class LocalService {
       if (records.length) {
         return this.recv(records);
       }
-      // 备份远端文件，并把整个文件传给远端
-      await endpointService.backup();
+      // 把整个文件传给远端
       await endpointService.replace();
       return;
     }
@@ -120,8 +114,7 @@ class LocalService {
         return;
       }
 
-      // 不匹配的数据，备份远端数据，然后把本地文件同步到远端
-      await endpointService.backup();
+      // 不匹配的数据，把本地文件同步到远端
       await endpointService.replace();
       return;
     }
@@ -134,27 +127,24 @@ class LocalService {
         this.db.prepare(sql).run(JSON.parse(params));
         const resultsum = dbhash();
         if (resultsum !== checksum) {
-          throw new Error(`同步失败, hash不一致, expect: ${checksum}, received: ${resultsum}`);
+          logger.e(`同步失败, hash不一致, expect: ${checksum}, received: ${resultsum}`);
+          return false;
         }
         await prisma.sQLHistory.create({
           data: records[i]
         });
       }
-    });
-  };
-
-  backup = async () => {
-    logger.i('backup');
-    return this.run(SyncState.Backuping, async () => {
-      const dbName = new Date().toISOString() + '.db';
-      await this.db.backup(path.join(backupPath, dbName));
+      return true;
     });
   };
 
   replace = async (file: File) => {
     logger.i('replace');
     return this.run(SyncState.Replacing, async () => {
+      const dbName = new Date().toISOString() + '.db';
+      await this.db.backup(path.join(backupPath, dbName));
       adapter.disconnect();
+      this.db.close();
       await prisma.$disconnect();
       copyFileSync(file.filepath, dbPath);
       adapter.connect();
@@ -165,13 +155,17 @@ class LocalService {
   // 把本地的records推到远程，让远程进行同步
   push = async (records: {
     id: number,
-    createdAt: string,
-    updatedAt: string,
+    createdAt: string | Date,
+    updatedAt: string | Date,
     sql: string,
     params: string,
     checksum: string
   }[]) => {
-    return request.post(ENDPOINT, { type: 'push', records });
+    const { data } = await request.post(ENDPOINT, { type: 'push', records });
+    if (!data.success) {
+      // 远程执行SQL失败了，把整个文件推上去
+      await endpointService.replace();
+    }
   };
   private getRecordsBetween = async (
     from: Omit<SQLHistory, 'params' | 'sql'>,
@@ -203,7 +197,7 @@ class LocalService {
       throw new Error('cant run when state is ' + this.state);
     }
   };
-  private run = async (state: SyncState, exec: () => Promise<void> | void) => {
+  private run = async <T>(state: SyncState, exec: () => Promise<T> | T) => {
     this.checkState();
     this.state = state;
     try {
@@ -219,7 +213,7 @@ class LocalService {
 class SyncTaskService {
   timeout: ReturnType<typeof setTimeout>;
 
-  constructor(private interval = 10 * 1000) { }
+  constructor(private interval = 10 * 60 * 1000) { }
 
   start = async () => {
     logger.i('start:', ENDPOINT);

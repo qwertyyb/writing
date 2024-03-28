@@ -3,12 +3,13 @@ import { adapter } from './prisma/adapter';
 import { createLogger } from './utils/logger';
 import { dbPath } from './const';
 import { dbhash } from './utils';
+import { localService } from './service/sync';
 
 const logger = createLogger('prisma');
 
 console.log('prisma dbPath', dbPath);
 
-adapter.on('query', (event) => {
+adapter.on('query', async (event) => {
   if (!event.success) return;
   if (event.sql.includes('`SQLHistory`')) return;
   const isUpdate = ['insert ', 'update ', 'delete ', 'alter '].some(item => event.sql.toLowerCase().includes(item));
@@ -22,10 +23,8 @@ adapter.on('query', (event) => {
     logger.i('dbhash after', dbhash());
   }, 400);
   // @todo buffer数据的存储需要再瞅瞅
-  prisma.sQLHistory.create({ data: { sql: event.sql, params: JSON.stringify(event.args), checksum: dbhash() } })
-    .then(res => {
-      console.log(res);
-    });
+  const record = await prisma.sQLHistory.create({ data: { sql: event.sql, params: JSON.stringify(event.args), checksum: dbhash() } });
+  return localService.push([record]);
 });
 
 export const prisma = new PrismaClient({
