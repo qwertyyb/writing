@@ -2,7 +2,6 @@ import { PrismaClient } from '@prisma/client';
 import { adapter } from './prisma/adapter';
 import { createLogger } from './utils/logger';
 import { dbPath } from './const';
-import { dbhash } from './utils';
 import { localService } from './service/sync';
 
 const logger = createLogger('prisma');
@@ -14,17 +13,9 @@ adapter.on('query', async (event) => {
   if (event.sql.includes('`SQLHistory`')) return;
   const isUpdate = ['insert ', 'update ', 'delete ', 'alter '].some(item => event.sql.toLowerCase().includes(item));
   if (!isUpdate) return;
+
   logger.i('query', event);
-  logger.i('dbhash', dbhash());
-  Promise.resolve().then(() => {
-    logger.i('dbhash promise', dbhash());
-  });
-  setTimeout(() => {
-    logger.i('dbhash after', dbhash());
-  }, 400);
-  // @todo buffer数据的存储需要再瞅瞅
-  const record = await prisma.sQLHistory.create({ data: { sql: event.sql, params: JSON.stringify(event.args), checksum: dbhash() } });
-  return localService.push([record]);
+  return localService.query({ sql: event.sql, args: event.args });
 });
 
 export const prisma = new PrismaClient({

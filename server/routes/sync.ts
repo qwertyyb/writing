@@ -5,6 +5,9 @@ import { SQLHistory } from '@prisma/client';
 import type { File } from 'formidable';
 import { localService } from '../service/sync';
 import { SYNC_KEY } from '../const';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('SyncRouter');
 
 const router = new KoaRouter({ prefix: '/api/v1/sync' });
 
@@ -29,6 +32,7 @@ router
   })
   .post('/endpoint', async (ctx) => {
     const { type, records } = ctx.request.body as PostBody;
+    logger.i('operate', type);
     if (type === 'file' && ctx.request.files?.file) {
       ctx.body = createRes(await localService.replace(ctx.request.files?.file as File));
       return;

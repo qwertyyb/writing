@@ -83,7 +83,6 @@ class LocalService {
     const latest = await this.getLatest();
     const lastOperateTime = latest?.createdAt.getTime() ?? 0;
     // 检查远端最新记录
-    // @todo 鉴权
     const remoteRecord = await endpointService.getLatest();
     logger.i('local and remote: ', latest, remoteRecord);
 
@@ -134,12 +133,19 @@ class LocalService {
           data: records[i]
         });
       }
+      await prisma.sQLHistory.deleteMany({
+        where: {
+          id: {
+            lte: Math.max(...records.map(item => item.id))
+          }
+        }
+      });
       return true;
     });
   };
 
   replace = async (file: File) => {
-    logger.i('replace');
+    logger.w('replace');
     return this.run(SyncState.Replacing, async () => {
       const dbName = new Date().toISOString() + '.db';
       await this.db.backup(path.join(backupPath, dbName));
@@ -162,10 +168,31 @@ class LocalService {
     checksum: string
   }[]) => {
     const { data } = await request.post(ENDPOINT, { type: 'push', records });
+    if (data.success) {
+      // 远程执行成功，删除此记录及之前的记录
+      await prisma.sQLHistory.deleteMany({
+        where: {
+          id: {
+            lte: Math.max(...records.map(item => item.id))
+          }
+        }
+      });
+      return;
+    }
     if (!data.success) {
       // 远程执行SQL失败了，把整个文件推上去
       await endpointService.replace();
     }
+  };
+  query = (event: { sql: string, args: any[] }) => {
+    if (!ENDPOINT) return;
+
+    const checksum = dbhash();
+    return prisma.sQLHistory
+      .create({ data: { sql: event.sql, params: JSON.stringify(event.args), checksum } })
+      .then((record) => {
+        this.push([record]);
+      });
   };
   private getRecordsBetween = async (
     from: Omit<SQLHistory, 'params' | 'sql'>,
@@ -201,8 +228,9 @@ class LocalService {
     this.checkState();
     this.state = state;
     try {
-      await exec();
+      const result = await exec();
       this.state = SyncState.Idle;
+      return result;
     } catch (err) {
       this.state = SyncState.Idle;
       throw err;
