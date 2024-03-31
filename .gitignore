@@ -4,3 +4,5 @@ data
 remote-data
 .DS_Store
 .vscode
+.env.local
+.env.*.local

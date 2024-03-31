@@ -11,7 +11,9 @@ export const apiFetch = async <D extends any>(...args: Parameters<typeof fetch>)
   let response: Response | null = null
   try {
     const token = localStorage.getItem('token')
-    response = await fetch(args[0], {
+    const path = args[0] as string;
+    const url = new URL(location.href).searchParams.get('remote') === '1' ? path.replace('/api', '/remote') : path
+    response = await fetch(url, {
       ...args[1],
       headers: {
         ...args[1]?.headers,

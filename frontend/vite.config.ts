@@ -19,7 +19,14 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api': 'http://localhost:4000'
+      '/api': 'http://localhost:4000',
+      '/remote': {
+        target: 'http://localhost:4100',
+        changeOrigin: true,
+        rewrite(path) {
+          return path.replace('/remote', '/api')
+        },
+      }
     },
   }
 })

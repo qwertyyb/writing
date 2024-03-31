@@ -1,18 +1,22 @@
+import { createServer } from 'node:http';
 import Koa from 'koa';
 import { koaBody } from 'koa-body';
 import send from 'koa-send';
 import koaLogger from 'koa-logger';
 import { useRouter } from './routes';
-// import { fallback } from './middlewares/404';
+import { fallback } from './middlewares/404';
 import path from 'path';
 import { PORT } from './const';
-import { syncTaskService } from './service/sync';
+import { createLogger } from './utils/logger';
+import { io } from './routes/socket.io';
+
+const logger = createLogger('app');
 
 const app = new Koa();
 
 app.use(koaLogger());
 
-// app.use(fallback);
+app.use(fallback);
 
 app.use(koaBody({
   multipart: true,
@@ -39,7 +43,13 @@ app.use(async (ctx) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log('server start on port:', PORT);
-  syncTaskService.start();
+const httpServer = createServer(app.callback());
+
+io.listen(httpServer, {
+  path: '/api/v1/sync/socket.io',
+  maxHttpBufferSize: 1e8 // 100MB
+});
+
+httpServer.listen(PORT, () => {
+  logger.i('server start on port: ', PORT);
 });

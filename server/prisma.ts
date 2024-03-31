@@ -2,7 +2,8 @@ import { PrismaClient } from '@prisma/client';
 import { adapter } from './prisma/adapter';
 import { createLogger } from './utils/logger';
 import { dbPath } from './const';
-import { localService } from './service/sync';
+import { realTimeService } from './service/RealTimeService';
+import { dbhash } from './utils';
 
 const logger = createLogger('prisma');
 
@@ -15,7 +16,10 @@ adapter.on('query', async (event) => {
   if (!isUpdate) return;
 
   logger.i('query', event);
-  return localService.query({ sql: event.sql, args: event.args });
+  return realTimeService.query({ sql: event.sql, args: event.args, hash: dbhash(), time: new Date() })
+    .catch(err => {
+      logger.e('realTimeService query failed', err);
+    });
 });
 
 export const prisma = new PrismaClient({

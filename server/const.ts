@@ -31,4 +31,6 @@ export const ENDPOINT = process.env.ENDPOINT;
 
 export const SYNC_KEY = process.env.SYNC_KEY;
 
+export const SYNC_TEMP_FILE = path.join(rootPath, './data/sync.json');
+
 logger.i('path', { rootPath, dbPath, backupPath });
