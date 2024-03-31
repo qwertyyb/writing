@@ -8,7 +8,6 @@ import { fallback } from './middlewares/404';
 import path from 'path';
 import { PORT } from './const';
 import { createLogger } from './utils/logger';
-import { io } from './routes/socket.io';
 
 const logger = createLogger('app');
 
@@ -44,11 +43,6 @@ app.use(async (ctx) => {
 });
 
 const httpServer = createServer(app.callback());
-
-io.listen(httpServer, {
-  path: '/api/v1/sync/socket.io',
-  maxHttpBufferSize: 1e8 // 100MB
-});
 
 httpServer.listen(PORT, () => {
   logger.i('server start on port: ', PORT);
