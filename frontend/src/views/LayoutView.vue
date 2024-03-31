@@ -52,6 +52,7 @@ import ColumnContainer from '@/components/ColumnContainer.vue';
 import SearchByTitle from '../components/SearchByTitle.vue';
 import { ref } from 'vue';
 import { useRoute } from 'vue-router';
+import { ElMessageBox } from 'element-plus';
 
 const logger = createLogger('LayoutView')
 
@@ -97,6 +98,11 @@ const locateEditing = () => {
   })
 }
 const logout = async () => {
+  await ElMessageBox.confirm('确认退出登录？', {
+    type: 'warning',
+    cancelButtonText: '取消',
+    confirmButtonText: '退出登录'
+  })
   const { useAuthStore } = await import('@/stores/auth')
   useAuthStore().logout()
   router.push({ name: 'auth' })

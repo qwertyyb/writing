@@ -3,7 +3,7 @@ import { documentService, attributeService } from "@/services";
 import { type Attribute, type Document } from '@/services/types';
 import { createLogger } from "@writing/utils/logger";
 import type { BlockModel } from "@writing/editor/block";
-import { ElMessageBox } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import { defineStore } from "pinia";
 
 const logger = createLogger('document-store')
@@ -153,6 +153,10 @@ export const useDocumentStore = defineStore('document', {
       updates.length && await documentService.updateMany(updates)
     },
     async remove(node: DocumentItem) {
+      if (node.path === '') {
+        ElMessage({ message: '根文档无法删除', type: 'error' })
+        return
+      }
       if (node.children.length) {
         await ElMessageBox.confirm(
           '删除此文档也将删除其子文档，是否确认删除？',

@@ -46,7 +46,7 @@ const update = (values: { title: string }) => {
   outline: none;
   font-size: var(--document-editor-title-font-size, 36px);
   margin: var(--document-editor-title-margin);
-  width: 100%;
+  width: -webkit-fill-available;
   font-weight: var(--document-editor-title-font-weight, bolder);
   color: var(--document-editor-title-color, #000);
   &:disabled {
