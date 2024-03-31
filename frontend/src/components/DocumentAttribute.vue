@@ -43,5 +43,8 @@ const changeHandler = async (shared: boolean) => {
 .form-item-content {
   display: flex;
   flex-direction: column;
+  .share-link {
+    word-break: break-all;
+  }
 }
 </style>

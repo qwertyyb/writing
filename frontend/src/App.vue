@@ -14,5 +14,12 @@ html, body, #app {
 :root {
   --animate-duration: 400ms;
   --animate-delay: 0;
+
+}
+
+@media screen and (max-width: 540px) {
+  body .el-dialog {
+    --el-dialog-width: 80vw;
+  }
 }
 </style>
