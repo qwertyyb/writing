@@ -21,7 +21,8 @@ const logger = createLogger('DocTree')
 const props = defineProps<{
   tree: TreeNodeModel,
   expandedIdMap?: Record<number | string, boolean>,
-  selectedId?: number | string
+  selectedId?: number | string,
+  hoistId?: number
 }>()
 
 const emits = defineEmits<{
@@ -29,7 +30,9 @@ const emits = defineEmits<{
   select: [node: TreeNodeModel],
   toggleExpand: [node: TreeNodeModel],
   remove: [node: TreeNodeModel],
-  move: [params: { sourceId: number, sourceIndexPath: number[], toId: number, toIndexPath: number[], position: 'before' | 'after' | 'inside' }],
+  move: [params: { sourceId: number, sourceIndexPath: number[], toId: number, toIndexPath: number[],
+    position: 'before' | 'after' | 'inside' }],
+  hoist: [node: TreeNodeModel],
   'update:tree': [TreeNodeModel],
 }>()
 
@@ -39,6 +42,7 @@ const nodeUpdateHandler = (node: TreeNodeModel) => {
 
 provide('treeSelectedId', computed(() => props.selectedId))
 provide('treeExpandedIdMap', computed(() => props.expandedIdMap))
+provide('treeHoistId', computed(() => props.hoistId))
 provide('tree', emits)
 
 const { pointerdownHandler, pointermoveHandler, pointerupHandler } = useMovable(({ source, target, position }) => {

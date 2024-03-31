@@ -20,6 +20,8 @@
             @toggleExpand="node => documentStore.toggleExpand(node.id)"
             @remove="documentStore.remove"
             @move="documentStore.move"
+            @hoist="documentStore.hoist"
+            :hoistId="documentStore.hoistId"
             :selectedId="documentStore.editing?.id"
             :expandedIdMap="documentStore.expandedIdMap"
           ></document-tree>
@@ -64,7 +66,7 @@ const runtimeStore = useRuntime()
 const documentStore = useDocumentStore()
 const route = useRoute()
 
-documentStore.getList()
+documentStore.refresh()
 
 runtimeStore.refresh()
   .then(() => {

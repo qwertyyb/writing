@@ -1,5 +1,5 @@
 import { createEditingDocument } from "@/models/block";
-import { documentService, attributeService } from "@/services";
+import { documentService, attributeService, configService } from "@/services";
 import { type Attribute, type Document } from '@/services/types';
 import { createLogger } from "@writing/utils/logger";
 import type { BlockModel } from "@writing/editor/block";
@@ -53,28 +53,56 @@ const transformContent = (model: BlockModel): BlockModel => {
   }
 }
 
+const getTreeNode = (tree: DocumentItem, hoist: number): DocumentItem | undefined => {
+  if (tree.id === hoist) return tree;
+  return tree.children.find(item => getTreeNode(item, hoist))
+}
+
 export const useDocumentStore = defineStore('document', {
   state: () => ({
     documents: [] as ListItem[],
     editing: null as (EditingDocument | null),
+    hoistId: null as (number | null),
     expandedIdMap: {} as Record<number, boolean>
   }),
   getters: {
     tree(): DocumentItem | null {
       const root = getRoot(this.documents)
       if (!root) return null
-      return {
+      const wholeTree = {
         ...root,
         children: buildTree(this.documents, `${root.path}/${root.id}`, null)
       }
+      if (!this.hoistId) return wholeTree
+      return getTreeNode(wholeTree, this.hoistId) ?? wholeTree
     }
   },
   actions: {
-    async getList(): Promise<void> {
-      const { data: { list: documents } } = await documentService.findMany()
+    async refresh() {
+      const [
+        { data: { list: documents } },
+        hoistId
+      ] = await Promise.all([
+        documentService.findMany(),
+        configService.getValue('hoist')
+      ])
       this.documents = documents
+      this.hoistId = hoistId ? Number(hoistId) : null
       this.expandAll()
     },
+    hoist(node: DocumentItem) {
+      if (this.hoistId === node.id) {
+        this.hoistId = null
+      } else {
+        this.hoistId = node.id
+      }
+      configService.setValue('hoist', this.hoistId ? this.hoistId.toString() : null)
+    },
+    // async getList(): Promise<void> {
+    //   const { data: { list: documents } } = await documentService.findMany()
+    //   this.documents = documents
+    //   this.expandAll()
+    // },
     moveToTarget(source: ListItem, target: ListItem, position: 'before' | 'after' | 'inside') {
       const updates: { id: number, path: string, nextId: number | null }[] = []
       if (position === 'after') {

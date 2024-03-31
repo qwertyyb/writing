@@ -2,7 +2,7 @@ import type { Config } from "../types"
 import { db } from "./db"
 
 class ConfigService {
-  setValue = (key: string, value: string) => {
+  setValue = (key: string, value: string | null) => {
     return db.config.where({ key }).modify({ value })
   }
   getValue = async (key: string) => {

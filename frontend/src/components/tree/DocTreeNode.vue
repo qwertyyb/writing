@@ -30,12 +30,14 @@
       <div class="tree-action">
         <span class="material-symbols-outlined add-action" title="添加" @click.stop="addChild">add</span>
         <el-dropdown trigger="click">
-          <span class="material-symbols-outlined more-acto" title="更多操作">more_vert</span>
+          <span class="material-symbols-outlined more-acto" title="更多操作" @click.stop>more_vert</span>
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item :icon="Plus" @click.stop="addBefore">在上方插入</el-dropdown-item>
               <el-dropdown-item :icon="Plus" @click.stop="addAfter">在下方插入</el-dropdown-item>
               <el-dropdown-item :icon="Delete" @click.stop="remove">删除文档</el-dropdown-item>
+              <el-dropdown-item :icon="Filter" @click.stop="hoist"
+                :style="{color: node.id === treeHoistId ? '#409EFF': undefined}">only show</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -57,7 +59,7 @@
 <script lang="ts" setup>
 import { computed, inject, type ComputedRef } from 'vue';
 import type { TreeNodeModel } from './types';
-import { Delete, Plus } from '@element-plus/icons-vue'
+import { Delete, Plus, Filter } from '@element-plus/icons-vue'
 
 const props = withDefaults(defineProps<{
   node: TreeNodeModel,
@@ -72,10 +74,12 @@ const treeEmits = inject<
 & ((evt: 'select', node: TreeNodeModel) => void)
 & ((evt: 'toggleExpand', node: TreeNodeModel) => void)
 & ((evt: 'remove', node: TreeNodeModel) => void)
+& ((evt: 'hoist', node: TreeNodeModel) => void)
 >('tree')
 
 const treeExpandedState = inject<ComputedRef<Record<string, boolean>>>('treeExpandedIdMap')
 const treeSelectedId = inject<ComputedRef<number | string>>('treeSelectedId')
+const treeHoistId = inject<number | null>('treeHoistId')
 
 const selected = computed(() => treeSelectedId?.value === props.node.id)
 const expanded = computed(() => treeExpandedState?.value[props.node.id])
@@ -103,6 +107,10 @@ const select = () => {
 
 const remove = () => {
   treeEmits?.('remove', props.node)
+}
+
+const hoist = () => {
+  treeEmits?.('hoist', props.node)
 }
 
 const onAnimEnter = (el: Element) => {

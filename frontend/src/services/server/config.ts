@@ -1,7 +1,7 @@
 import { apiFetch } from "./fetch";
 
 class ConfigService {
-  setValue = (key: string, value: string) => apiFetch<{ value: string }>('/api/v1/config/update', {
+  setValue = (key: string, value: string | null) => apiFetch<{ value: string }>('/api/v1/config/update', {
     method: 'POST',
     headers: {
       'content-type': 'application/json'
