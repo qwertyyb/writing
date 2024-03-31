@@ -139,12 +139,7 @@ export class LocalService {
       // 不匹配的checksum，返回空数组
       return [];
     }
-    return records.slice(1).map(item => {
-      return {
-        ...item,
-        time: new Date(item.time)
-      };
-    });
+    return records.slice(1);
   };
   private checkState = () => {
     if (this.state !== SyncState.Idle) {

@@ -31,7 +31,9 @@ export class EndpointService {
       logger.e('connect error', err.message);
     });
     client.on('query', async (event, callback) => {
+      logger.i('query from remote', event);
       const success = await localService.recv(event);
+      logger.i('query from remote result', success);
       callback?.({ success });
     });
 

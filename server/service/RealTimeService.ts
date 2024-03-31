@@ -24,7 +24,14 @@ export class RealTimeSyncService {
   }
 
   query = (event: QueryEvent) => {
-    if (!ENDPOINT) return;
+    if (!ENDPOINT) {
+      this.chain = this.chain.then(async () => {
+        // 作为服务端向客户端发送消息
+        logger.i('query to client sockets', (await io.to('sync').fetchSockets()).map(item => item.id));
+        io.to('sync').emit('query', [SyncStorage.serialize(event)]);
+      });
+      return this.chain;
+    }
 
     this.queue.push(event);
     this.writeToFile();
@@ -32,10 +39,11 @@ export class RealTimeSyncService {
     this.chain = this.chain.then(async () => {
       logger.i('query start', event.sql);
       // 作为服务端向客户端发送消息
-      io.to('sync').emit('query', event);
+      logger.i('query to client sockets', (await io.to('sync').fetchSockets()).map(item => item.id));
+      io.to('sync').emit('query', [SyncStorage.serialize(event)]);
 
       // 作为客户端向服务端推送消息
-      const data = await endpointService.query([event]);
+      const data = await endpointService.query([SyncStorage.serialize(event)]);
       logger.i('query end', data);
       if (data.success) {
         // 远程执行成功，从队列中移除

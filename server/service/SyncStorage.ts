@@ -11,13 +11,20 @@ export class SyncStorage {
       return val;
     });
   };
+  static serialize = (event: QueryEvent): QueryEventJSON => {
+    return {
+      ...event,
+      time: event.time.toISOString(),
+      args: JSON.stringify(event.args)
+    };
+  };
 
   getData = (): QueryEventJSON[] => {
     if (!existsSync(SYNC_TEMP_FILE)) return [];
     return JSON.parse(readFileSync(SYNC_TEMP_FILE, 'utf-8'));
   };
   setData = (data: QueryEvent[]) => {
-    return writeFileSync(SYNC_TEMP_FILE, JSON.stringify(data), 'utf-8');
+    return writeFileSync(SYNC_TEMP_FILE, JSON.stringify(data.map(item => SyncStorage.serialize(item))), 'utf-8');
   };
 }
 
