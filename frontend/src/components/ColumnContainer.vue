@@ -98,7 +98,7 @@ const pointerupHandler = (event: PointerEvent) => {
     .open-side-icon {
       position: absolute;
       left: 16px;
-      top: 20px;
+      bottom: 20px;
       cursor: pointer;
       border-radius: 4px;
       transition: background .3s, opacity 0.3s;

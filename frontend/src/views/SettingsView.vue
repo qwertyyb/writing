@@ -1,7 +1,7 @@
 <template>
   <div class="settings-view">
     <div class="settings-side">
-      <el-menu class="settings-menu" router :default-active="$route.path">
+      <el-menu class="settings-menu" router :default-active="$route.path" collapse>
         <el-menu-item index="/admin/settings/auth">
           <el-icon><Avatar /></el-icon>
           <template #title>鉴权</template>
