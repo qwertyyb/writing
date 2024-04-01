@@ -52,9 +52,10 @@ import router from '@/router';
 import { useRuntime } from '@/stores/runtime';
 import ColumnContainer from '@/components/ColumnContainer.vue';
 import SearchByTitle from '../components/SearchByTitle.vue';
-import { ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { ElMessageBox } from 'element-plus';
+import { ScreenSize, sizeChange } from '@/utils/resize';
 
 const logger = createLogger('LayoutView')
 
@@ -76,6 +77,17 @@ runtimeStore.refresh()
       params: { id: runtimeStore.settings.recentDocumentId }
     })
   })
+
+let unsize: (() => void) | null
+onMounted(() => {
+  unsize = sizeChange((size) => {
+    sideHidden.value = size === ScreenSize.Small
+  })
+})
+onBeforeUnmount(() => {
+  unsize?.()
+  unsize = null
+})
 
 const selectHandler = async (node: TreeNodeModel) => {
   logger.i('select tree node', node)

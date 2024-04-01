@@ -1,9 +1,11 @@
 <template>
   <div class="settings-view">
     <div class="settings-side">
-      <el-menu class="settings-menu" router :default-active="$route.path" collapse>
+      <el-menu class="settings-menu" router
+        :default-active="$route.path"
+        :collapse="size === ScreenSize.Small">
         <el-menu-item index="/admin/settings/auth">
-          <el-icon><Avatar /></el-icon>
+          <el-icon><Lock /></el-icon>
           <template #title>鉴权</template>
         </el-menu-item>
         <el-menu-item index="/admin/settings/file">
@@ -19,7 +21,11 @@
 </template>
 
 <script lang="ts" setup>
-import { Folder, Avatar } from '@element-plus/icons-vue';
+import { Folder, Lock } from '@element-plus/icons-vue';
+import { useSize } from '@/hooks/useSize';
+import { ScreenSize } from '@/utils/resize';
+
+const { size } = useSize();
 </script>
 
 <style lang="less" scoped>
@@ -27,11 +33,6 @@ import { Folder, Avatar } from '@element-plus/icons-vue';
   display: flex;
   padding: 0 20px 0 0;
   height: 100%;
-  .settings-side {
-    width: 160px;
-    flex: 1;
-    max-width: 240px;
-  }
   .settings-menu {
     height: 100%;
   }
