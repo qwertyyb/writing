@@ -28,6 +28,18 @@ const router = createRouter({
                 path: 'settings',
                 name: 'settings',
                 component: () => import('@/views/SettingsView.vue'),
+                children: [
+                  {
+                    path: 'auth',
+                    name: 'authSettings',
+                    component: () => import('@/views/AuthSettingsView.vue')
+                  },
+                  {
+                    path: 'file',
+                    name: 'fileSettings',
+                    component: () => import('@/views/FileSettingsView.vue')
+                  }
+                ]
               }] : []
             )
           ]

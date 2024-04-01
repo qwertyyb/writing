@@ -101,7 +101,8 @@ const pointerupHandler = (event: PointerEvent) => {
       top: 20px;
       cursor: pointer;
       border-radius: 4px;
-      transition: background .3s, opacity 0.3s;;
+      transition: background .3s, opacity 0.3s;
+      z-index: 1;
       &:hover {
         background: #eee;
         opacity: 1;

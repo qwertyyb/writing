@@ -69,7 +69,7 @@ const route = useRoute()
 documentStore.refresh()
 
 runtimeStore.refresh()
-  .then(() => {
+  .then(async () => {
     if (router.currentRoute.value.name !== 'admin') return;
     router.push({
       name: 'document',

@@ -2,6 +2,8 @@ import KoaRouter from '@koa/router';
 import { readFileSync } from 'node:fs';
 import { prisma } from '../prisma';
 import { needAuth } from '../middlewares/auth';
+import { createRes } from '../utils';
+import { fileService } from '../service/fileService';
 
 const router = new KoaRouter();
 
@@ -35,6 +37,31 @@ router.post('/api/v1/upload', needAuth, async (ctx) => {
       url: `/api/v1/file?name=${encodeURIComponent(data.name)}`,
     },
   };
+});
+
+
+router.get('/api/v1/file/check', async ctx => {
+  const { start, end, mimetype } = ctx.request.query as Partial<{ start: string, end: string, mimetype: string }>;
+  const query: any = { mimetype };
+  start && (query.start = new Date(start));
+  end && (query.end = new Date(end));
+  ctx.body = createRes(await fileService.check(query));
+});
+
+router.post('/api/v1/file/remove', async (ctx) => {
+  const names = ctx.request.body.names as string[];
+  if (!names?.length) {
+    ctx.body = createRes(null, 400, '未传入names参数');
+    return;
+  }
+  const result = await prisma.file.deleteMany({
+    where: {
+      name: {
+        in: names
+      }
+    }
+  });
+  ctx.body = createRes(result);
 });
 
 router.get('/api/v1/file', async (ctx) => {

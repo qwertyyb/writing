@@ -55,7 +55,10 @@ const transformContent = (model: BlockModel): BlockModel => {
 
 const getTreeNode = (tree: DocumentItem, hoist: number): DocumentItem | undefined => {
   if (tree.id === hoist) return tree;
-  return tree.children.find(item => getTreeNode(item, hoist))
+  for(let i = 0; i < tree.children.length; i += 1) {
+    const target = getTreeNode(tree.children[i], hoist)
+    if (target) return target
+  }
 }
 
 export const useDocumentStore = defineStore('document', {
@@ -74,7 +77,8 @@ export const useDocumentStore = defineStore('document', {
         children: buildTree(this.documents, `${root.path}/${root.id}`, null)
       }
       if (!this.hoistId) return wholeTree
-      return getTreeNode(wholeTree, this.hoistId) ?? wholeTree
+      const hoistTree = getTreeNode(wholeTree, this.hoistId)
+      return hoistTree ?? wholeTree
     }
   },
   actions: {
