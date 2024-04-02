@@ -3,7 +3,7 @@
     <text-editor :modelValue="data.ops"
       :readonly="readonly"
       :spellcheck="spellcheck"
-      trigger="/"
+      trigger="Slash"
       @update:modelValue="updateModelValue"
       @keyEnter="enterKeyHandler"
       @keyEsc="closeSelector"

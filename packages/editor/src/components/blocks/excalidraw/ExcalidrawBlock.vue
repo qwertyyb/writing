@@ -26,14 +26,15 @@
     </base-image>
     <el-dialog v-model="editDialogVisible"
       fullscreen
-      title="Excalidraw"
       class="excalidraw-dialog"
       append-to-body
-      :before-close="beforeCloseHandler"
+      @close="beforeCloseHandler"
+      :show-close="false"
       destroy-on-close>
       <excalidraw-editor
         :model-value="excalidrawData"
         :upload-state="uploadState"
+        @close="editDialogVisible=false"
         @update:model-value="updateExcalidrawData"
         ref="editor"></excalidraw-editor>
     </el-dialog>
@@ -137,9 +138,8 @@ const openEditDialog = () => {
   editDialogVisible.value = true;
 };
 
-const beforeCloseHandler = async (done: () => void) => {
+const beforeCloseHandler = async () => {
   const blob = await editor.value?.exportToBlob();
-  done();
   const { url, ratio } = await uploadBlob(blob);
   updateCover({ url, ratio });
 };
@@ -163,9 +163,13 @@ const beforeCloseHandler = async (done: () => void) => {
 .el-dialog.excalidraw-dialog {
   display: flex;
   flex-direction: column;
+  padding: 0;
   & > .el-dialog__body {
     padding: 0;
     flex: 1;
+  }
+  & > header {
+    display: none;
   }
 }
 </style>

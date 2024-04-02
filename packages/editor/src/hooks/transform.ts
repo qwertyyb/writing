@@ -14,7 +14,7 @@ export const transformBlock = (trigger: string, origin: BlockModel, content: Op[
       data: { ops: content }, 
     };
   }
-  if (/^1\.$/.test(trigger)) {
+  if (/^(1|a|A)\.$/.test(trigger)) {
     return {
       id: origin.id,
       type: 'ordered-list',

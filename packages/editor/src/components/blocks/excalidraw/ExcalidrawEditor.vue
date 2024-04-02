@@ -13,6 +13,10 @@ const model = defineModel<{
   files: any
 }>();
 
+const emits = defineEmits<{
+  close: []
+}>();
+
 const { readonly } = useMode();
 
 const el = ref<HTMLDivElement>();
@@ -36,6 +40,17 @@ onMounted(() => {
             initialData: {
               ...model.value,
               scrollToContent: true,
+            },
+            renderTopRightUI: () => {
+              return window.React.createElement(
+                'button',
+                {
+                  className: 'material-symbols-outlined',
+                  style: { border: 'none', borderRadius: '6px' },
+                  onClick: () => { emits('close'); }
+                },
+                'close'
+              );
             },
             onChange: changeHandler,
             langCode: 'zh-CN',

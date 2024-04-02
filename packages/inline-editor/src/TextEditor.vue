@@ -31,7 +31,7 @@ const props = defineProps({
   },
   trigger: {
     type: String,
-    default: '/'
+    default: 'Slash'
   }
 });
 
