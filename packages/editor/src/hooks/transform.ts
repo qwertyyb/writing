@@ -7,14 +7,14 @@ const logger = createLogger('transform');
 
 export const transformBlock = (trigger: string, origin: BlockModel, content: Op[]) => {
   logger.i('transform', trigger, origin);
-  if (/^#{1,6}/.test(trigger)) {
+  if (/^#{1,6}$/.test(trigger)) {
     return {
       id: origin.id,
       type: 'heading' + trigger.length,
-      data: { ops: content } 
+      data: { ops: content }, 
     };
   }
-  if (/^1\./.test(trigger)) {
+  if (/^1\.$/.test(trigger)) {
     return {
       id: origin.id,
       type: 'ordered-list',
@@ -23,7 +23,8 @@ export const transformBlock = (trigger: string, origin: BlockModel, content: Op[
           type: 'text',
           data: {
             ops: content
-          }
+          },
+          children: origin.children || []
         })
       ]
     };
@@ -37,7 +38,8 @@ export const transformBlock = (trigger: string, origin: BlockModel, content: Op[
           type: 'text',
           data: {
             ops: content
-          }
+          },
+          children: origin.children || []
         })
       ]
     };
@@ -51,12 +53,13 @@ export const transformBlock = (trigger: string, origin: BlockModel, content: Op[
           type: 'text',
           data: {
             ops: content
-          }
+          },
+          children: origin.children || []
         })
       ]
     };
   }
-  if (trigger.startsWith('```')) {
+  if (/^```\S*$/.test(trigger)) {
     const language = trigger.substring(3);
     return {
       id: origin.id,
@@ -76,7 +79,8 @@ export const transformBlock = (trigger: string, origin: BlockModel, content: Op[
           type: 'text',
           data: {
             ops: content
-          }
+          },
+          children: origin.children || []
         })
       ]
     };

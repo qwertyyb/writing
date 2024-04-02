@@ -99,45 +99,44 @@ watch(() => props.readonly, () => {
   editor.enable(!props.readonly);
 });
 
-enum KeyCodes {
-  Enter = 'Enter',
-  Backspace = 'Backspace',
-  Escape = 'Escape',
-  Space = 'Space',
-  Tab = 'Tab',
-}
 const keydownHandler = (event: KeyboardEvent) => {
   if (event.isComposing) return;
-  const range = editor!.getSelection(true);
+  const range = editor.getSelection(true);
   if (!range) return;
   const { index: offset, length } = range;
   if (length) return;
-  if (event.code === KeyCodes.Enter) {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    event.stopPropagation();
-    emits('keyEnter', offset);
-  } else if (event.code === KeyCodes.Escape) {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    event.stopPropagation();
-    // 根据当前状态，判断是否要关闭命令选择
-    escapeKeyHandler(event);
-  } else if (event.code === KeyCodes.Backspace) {
-    backspaceKeyHandler(event, offset);
-  } else if (event.key === props.trigger) {
-    // 打开命令选择
-    triggerKeyHandler();
-  } else if (event.code === KeyCodes.Tab && event.shiftKey) {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    event.stopPropagation();
-    emits('keyShiftTab', event);
-  } else if (event.code === KeyCodes.Tab) {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    event.stopPropagation();
-    emits('keyTab', event);
+
+  const modifiers = {
+    Meta: event.metaKey,
+    Shift: event.shiftKey,
+    Alt: event.altKey,
+    Ctrl: event.ctrlKey
+  };
+  const key = [Object.keys(modifiers).filter(modifier => modifiers[modifier]).join('+'), event.code].filter(i => i).join('+');
+
+  logger.i('keydownHandler', key);
+
+  const prevent = (fn: () => void) => {
+    return () => {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      event.stopPropagation();
+      fn();
+      return true;
+    };
+  };
+
+  const keyMap = {
+    Enter: prevent(() => emits('keyEnter', offset)),
+    Escape: prevent(() => escapeKeyHandler(event)),
+    Backspace: () => backspaceKeyHandler(event, offset),
+    [props.trigger]: () => triggerKeyHandler(),
+    Tab: prevent(() => emits('keyTab', event)),
+    'Shift+Tab': prevent(() => emits('keyShiftTab', event)),
+  };
+
+  if (keyMap[key]) {
+    keyMap[key]();
   } else {
     emits('keydown', event, offset);
   }

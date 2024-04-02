@@ -29,7 +29,7 @@ export const focusAfter = () => {
 const focusBlockImmediate = (id: string, pos: 'start' | 'end') => {
   const input: HTMLDivElement | null | undefined = document.body.querySelector<HTMLDivElement>(`[data-block-id=${JSON.stringify(id)}] [data-focusable]`);
   input?.focus();
-  logger.i('focusBlock', input, id);
+  logger.w('focusBlock', input, id);
   if (input) {
     pos === 'end' && moveCaretToEnd(input);
     pos === 'start' && moveCaretToStart(input);

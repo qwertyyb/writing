@@ -270,6 +270,7 @@ const keydownHandler = (event: KeyboardEvent) => {
     multiSelectDeleteHandler();
   }
 };
+
 </script>
 
 <style lang="less" scoped>
