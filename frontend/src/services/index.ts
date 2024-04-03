@@ -1,12 +1,13 @@
 import router from '@/router'
+import * as service from './server'
 import { AuthError } from './types'
 
-let service = null
-if (import.meta.env.MODE === 'indexeddb') {
-  service = await import('./indexeddb')
-} else {
-  service = await import('./server/index')
-}
+// let service = null
+// if (import.meta.env.MODE === 'indexeddb') {
+//   service = await import('./indexeddb')
+// } else {
+//   service = await import('./server/index')
+// }
 
 export const documentService = service.documentService
 export const configService = service.configService

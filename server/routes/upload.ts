@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { prisma } from '../prisma';
 import { needAuth } from '../middlewares/auth';
 import { createRes } from '../utils';
-import { fileService } from '../service/fileService';
+import { fileService } from '../service/FileService';
 
 const router = new KoaRouter();
 
