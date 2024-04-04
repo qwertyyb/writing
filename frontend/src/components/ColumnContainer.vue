@@ -121,6 +121,9 @@ const pointerupHandler = (event: PointerEvent) => {
     z-index: 10;
     backdrop-filter: blur(4px);
   }
+  .column-divider {
+    display: none;
+  }
   .column-left-divider {
     position: absolute;
     left: 0;
@@ -129,6 +132,7 @@ const pointerupHandler = (event: PointerEvent) => {
     z-index: 100;
     background: #fff;
     width: 80vw !important;
+    box-shadow: 7px 14px 28px rgba(0, 0, 0, .1);
   }
 }
 </style>

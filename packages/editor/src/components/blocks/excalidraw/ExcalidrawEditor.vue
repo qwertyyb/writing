@@ -86,3 +86,8 @@ defineExpose({
   height: 100%;
 }
 </style>
+<style>
+.excalidraw.excalidraw-modal-container {
+  z-index: 9999;
+}
+</style>
