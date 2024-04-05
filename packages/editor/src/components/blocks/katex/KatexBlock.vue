@@ -7,13 +7,21 @@
           ref="viewEl">{{ readonly ? '' : '点击填写公式' }}</div>
       </template>
       <template #default>
-        <textarea name="katex" cols="30" rows="5"
-          placeholder="|x| = \begin{cases}             
-  x, &\quad x \geq 0 \\           
- -x, &\quad x < 0             
-\end{cases}"
-          :value="block.data.source || ''"
-          @input="updateData({ source: ($event.target as HTMLTextAreaElement).value })"></textarea>
+        <div class="katex-input-content">
+          <textarea name="katex" cols="30" rows="5"
+            class="katex-source"
+            placeholder="|x| = \begin{cases}             
+    x, &\quad x \geq 0 \\           
+  -x, &\quad x < 0             
+  \end{cases}"
+            :value="block.data.source || ''"
+            @input="updateData({ source: ($event.target as HTMLTextAreaElement).value })"></textarea>
+          <a href="https://katex.org/docs/supported"
+          class="intro"
+          target="_blank"
+          referrerpolicy="strict-origin-when-cross-origin"
+          rel="noopener">Supported Functions</a>
+      </div>
       </template>
     </el-popover>
   </div>
@@ -67,9 +75,28 @@ watch(
 <style lang="less" scoped>
 .katex-view {
   text-align: center;
-  padding: 10px 0;
+  padding: 16px 0;
   &.is-empty {
     color: #bbb;
   }
+}
+.katex-input-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.katex-source {
+  font-family: 'Courier New', Courier, monospace;
+  border: none;
+  resize: none;
+  outline: none;
+    &::-webkit-scrollbar {
+      border: none;
+      width: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background-color: #ddd;
+      border-radius: 100px;
+    }
 }
 </style>
