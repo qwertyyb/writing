@@ -106,5 +106,15 @@ export const transformBlock = (trigger: string, origin: BlockModel, content: Op[
   if (['***', '---', '___'].includes(toText(origin.data.ops))) {
     return { id: origin.id, type: 'divider' };
   }
+  if (trigger == '$$') {
+    // 转换为数学公式
+    return {
+      id: origin.id,
+      type: 'katex',
+      data: {
+        source: toText(content)
+      }
+    };
+  }
   return null;
 };
