@@ -33,7 +33,7 @@ export const split = (ops: Op[], index: number) => {
 
 export const toText = (ops: Op[]) => {
   return ops.reduce<string>((acc, cur) => {
-    return acc + ((typeof cur.insert === 'string') ? cur.insert : '');
+    return acc + ((typeof cur.insert === 'string') ? cur.insert : ' ');
   }, '');
 };
 

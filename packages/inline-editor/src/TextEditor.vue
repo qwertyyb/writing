@@ -78,7 +78,7 @@ onMounted(() => {
       markdown: true
     },
     readOnly: props.readonly,
-    formats: ['background', 'bold', 'color', 'font', 'code', 'italic', 'link', 'size', 'strike', 'script', 'underline'],
+    formats: ['background', 'bold', 'color', 'font', 'code', 'italic', 'link', 'size', 'strike', 'script', 'underline', 'formula'],
     placeholder: 'Type someting'
   });
   setValue();
