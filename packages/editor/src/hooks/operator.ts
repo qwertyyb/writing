@@ -35,11 +35,20 @@ export const useOperator = (props: { path: number[] }) => {
   const removeBlock = (index: number) => {
     return rootValue?.value.startTransaction(() => {
       const removed = rootValue?.value.remove([...props.path, index]);
-      const { path: prevPath, block: prev } = rootValue!.value.getPrev([...props.path, index])!;
-      rootValue!.value.update(
-        prevPath,
-        { children: [ ...prev.children, ... removed.children ] }
-      );
+      const prevInfo = rootValue!.value.getPrev([...props.path, index])!;
+      if (prevInfo) {
+        // 把移除节点的子节点合并到前一个节点中
+        const { path: prevPath, block: prev } = prevInfo;
+        rootValue!.value.update(
+          prevPath,
+          { children: [ ...prev.children, ... removed.children ] }
+        );
+      } else {
+        // 删除的节点已是第一个节点，直接把子节点插入到当前节点所在位置
+        removed.children.forEach((item, i) => {
+          rootValue?.value.addAfter([...props.path, index - 1 + i], item);
+        });
+      }
     }, OperateSource.User);
   };
 

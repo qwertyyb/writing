@@ -137,7 +137,7 @@ export class BlockTree extends EventEmitter<BlockTreeEventTypes> {
   getPrev = (
     path: number[],
     predicate: (path: number[], block: BlockModel) => boolean = (() => true)
-  ) => {
+  ): { path: number[], block: BlockModel } | null => {
     if (!path.length) return null;
   
     const getMergablePathLast = (root: BlockModel, path: number[]): {

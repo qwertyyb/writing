@@ -262,11 +262,10 @@ const keydownHandler = (event: KeyboardEvent) => {
   const { from, to } = selectionState.value.range;
   if (R.equals(from.path, to.path)) return;
 
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  event.stopPropagation();
   if (event.code === 'Backspace') {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    event.stopPropagation();
-
     multiSelectDeleteHandler();
   }
 };
