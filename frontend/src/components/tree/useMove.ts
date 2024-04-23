@@ -1,5 +1,5 @@
 import { useDocumentStore } from "@/stores/document"
-import { createLogger } from "@/utils/logger"
+import { createLogger } from "@writing/utils"
 
 const logger = createLogger('useMove')
 

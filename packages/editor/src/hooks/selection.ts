@@ -134,7 +134,7 @@ export const useSelection = ({ el }: {
     logger.i('rangeHandler', range);
 
     state.value.range = getSelectionRange(range);
-    logger.i('rangeHandler selection', { ...toRaw(state.value.range) });
+    logger.i('rangeHandler selection', { ...toRaw(state.value.range) }, document.activeElement);
 
     const rect = range.getBoundingClientRect();
     state.value.rect = {
@@ -188,7 +188,7 @@ export const useSelection = ({ el }: {
       if (curBlockId !== anchorNodeBlockId) {
         // 鼠标移出了当前的块范围，设置为跨块多选模式
         isMultiSelect = true;
-        el.value!.querySelectorAll<HTMLElement>('[contenteditable="false"]')
+        el.value!.querySelectorAll<HTMLElement>('[contenteditable]')
           .forEach(dom => {
             dom.dataset.originContenteditable = dom.contentEditable;
             dom.removeAttribute('contenteditable');

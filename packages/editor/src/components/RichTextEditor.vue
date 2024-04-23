@@ -11,7 +11,7 @@
       ref="editorEl"
       @keydown.capture="keydownHandler"
       tabindex="0"
-      :contenteditable="mode === Mode.Readonly ? undefined : 'plaintext-only'">
+      :contenteditable="mode === Mode.Readonly ? undefined : 'true'">
       <block-editor :model-value="model"
         :index="0"
         :path="[]"
@@ -38,6 +38,7 @@ import { JSONPatch } from '@writing/utils/patch';
 import * as R from 'ramda';
 import Delta from 'quill-delta';
 import { isTextBlock } from '../hooks/operator';
+import { useCopy } from '../hooks/copy';
 import BlockActions from './tool/BlockActions.vue';
 
 const logger = createLogger('RichTextEditor');
@@ -74,6 +75,8 @@ provide('mode', mode);
 provide('spellcheck', spellcheck);
 provide(uploadSymbol, props.upload);
 provide(rootSymbol, rootValue);
+
+useCopy();
 
 const { state: selectionState, pointermoveHandler: selectionTrigger, clear: clearSelection } = useSelection({ el: editorEl });
 
@@ -195,19 +198,21 @@ const multiSelectDeleteHandler = () => {
     };
   }
 
-  const leftBlocks: BlockModel[] = [];
+  const needRetainBlocks: BlockModel[] = [];
   if (needRemoveBlocks.length) {
+    // 有块需要删除时，从尾部来看，仅需要删除块本身，不需要删除块的子节点或不在范围的兄弟节点
+    // 所以此处查找出所有不需要删除的子节点或不在范围的子节点
     const blockIds = needRemoveBlocks.map(item => item.block.id);
     needRemoveBlocks.forEach(item => {
       BlockTree.walkTree(item.path, rootValue.value.getByPath(item.path), (childPath, block) => {
         const needLeft = !blockIds.includes(block.id);
-        if (needLeft && leftBlocks.indexOf(block) === -1) {
-          leftBlocks.push(block);
+        if (needLeft && !needRetainBlocks.includes(block)) {
+          needRetainBlocks.push(block);
         }
       });
     });
 
-    // 把选中的组件删除
+    // 把待删除的本身节点过滤掉
     const result = BlockTree.filter(rootValue.value.model, (block) => {
       return !blockIds.includes(block.id);
     });
@@ -223,10 +228,11 @@ const multiSelectDeleteHandler = () => {
         OperateSource.API
       );
     }
-    if (leftBlocks.length && prevPath) {
+    if (needRetainBlocks.length && prevPath) {
+      // 把需要保留的节点追加为第一个节点的子节点
       const baseIndex = R.last(firstBlock.path);
       const parentPath = R.init(firstBlock.path);
-      leftBlocks.forEach((block, index) => {
+      needRetainBlocks.forEach((block, index) => {
         rootValue.value.addAfter([...parentPath, index + baseIndex], block, OperateSource.API);
       });
     }
@@ -256,6 +262,8 @@ const keydownHandler = (event: KeyboardEvent) => {
     event.stopImmediatePropagation();
     event.stopPropagation();
     undo();
+  } else if (event.metaKey && event.key === 'c') {
+    return;
   }
 
   if (!selectionState.value.range) return;
