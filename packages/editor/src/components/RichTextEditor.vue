@@ -76,9 +76,9 @@ provide('spellcheck', spellcheck);
 provide(uploadSymbol, props.upload);
 provide(rootSymbol, rootValue);
 
-useCopy();
-
 const { state: selectionState, pointermoveHandler: selectionTrigger, clear: clearSelection } = useSelection({ el: editorEl });
+
+useCopy({ rootValue, selectionState });
 
 const { undo, redo, pushLatest } = useHistory(el, model);
 

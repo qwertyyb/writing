@@ -1,9 +1,21 @@
 import { createLogger } from '@writing/utils/logger';
-import { onBeforeUnmount, onMounted } from 'vue';
+import { Ref, ShallowRef, onBeforeUnmount, onMounted } from 'vue';
+import type { SelectionState } from './selection';
+import type { BlockModel } from '../models/block';
+import { BlockTree } from '../models/BlockTree';
 
 const logger = createLogger('copy');
 
-export const useCopy = () => {
+const getSelectedBlocks = (rootValue: BlockTree, selectionState: SelectionState) => {
+  const { from, to } = selectionState.range;
+  const blocksInRange: BlockModel[] = [];
+  rootValue.walkTreeBetween(from.path, to.path, (path, block) => {
+    blocksInRange.push(block);
+  });
+  return blocksInRange;
+};
+
+export const useCopy = ({ rootValue, selectionState }: { rootValue: ShallowRef<BlockTree>, selectionState: Ref<SelectionState> }) => {
   const copyHandler = (event: ClipboardEvent) => {
     logger.i('copyHandler', event);
     const div = document.createElement('div');
@@ -14,7 +26,7 @@ export const useCopy = () => {
     try {
       event.clipboardData.setData('text/html', div.innerHTML);
       event.clipboardData.setData('text/plain', div.innerText);
-      event.clipboardData.setData('text/writing-data', 'hello');
+      event.clipboardData.setData('text/_writing-copy-data', JSON.stringify(getSelectedBlocks(rootValue.value, selectionState.value)));
       event.preventDefault();
       document.body.removeChild(div);
     } catch (err) {
@@ -22,11 +34,21 @@ export const useCopy = () => {
     }
   };
 
+  const pasteHandler = (event: ClipboardEvent) => {
+    logger.i('pasteHandler', event, event.clipboardData.getData('text/_writing-copy-data'));
+    const dataFromSelf = event.clipboardData.getData('text/_writing-copy-data');
+    if (dataFromSelf) {
+      // @todo 把数据解析出来，判断 ID 是否要重新生成，然后插入到当前位置
+    }
+  };
+
   onMounted(() => {
     document.addEventListener('copy', copyHandler);
+    document.addEventListener('paste', pasteHandler);
   });
 
   onBeforeUnmount(() => {
     document.removeEventListener('copy', copyHandler);
+    document.removeEventListener('paste', pasteHandler);
   });
 };
