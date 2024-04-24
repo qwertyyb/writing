@@ -16,6 +16,7 @@ export interface SelectionRange {
 
 export interface SelectionState {
   range: SelectionRange | null,
+  type: 'Caret' | 'Range',
   rect: {
     top: number, left: number
     width: number, height: number
@@ -100,6 +101,7 @@ export const useSelection = ({ el }: {
 }) => {
   const state = ref<SelectionState>({
     range: null,
+    type: 'Caret',
     rect: null
   });
 
@@ -111,16 +113,34 @@ export const useSelection = ({ el }: {
   let focusOffset = 0;
   let anchorOffset = 0;
 
-  const clear = () => {
+  const resetState = () => {
     logger.i('clear');
     state.value.range = null;
+    state.value.type = 'Caret';
     state.value.rect = null;
+  };
+
+  const enterMultiSelect = () => {
+    isMultiSelect = true;
+    el.value!.querySelectorAll<HTMLElement>('[contenteditable]')
+      .forEach(dom => {
+        dom.dataset.originContenteditable = dom.contentEditable;
+        dom.removeAttribute('contenteditable');
+      });
+  };
+
+  const exitMultiSelect = () => {
     isMultiSelect = false;
     el.value!.querySelectorAll<HTMLElement>('[data-origin-contenteditable]')
       .forEach(dom => {
         dom.contentEditable = dom.dataset.originContenteditable as string;
         delete dom.dataset.originContenteditable;
       });
+  };
+
+  const clear = () => {
+    resetState();
+    exitMultiSelect();
   };
 
   const selectionInEditor = (selection: Selection) => {
@@ -147,8 +167,8 @@ export const useSelection = ({ el }: {
 
   const selectionchangeHandler = () => {
     const selection = window.getSelection();
-    if (selection.type === 'None') return;
-    if (!selection || !selectionInEditor(selection)) return clear();
+    logger.i('selectionchangeHandler', selection, selectionInEditor(selection));
+    if (!selection || !selectionInEditor(selection) || selection.type === 'None') return clear();
 
     if (selection.anchorNode) {
       anchorNode = selection.anchorNode;
@@ -165,12 +185,11 @@ export const useSelection = ({ el }: {
     }
 
     state.value.rect = null;
+    state.value.type = selection.type as 'Caret' | 'Range';
 
     if (selection.type === 'Caret') {
-      clear();
-      return;
+      exitMultiSelect();
     }
-
     rangeHandler();
   };
 
@@ -187,12 +206,7 @@ export const useSelection = ({ el }: {
       const curBlockId = getBlockIdFromPoint(event.clientX, event.clientY);
       if (curBlockId !== anchorNodeBlockId) {
         // 鼠标移出了当前的块范围，设置为跨块多选模式
-        isMultiSelect = true;
-        el.value!.querySelectorAll<HTMLElement>('[contenteditable]')
-          .forEach(dom => {
-            dom.dataset.originContenteditable = dom.contentEditable;
-            dom.removeAttribute('contenteditable');
-          });
+        enterMultiSelect();
         const sel = window.getSelection();
         if (!sel) return;
         if (anchorNode && focusNode) {

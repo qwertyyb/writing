@@ -58,6 +58,7 @@ export class BlockTree extends EventEmitter<BlockTreeEventTypes> {
   }
 
   addAfter(path: number[], data: Partial<BlockModel>, source: OperateSource = OperateSource.API) {
+    logger.i('addAfter', path);
     const index = R.last(path)!;
     const parent = this.getParentFromPath(path);
 
@@ -194,6 +195,7 @@ export class BlockTree extends EventEmitter<BlockTreeEventTypes> {
     ancestor: BlockModel,
     callback: (path: number[], block: BlockModel) => void
   ) => {
+    if (!ancestor) return;
     callback(prefixPath, ancestor);
     for(let i = 0; i < (ancestor.children?.length ?? 0); i+= 1) {
       BlockTree.walkTree(

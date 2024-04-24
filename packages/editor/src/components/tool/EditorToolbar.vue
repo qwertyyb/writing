@@ -1,7 +1,7 @@
 <template>
   <div class="editor-toolbar" ref="el" :style="floatingStyles"
     :data-popper-placement="placement"
-    v-show="selection.rect && selectedInfo.textBlockSelected">
+    v-show="selection.rect && selection.type === 'Range' && selectedInfo.textBlockSelected">
     <ul class="editor-toolbar-item-list"
       @mousedown.prevent>
       <li class="toolbar-item" @click.capture="setSizeFormat('decrease')">
