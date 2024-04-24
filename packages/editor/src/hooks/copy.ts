@@ -1,7 +1,7 @@
 import { createLogger } from '@writing/utils/logger';
 import { Ref, ShallowRef, onBeforeUnmount, onMounted } from 'vue';
 import type { SelectionState } from './selection';
-import type { BlockModel } from '../models/block';
+import { createBlockId, type BlockModel } from '../models/block';
 import { BlockTree } from '../models/BlockTree';
 
 const logger = createLogger('copy');
@@ -26,7 +26,8 @@ export const useCopy = ({ rootValue, selectionState }: { rootValue: ShallowRef<B
     try {
       event.clipboardData.setData('text/html', div.innerHTML);
       event.clipboardData.setData('text/plain', div.innerText);
-      event.clipboardData.setData('text/_writing-copy-data', JSON.stringify(getSelectedBlocks(rootValue.value, selectionState.value)));
+      const blocks = getSelectedBlocks(rootValue.value, selectionState.value);
+      event.clipboardData.setData('text/_writing-data', JSON.stringify({ action: 'copy', blocks }));
       event.preventDefault();
       document.body.removeChild(div);
     } catch (err) {
@@ -38,7 +39,14 @@ export const useCopy = ({ rootValue, selectionState }: { rootValue: ShallowRef<B
     logger.i('pasteHandler', event, event.clipboardData.getData('text/_writing-copy-data'));
     const dataFromSelf = event.clipboardData.getData('text/_writing-copy-data');
     if (dataFromSelf) {
-      // @todo 把数据解析出来，判断 ID 是否要重新生成，然后插入到当前位置
+      const { action, blocks } = JSON.parse(dataFromSelf) as { action: 'cut' | 'copy', blocks: BlockModel[] };
+      if (action === 'copy') {
+        // 复制的时候，需要重新生成 ID，以防止 ID 重复
+        blocks.forEach(block => {
+          block.id = createBlockId();
+        });
+      }
+      // @todo 获取当前位置，把内容插入到当前位置
     }
   };
 
