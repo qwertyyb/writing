@@ -57,6 +57,20 @@ const data = ref<CodeData>({
   text: block.value?.data?.text ?? ''
 });
 
+watch(() => block.value.data, (val) => {
+  if (!val) return;
+  if (val.text !== data.value.text) {
+    viewer.dispatch({changes: {
+      from: 0,
+      to: viewer.state.doc.length,
+      insert: val.text
+    }});
+  }
+  if (val.language !== data.value.language) {
+    languageChangeHandler(val.language);
+  }
+});
+
 let viewer: EditorView | null = null;
 
 const languageConfig = markRaw(new Compartment());
@@ -113,7 +127,7 @@ const languageChangeHandler = (value: string) => {
       effects: languageConfig.reconfigure(matched.support)
     });
   });
-  if (value !== matched.name) {
+  if (value !== matched.name || matched.name !== data.value.language) {
     update({ language: matched.name });
   }
 };
