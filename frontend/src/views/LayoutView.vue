@@ -1,9 +1,9 @@
 <template>
   <column-container class="layout-view"
     v-model="runtimeStore.settings.layout.siderWidth"
-    :side-hidden="sideHidden"
-    @openSide="sideHidden = false"
-    @closeSide="sideHidden = true"
+    :side-hidden="runtimeStore.settings.layout.collapsed"
+    @openSide="runtimeStore.updateSettings('layout', { ...runtimeStore.settings.layout, collapsed: false })"
+    @closeSide="runtimeStore.updateSettings('layout', { ...runtimeStore.settings.layout, collapsed: true })"
     @change="runtimeStore.updateSettings('layout', { ...runtimeStore.settings.layout, siderWidth: $event })">
     <template v-slot:side>
       <div class="layout-side-wrapper">
@@ -33,7 +33,7 @@
             <span class="material-symbols-outlined action-item" title="折叠" @click="unExpandAll">unfold_less</span>
             <span class="material-symbols-outlined action-item location-opened" title="定位打开的文档" @click="locateEditing">my_location</span>
             <span class="material-symbols-outlined action-item logout-action" title="退出登录" @click="logout" v-if="hasAuth">logout</span>
-            <span class="material-symbols-outlined action-item close-action" title="关闭侧边栏" @click="closeSide">start</span>
+            <span class="material-symbols-outlined action-item close-action" title="关闭侧边栏" @click="runtimeStore.updateSettings('layout', { ...runtimeStore.settings.layout, collapsed: true })">start</span>
           </div>
         </template>
       </div>
@@ -52,15 +52,13 @@ import router from '@/router';
 import { useRuntime } from '@/stores/runtime';
 import ColumnContainer from '@/components/ColumnContainer.vue';
 import SearchByTitle from '../components/SearchByTitle.vue';
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { ElMessageBox } from 'element-plus';
-import { ScreenSize, sizeChange } from '@/utils/resize';
 
 const logger = createLogger('LayoutView')
 
 const treeVisible = ref(true)
-const sideHidden = ref(false)
 const hasAuth = ref(import.meta.env.MODE !== 'indexeddb')
 
 const runtimeStore = useRuntime()
@@ -77,17 +75,6 @@ runtimeStore.refresh()
       params: { id: runtimeStore.settings.recentDocumentId }
     })
   })
-
-let unsize: (() => void) | null
-onMounted(() => {
-  unsize = sizeChange((size) => {
-    sideHidden.value = size === ScreenSize.Small
-  })
-})
-onBeforeUnmount(() => {
-  unsize?.()
-  unsize = null
-})
 
 const selectHandler = async (node: TreeNodeModel) => {
   logger.i('select tree node', node)
@@ -120,9 +107,6 @@ const logout = async () => {
   const { useAuthStore } = await import('@/stores/auth')
   useAuthStore().logout()
   router.push({ name: 'auth' })
-}
-const closeSide = () => {
-  sideHidden.value = true
 }
 
 </script>

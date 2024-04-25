@@ -4,14 +4,17 @@ import { defineStore } from "pinia";
 import * as R from 'ramda'
 
 interface RuntimeSettings {
-  layout: { siderWidth: number }
+  layout: { siderWidth: number, collapsed: boolean }
   recentDocumentId: number
 }
 
 const debounceSetValue = debounce(configService.setValue)
 
 const defaultSettings = () => ({
-  layout: { siderWidth: 25 },
+  layout: {
+    siderWidth: 25,
+    collapsed: false,
+  },
   recentDocumentId: 1
 })
 
