@@ -26,18 +26,16 @@
 import { createBlock, type BlockModel } from '../models/block';
 import BlockEditor from './BlockEditor.vue';
 import { focusBlock } from '../hooks/focus';
-import { provide, type PropType, computed, ref, shallowRef, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { provide, type PropType, computed, ref, shallowRef, watch, onMounted, onBeforeUnmount } from 'vue';
 import { Mode } from './schema';
 import { useHistory } from '../hooks/history';
-import { setCaretPosition, useSelection } from '../hooks/selection';
+import { deleteRange, useSelection } from '../hooks/selection';
 import EditorToolbar from './tool/EditorToolbar.vue';
 import { createLogger } from '@writing/utils/logger';
 import { BlockTree, OperateSource, rootSymbol } from '../models/BlockTree';
 import { uploadSymbol } from '../utils/upload';
 import { JSONPatch } from '@writing/utils/patch';
 import * as R from 'ramda';
-import Delta from 'quill-delta';
-import { isTextBlock } from '../hooks/operator';
 import { useCopy } from '../hooks/copy';
 import BlockActions from './tool/BlockActions.vue';
 
@@ -155,97 +153,9 @@ const pointermoveHandler = (event: PointerEvent) => {
 };
 
 const multiSelectDeleteHandler = () => {
-  const { from, to } = selectionState.value.range;
-  const blocksInRange: { path: number[], block: BlockModel }[] = [];
-  rootValue.value.walkTreeBetween(from.path, to.path, (path, block) => {
-    blocksInRange.push({ path, block });
-  });
-  const firstBlock = R.head(blocksInRange);
-  const lastBlock = R.last(blocksInRange);
-  const needRemoveBlocks = R.tail(blocksInRange);
-  let firstBlockValue = null;
-  let prevPath = firstBlock.path;
-  if (!isTextBlock(firstBlock.block) && !isTextBlock(lastBlock.block)) {
-    // 第一个选中块非文字块，最后一个也非文字块，则把选中范围内的所有块删除
-    needRemoveBlocks.unshift(firstBlock);
-    prevPath = rootValue.value.getPrev(firstBlock.path)?.path ?? null;
-  } else if (!isTextBlock(firstBlock.block) && isTextBlock(lastBlock.block)) {
-    // 第一个选中块非文字块，最后一个块为文字块，则更新最后一个块为选中范围之后的文字
-    firstBlockValue = {
-      id: firstBlock.block.id,
-      type: lastBlock.block.type,
-      data: {
-        ops: new Delta(lastBlock.block.data.ops).slice(to.offset).ops
-      }
-    };
-  } else if (isTextBlock(firstBlock.block) && isTextBlock(lastBlock.block)) {
-    // 第一个选中块为文字块，并且最后一个也是文字块
-    // 把第一个选中块选中范围之前的文字和最后一个选中块选中范围之后的文字拼接
-    const firstBeforeText = new Delta(firstBlock.block.data.ops).slice(0, from.offset);
-    const lastAfterText = new Delta(lastBlock.block.data.ops).slice(to.offset);
-    firstBlockValue = {
-      data: {
-        ops: firstBeforeText.compose(new Delta().retain(from.offset).concat(lastAfterText)).ops
-      }
-    };
-  } else if (isTextBlock(firstBlock.block) && !isTextBlock(lastBlock.block)) {
-    // 第一个选中块为文字块，最后一个块非文字块
-    // 保留第一个块选中范围之前的文字
-    firstBlockValue = {
-      data: {
-        ops: new Delta(firstBlock.block.data.ops).slice(0, from.offset).ops
-      }
-    };
-  }
-
-  const needRetainBlocks: BlockModel[] = [];
-  if (needRemoveBlocks.length) {
-    // 有块需要删除时，从尾部来看，仅需要删除块本身，不需要删除块的子节点或不在范围的兄弟节点
-    // 所以此处查找出所有不需要删除的子节点或不在范围的子节点
-    const blockIds = needRemoveBlocks.map(item => item.block.id);
-    needRemoveBlocks.forEach(item => {
-      BlockTree.walkTree(item.path, rootValue.value.getByPath(item.path), (childPath, block) => {
-        const needLeft = !blockIds.includes(block.id);
-        if (needLeft && !needRetainBlocks.includes(block)) {
-          needRetainBlocks.push(block);
-        }
-      });
-    });
-
-    // 把待删除的本身节点过滤掉
-    const result = BlockTree.filter(rootValue.value.model, (block) => {
-      return !blockIds.includes(block.id);
-    });
-    rootValue.value.updateModel(result);
-    logger.i('keydownHandler after filter', result);
-
-  }
-  rootValue.value.startTransaction(() => {
-    if (firstBlockValue) {
-      rootValue.value.update(
-        firstBlock.path,
-        firstBlockValue,
-        OperateSource.API
-      );
-    }
-    if (needRetainBlocks.length && prevPath) {
-      // 把需要保留的节点追加为第一个节点的子节点
-      const baseIndex = R.last(firstBlock.path);
-      const parentPath = R.init(firstBlock.path);
-      needRetainBlocks.forEach((block, index) => {
-        rootValue.value.addAfter([...parentPath, index + baseIndex], block, OperateSource.API);
-      });
-    }
-  }, OperateSource.API);
+  deleteRange({ rootValue: rootValue.value, range: selectionState.value.range });
 
   clearSelection();
-  nextTick(() => {
-    if (!R.equals(prevPath, firstBlock.path)) {
-      focusBlock(rootValue.value.getByPath(prevPath).id, 'end');
-    } else {
-      setCaretPosition({ path: firstBlock.path, offset: from.offset });
-    }
-  });
 };
 
 const keydownHandler = (event: KeyboardEvent) => {
@@ -262,7 +172,7 @@ const keydownHandler = (event: KeyboardEvent) => {
     event.stopImmediatePropagation();
     event.stopPropagation();
     undo();
-  } else if (event.metaKey && event.key === 'c') {
+  } else if (event.metaKey && event.key === 'c' || event.metaKey && event.key === 'x' || event.metaKey && event.key === 'v') {
     return;
   }
 

@@ -1,6 +1,12 @@
 import { createLogger } from '@writing/utils/logger';
-import { type Ref, onMounted, onBeforeUnmount, ref, toRaw } from 'vue';
+import { type Ref, onMounted, onBeforeUnmount, ref, toRaw, nextTick } from 'vue';
 import { getSelectionOffset } from '../models/caret';
+import { BlockTree, OperateSource } from '../models/BlockTree';
+import { BlockModel } from '../models/block';
+import * as R from 'ramda';
+import { isTextBlock } from './operator';
+import Delta from 'quill-delta';
+import { focusBlock } from './focus';
 
 const logger = createLogger('selection');
 
@@ -217,5 +223,128 @@ export const useSelection = ({ el }: {
       }
     }
   };
+  
   return { state, pointermoveHandler, clear };
+};
+
+export const getBlocksInRange = ({ rootValue, range }: { rootValue: BlockTree, range: SelectionRange }) => {
+  const { from, to } = range;
+  const blocksInRange: { path: number[], block: BlockModel }[] = [];
+  rootValue.walkTreeBetween(from.path, to.path, (path, block) => {
+    blocksInRange.push({ path, block: { ...block, children: [] } });
+  });
+  const firstBlock = R.head(blocksInRange);
+  const lastBlock = R.last(blocksInRange);
+  if (isTextBlock(firstBlock.block)) {
+    blocksInRange[0].block = {
+      ...firstBlock.block,
+      data: {
+        ops: new Delta(firstBlock.block.data.ops).slice(from.offset).ops
+      }
+    };
+  }
+  if (isTextBlock(lastBlock.block)) {
+    blocksInRange[blocksInRange.length - 1].block = {
+      ...lastBlock.block,
+      data: {
+        ops: new Delta(lastBlock.block.data.ops).slice(0, to.offset).ops
+      }
+    };
+  }
+  return blocksInRange;
+};
+
+export const deleteRange = ({ rootValue, range }: { rootValue: BlockTree, range: SelectionRange }) => {
+  const { from, to } = range;
+  const blocksInRange: { path: number[], block: BlockModel }[] = [];
+  rootValue.walkTreeBetween(from.path, to.path, (path, block) => {
+    blocksInRange.push({ path, block });
+  });
+  const firstBlock = R.head(blocksInRange);
+  const lastBlock = R.last(blocksInRange);
+  const needRemoveBlocks = R.tail(blocksInRange);
+  let firstBlockValue = null;
+  let prevPath = firstBlock.path;
+  if (!isTextBlock(firstBlock.block) && !isTextBlock(lastBlock.block)) {
+    // 第一个选中块非文字块，最后一个也非文字块，则把选中范围内的所有块删除
+    needRemoveBlocks.unshift(firstBlock);
+    prevPath = rootValue.getPrev(firstBlock.path)?.path ?? null;
+  } else if (!isTextBlock(firstBlock.block) && isTextBlock(lastBlock.block)) {
+    // 第一个选中块非文字块，最后一个块为文字块，则更新最后一个块为选中范围之后的文字
+    firstBlockValue = {
+      id: firstBlock.block.id,
+      type: lastBlock.block.type,
+      data: {
+        ops: new Delta(lastBlock.block.data.ops).slice(to.offset).ops
+      }
+    };
+  } else if (isTextBlock(firstBlock.block) && isTextBlock(lastBlock.block)) {
+    // 第一个选中块为文字块，并且最后一个也是文字块
+    // 把第一个选中块选中范围之前的文字和最后一个选中块选中范围之后的文字拼接
+    const firstBeforeText = new Delta(firstBlock.block.data.ops).slice(0, from.offset);
+    const lastAfterText = new Delta(lastBlock.block.data.ops).slice(to.offset);
+    firstBlockValue = {
+      data: {
+        ops: firstBeforeText.compose(new Delta().retain(from.offset).concat(lastAfterText)).ops
+      }
+    };
+  } else if (isTextBlock(firstBlock.block) && !isTextBlock(lastBlock.block)) {
+    // 第一个选中块为文字块，最后一个块非文字块
+    // 保留第一个块选中范围之前的文字
+    firstBlockValue = {
+      data: {
+        ops: new Delta(firstBlock.block.data.ops).slice(0, from.offset).ops
+      }
+    };
+  }
+
+  const needRetainBlocks: BlockModel[] = [];
+  if (needRemoveBlocks.length) {
+    // 有块需要删除时，从尾部来看，仅需要删除块本身，不需要删除块的子节点或不在范围的兄弟节点
+    // 所以此处查找出所有不需要删除的子节点或不在范围的子节点
+    const blockIds = needRemoveBlocks.map(item => item.block.id);
+    needRemoveBlocks.forEach(item => {
+      BlockTree.walkTree(item.path, rootValue.getByPath(item.path), (childPath, block) => {
+        const needLeft = !blockIds.includes(block.id);
+        if (needLeft && !needRetainBlocks.includes(block)) {
+          needRetainBlocks.push(block);
+        }
+      });
+    });
+
+    // 把待删除的本身节点过滤掉
+    const result = BlockTree.filter(rootValue.model, (block) => {
+      return !blockIds.includes(block.id);
+    });
+    rootValue.updateModel(result);
+    logger.i('keydownHandler after filter', result);
+
+  }
+  rootValue.startTransaction(() => {
+    if (firstBlockValue) {
+      rootValue.update(
+        firstBlock.path,
+        firstBlockValue,
+        OperateSource.API
+      );
+    }
+    if (needRetainBlocks.length && prevPath) {
+      // 把需要保留的节点追加为第一个节点的子节点
+      const baseIndex = R.last(firstBlock.path);
+      const parentPath = R.init(firstBlock.path);
+      needRetainBlocks.forEach((block, index) => {
+        rootValue.addAfter([...parentPath, index + baseIndex], block, OperateSource.API);
+      });
+    }
+  }, OperateSource.API);
+
+
+  nextTick(() => {
+    if (!R.equals(prevPath, firstBlock.path)) {
+      focusBlock(rootValue.getByPath(prevPath).id, 'end');
+    } else {
+      setCaretPosition({ path: firstBlock.path, offset: from.offset });
+    }
+  });
+  return prevPath;
 };

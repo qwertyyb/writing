@@ -4,6 +4,7 @@
       tabindex="0"
       :spellcheck="spellcheck"
       @keydown.capture="keydownHandler($event)"
+      @paste.prevent
       placeholder="Type something..."
       ref="el"></div>
   </div>
