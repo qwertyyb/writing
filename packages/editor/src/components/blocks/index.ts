@@ -4,6 +4,7 @@ import listBlocks from './list/list';
 import link from './link/link';
 import blockQuote from './block-quote/block-quote';
 import divider from './divider/divider';
+import callout from './callout/callout';
 import codeBlock from './code/code';
 import type { BlockModel } from '../../models/block';
 import type { Component } from 'vue';
@@ -40,6 +41,7 @@ const commands: BlockConfig[] = [
   image,
   blockQuote,
   divider,
+  callout,
   codeBlock,
   documentBlock,
   todo,
