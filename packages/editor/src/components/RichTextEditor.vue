@@ -76,7 +76,7 @@ provide(rootSymbol, rootValue);
 
 const { state: selectionState, pointermoveHandler: selectionTrigger, clear: clearSelection } = useSelection({ el: editorEl });
 
-useCopy({ rootValue, selectionState });
+useCopy({ rootValue, selectionState, upload: props.upload });
 
 const { undo, redo, pushLatest } = useHistory(el, model);
 
@@ -160,6 +160,7 @@ const multiSelectDeleteHandler = () => {
 
 const keydownHandler = (event: KeyboardEvent) => {
   if (props.mode === Mode.Readonly) return;
+  logger.i('keydownHandler', event);
   // 仅用来处理多选和历史
   // 处理历史 undo/redo
   if (event.metaKey && event.key === 'z' && event.shiftKey) {

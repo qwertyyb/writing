@@ -11,7 +11,6 @@
       @keyShiftTab="$emit('moveUpper')"
       @backspace="backspaceKeyHandler"
       @keyTrigger="openSelector"
-      @upload="uploadHandler"
       @keydown="keydownHandler"
       @change="textChangeHandler"
       ref="textEditorEl"
@@ -31,19 +30,17 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, inject } from 'vue';
+import { ref, watch } from 'vue';
 import { ClickOutside as vClickOutside } from 'element-plus';
 import BlockSelector from '../tool/BlockSelector.vue';
 import TextEditor from '@writing/inline-editor';
-import { createBlock, type BlockModel } from '../../models/block';
+import { type BlockModel } from '../../models/block';
 import { useMode } from '../../hooks/mode';
 import { useSpellcheck } from '../../hooks/spellcheck';
 import { transformBlock } from '../../hooks/transform';
 import { createLogger } from '@writing/utils/logger';
-import { getImageRatio } from './image/utils';
 import { isEmpty, split, toText } from '@writing/utils/delta';
 import type { TextData } from '../schema';
-import { uploadSymbol } from '../../utils/upload';
 import { useBlockSelectorState } from '../../hooks/blockSelector';
 import Quill from 'quill';
 import Delta from 'quill-delta';
@@ -68,7 +65,6 @@ const emits = defineEmits<{
 
 const { readonly } = useMode();
 const spellcheck = useSpellcheck();
-const uploader = inject<(file: Blob | File) => Promise<string>>(uploadSymbol);
 
 const data = ref<TextData>({ ...block.value.data, ops: block.value.data?.ops ?? [] });
 
@@ -172,19 +168,6 @@ const keydownHandler = (event: KeyboardEvent, offset: number) => {
     event.preventDefault();
     block.value = newBlock as any;
   }
-};
-
-const uploadHandler = async (file: File) => {
-  const isImage = file.type.startsWith('image/');
-  if (!isImage) {
-    return logger.i('暂不支持的文件类型', file);
-  }
-  const url = await uploader(file);
-  const data = await getImageRatio(url);
-  emits('add', createBlock({
-    type: 'image',
-    data
-  }));
 };
 </script>
 

@@ -45,8 +45,6 @@ const emits = defineEmits<{
 
   keydown: [event: KeyboardEvent, offset: number],
 
-  upload: [file: File],
-
   keyTrigger: [{ top: number, left: number, width: number, height: number }, offset: number],
   change: [editor: Quill]
 }>();
@@ -167,26 +165,6 @@ const triggerKeyHandler = () => {
     );
   });
 };
-
-// const pasteHandler = (event: ClipboardEvent) => {
-//   event.preventDefault();
-//   logger.i('paste', event, event.clipboardData?.files);
-//   const file = event.clipboardData?.files?.[0];
-//   if (file) {
-//     emits('upload', file);
-//     return;
-//   }
-//   // 先简单全部作为普通文本来处理
-//   const range = editor.getSelection(true);
-//   if (!range) return;
-//   const { index } = range;
-//   const plainText = event.clipboardData?.getData('text/plain') ?? '';
-//   editor.insertText(index, plainText);
-//   setTimeout(() => {
-//     logger.i('selection', index + plainText.length);
-//     editor.setSelection(index + plainText.length, 0);
-//   }, 10);
-// };
 </script>
 
 <style lang="less" scoped>
