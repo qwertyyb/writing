@@ -1,16 +1,24 @@
 import { createLogger } from '@writing/utils/logger';
 import { Ref, ShallowRef, onBeforeUnmount, onMounted } from 'vue';
+import * as R from 'ramda';
 import { deleteRange, getBlocksInRange, type SelectionState } from './selection';
 import { createBlockId, type BlockModel, createBlock } from '../models/block';
-import { BlockTree } from '../models/BlockTree';
+import { BlockTree, OperateSource } from '../models/BlockTree';
 import { getImageRatio } from '../components/blocks/image/utils';
 import Delta from 'quill-delta';
+import { isTextBlock } from './operator';
 
 const logger = createLogger('copy');
 
 type BlockWithPath = { path: number[], block: BlockModel }
 
 export const useCopy = ({ rootValue, selectionState, upload }: { rootValue: ShallowRef<BlockTree>, selectionState: Ref<SelectionState>, upload: (file: Blob | File) => Promise<string> }) => {
+  const selectionIsMulti = () => {
+    const range = selectionState.value.range;
+    logger.i('selectionIsMulti', range.from.path, range.to.path);
+    return !range?.from?.path || !R.equals(range.from.path, range.to.path);
+  };
+
   const writeToClipboard = (clipboardData: DataTransfer, action: 'copy' | 'cut' = 'copy') => {
     const div = document.createElement('div');
     div.style.cssText = 'width:0;height:0;overflow:hidden';
@@ -30,12 +38,18 @@ export const useCopy = ({ rootValue, selectionState, upload }: { rootValue: Shal
   };
 
   const copyHandler = (event: ClipboardEvent) => {
+    if (!selectionIsMulti()) {
+      return;
+    }
     logger.i('copyHandler', event);
     writeToClipboard(event.clipboardData);
     event.preventDefault();
   };
 
   const cutHandler = (event: ClipboardEvent) => {
+    if (!selectionIsMulti()) {
+      return;
+    }
     writeToClipboard(event.clipboardData, 'cut');
     event.preventDefault();
     deleteRange({ rootValue: rootValue.value, range: selectionState.value.range });
@@ -65,8 +79,22 @@ export const useCopy = ({ rootValue, selectionState, upload }: { rootValue: Shal
     // 用粘贴内容的第一个节点的层级对齐当前编辑位置的层级，生成在添加节点时需要使用的位置数组
     const baseLevel = blocks[0].path.length;
     const indexArr = curPath.concat(new Array(maxLevel - baseLevel).fill(-1));
+    const curBlock = rootValue.value.getByPath(curPath);
     rootValue.value.startTransaction(() => {
-      blocks.forEach(item => {
+      let merged = false;
+      // 如果当前节点和要粘贴的第一个节点都是文字节点，则进行合并
+      if (isTextBlock(curBlock) && isTextBlock(blocks[0].block)) {
+        const firstOffset = selectionState.value.range.from.offset;
+        const insertDelta = new Delta(blocks[0].block.data?.ops || []);
+        const ops = new Delta(curBlock.data?.ops || [])
+          .slice(0, firstOffset)
+          .concat(insertDelta.slice(0, insertDelta.length() - 1))
+          .concat(new Delta(curBlock.data?.ops || []).slice(firstOffset))
+          .ops;
+        rootValue.value.update(curPath, { data: { ops } }, OperateSource.API);
+        merged = true;
+      }
+      blocks.slice(merged ? 1 : 0).forEach(item => {
         // 计算当前要添加的节点的最终层级
         const curLevel = Math.max(item.path.length - baseLevel + curPath.length - 1, 0);
         // 之后添加的节点都作为此节点的子节点，所以需要把大于此层级的位置归 0
@@ -115,15 +143,15 @@ export const useCopy = ({ rootValue, selectionState, upload }: { rootValue: Shal
     } else {
       const plainText = event.clipboardData?.getData('text/plain') ?? '';
       if (!plainText) return;
-      blocks = [{
-        path: [0, 0],
-        block: createBlock({
-          type: 'text',
-          data: {
-            ops: new Delta().insert(plainText).ops
-          }
-        })
-      }];
+      // blocks = [{
+      //   path: [0, 0],
+      //   block: createBlock({
+      //     type: 'text',
+      //     data: {
+      //       ops: new Delta().insert(plainText).ops
+      //     }
+      //   })
+      // }];
     }
     if (blocks.length) {
       pasteBlocks(blocks);
