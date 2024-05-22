@@ -7,6 +7,7 @@ import { BlockTree, OperateSource } from '../models/BlockTree';
 import { getImageRatio } from '../components/blocks/image/utils';
 import Delta from 'quill-delta';
 import { isTextBlock } from './operator';
+import { moveCaret } from '../models/caret';
 
 const logger = createLogger('copy');
 
@@ -15,7 +16,6 @@ type BlockWithPath = { path: number[], block: BlockModel }
 export const useCopy = ({ rootValue, selectionState, upload }: { rootValue: ShallowRef<BlockTree>, selectionState: Ref<SelectionState>, upload: (file: Blob | File) => Promise<string> }) => {
   const selectionIsMulti = () => {
     const range = selectionState.value.range;
-    logger.i('selectionIsMulti', range.from.path, range.to.path);
     return !range?.from?.path || !R.equals(range.from.path, range.to.path);
   };
 
@@ -93,6 +93,10 @@ export const useCopy = ({ rootValue, selectionState, upload }: { rootValue: Shal
           .ops;
         rootValue.value.update(curPath, { data: { ops } }, OperateSource.API);
         merged = true;
+
+        setTimeout(() => {
+          moveCaret(document.body.querySelector<HTMLDivElement>(`[data-block-id=${JSON.stringify(curBlock.id)}] [data-focusable]`)!, firstOffset + insertDelta.length());
+        });
       }
       blocks.slice(merged ? 1 : 0).forEach(item => {
         // 计算当前要添加的节点的最终层级
@@ -131,7 +135,8 @@ export const useCopy = ({ rootValue, selectionState, upload }: { rootValue: Shal
 
   const pasteHandler = async (event: ClipboardEvent) => {
     logger.i('pasteHandler', event, event.clipboardData.getData('text/_writing-copy-data'));
-    if (!selectionState.value.range.from.path) return;
+    if (!selectionState.value.range?.from.path) return;
+    event.preventDefault();
     let blocks: BlockWithPath[] = [];
     const files = event.clipboardData.files;
     const dataFromSelf = event.clipboardData.getData('text/_writing-copy-data');

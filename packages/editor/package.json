@@ -28,12 +28,12 @@
     "element-plus": "^2.6.0",
     "eventemitter3": "^5.0.1",
     "gemoji": "^8.1.0",
+    "quill": "~2.0.2",
     "quill-delta": "~5.1.0",
     "ramda": "^0.29.1",
     "vue": "^3.4.21"
   },
   "devDependencies": {
-    "@types/quill": "^2.0.14",
     "@types/ramda": "^0.29.11",
     "@vitejs/plugin-vue": "^5.0.4",
     "vite": "^5.1.5"

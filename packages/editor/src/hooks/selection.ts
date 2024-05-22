@@ -21,7 +21,7 @@ export interface SelectionRange {
 }
 
 export interface SelectionState {
-  range: SelectionRange | null,
+  range?: SelectionRange | null,
   type: 'Caret' | 'Range',
   rect: {
     top: number, left: number

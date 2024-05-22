@@ -77,7 +77,7 @@ watch(() => block.value.children?.length ?? 0, (newVal, oldVal) => {
       content: counter(var(--list-counter-name), var(--list-counter-style))".";
       margin-right: 0.5em;
     }
-    & > .list-item-content:deep > .block-children {
+    & > .list-item-content:deep(> .block-children) {
       padding: 0;
     }
     .list-item-content {

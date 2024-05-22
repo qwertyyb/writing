@@ -4,7 +4,7 @@
       tabindex="0"
       :spellcheck="spellcheck"
       @keydown.capture="keydownHandler($event)"
-      @paste.prevent
+      @paste.capture.prevent
       placeholder="Type something..."
       ref="el"></div>
   </div>
@@ -14,11 +14,11 @@
 import { markRaw, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { createLogger } from '@writing/utils/logger';
 import Quill from './quill';
-import { DeltaOperation } from 'quill';
+import { Op } from 'quill-delta';
 
 const logger = createLogger('TextEditor');
 
-const model = defineModel<string | DeltaOperation[]>({ required: true });
+const model = defineModel<string | Op[]>({ required: true });
 
 const props = defineProps({
   readonly: {
@@ -54,7 +54,7 @@ const el = ref<HTMLDivElement>();
 let editor: Quill | null;
 
 const setValue = () => {
-  let values: DeltaOperation[] = model.value as DeltaOperation[];
+  let values: Op[] = model.value as Op[];
   if (typeof model.value === 'string') {
     values = [{ insert: model.value }];
   }
@@ -83,7 +83,7 @@ onMounted(() => {
   editor.on('text-change', (delta, origin) => {
     logger.i('text-change', delta, origin);
     const { ops } = editor!.getContents();
-    model.value = markRaw(ops as DeltaOperation[]);
+    model.value = markRaw(ops as Op[]);
     emits('change', editor);
   });
   el.value!.querySelector<HTMLElement>('.ql-editor')!.dataset.focusable = 'true';

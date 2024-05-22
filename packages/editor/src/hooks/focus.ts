@@ -7,6 +7,7 @@ const logger = createLogger('focus');
 let focusedEl: HTMLElement | null = null;
 
 export const focusBefore = () => {
+  logger.i('focusBefore');
   const doms = Array.from(document.querySelectorAll<HTMLElement>('[data-focusable]'));
   const index = (focusedEl && doms.indexOf(focusedEl)) ?? -1;
   if (doms[0] && (!focusedEl || index === -1)) {
@@ -17,6 +18,7 @@ export const focusBefore = () => {
 };
 
 export const focusAfter = () => {
+  logger.i('focusAfter');
   const doms = Array.from(document.querySelectorAll<HTMLElement>('[data-focusable]'));
   const index = (focusedEl && doms.indexOf(focusedEl)) ?? -1;
   if (doms[0] && !focusedEl) {
@@ -29,7 +31,7 @@ export const focusAfter = () => {
 const focusBlockImmediate = (id: string, pos: 'start' | 'end') => {
   const input: HTMLDivElement | null | undefined = document.body.querySelector<HTMLDivElement>(`[data-block-id=${JSON.stringify(id)}] [data-focusable]`);
   input?.focus();
-  logger.w('focusBlock', input, id);
+  logger.w('focusBlockImmediate', input, id);
   if (input) {
     pos === 'end' && moveCaretToEnd(input);
     pos === 'start' && moveCaretToStart(input);
@@ -37,6 +39,7 @@ const focusBlockImmediate = (id: string, pos: 'start' | 'end') => {
 };
 
 export const focusBlock = (id: string, pos: 'start' | 'end' = 'end') => {
+  logger.i('focusBlock', id, pos);
   setTimeout(() => {
     nextTick(() => {
       focusBlockImmediate(id, pos);
