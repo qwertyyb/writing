@@ -93,6 +93,7 @@ const random = () => {
   padding: 16px 16px 16px 12px;
   background: rgb(241, 241, 239);
   border-radius: 4px;
+  align-items: first baseline;
   .callout-icon {
     font-size: 22px;
     cursor: pointer;

@@ -88,7 +88,7 @@ export const useCopy = ({ rootValue, selectionState, upload }: { rootValue: Shal
         const insertDelta = new Delta(blocks[0].block.data?.ops || []);
         const ops = new Delta(curBlock.data?.ops || [])
           .slice(0, firstOffset)
-          .concat(insertDelta.slice(0, insertDelta.length() - 1))
+          .concat(insertDelta)
           .concat(new Delta(curBlock.data?.ops || []).slice(firstOffset))
           .ops;
         rootValue.value.update(curPath, { data: { ops } }, OperateSource.API);
@@ -143,15 +143,15 @@ export const useCopy = ({ rootValue, selectionState, upload }: { rootValue: Shal
     } else {
       const plainText = event.clipboardData?.getData('text/plain') ?? '';
       if (!plainText) return;
-      // blocks = [{
-      //   path: [0, 0],
-      //   block: createBlock({
-      //     type: 'text',
-      //     data: {
-      //       ops: new Delta().insert(plainText).ops
-      //     }
-      //   })
-      // }];
+      blocks = [{
+        path: [0, 0],
+        block: createBlock({
+          type: 'text',
+          data: {
+            ops: new Delta().insert(plainText).ops
+          }
+        })
+      }];
     }
     if (blocks.length) {
       pasteBlocks(blocks);
