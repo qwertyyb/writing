@@ -1,7 +1,7 @@
 import { logger } from '@/utils/logger'
 import crelt from 'crelt'
-import type { Attrs, NodeType, Node } from 'prosemirror-model'
-import { Plugin, Selection, TextSelection, type PluginView } from 'prosemirror-state'
+import type { Attrs } from 'prosemirror-model'
+import { Plugin, TextSelection, type PluginView } from 'prosemirror-state'
 import type { EditorView } from 'prosemirror-view'
 
 const COMMAND_TRIGGER = '/'
@@ -80,7 +80,7 @@ class BlockToolList {
       const visible = item.spec.keyword.includes(value)
       item.show(visible)
     })
-    return this.items.filter(item => item.visible)
+    return this.items.filter(item => item.visible())
   }
 
   selectNext() {
@@ -151,7 +151,11 @@ class BlockTool implements PluginView {
   }
 
   query(value: string) {
-    this.list.filter(value)
+    const results = this.list.filter(value)
+    if (!results.length) {
+      this.hide()
+      return
+    }
     this.list.select(0)
   }
 
@@ -164,6 +168,7 @@ class BlockTool implements PluginView {
   }
 
   show(position: { left: number, top: number }) {
+    this.view.dom.removeEventListener('keydown', this.keydownHandler, true)
     this.query('')
     this.dom.style.display = ''
     this.dom.style.left = position.left + 'px'
@@ -192,13 +197,14 @@ const updateNodeType = (view: EditorView, nodeType: string, attrs?: Attrs) => {
   if (!$cursor) return
 
   const node = $cursor.node()
-  if (node.isTextblock && node.textContent === '/') {
+  if (node.isTextblock) {
     const newNodeType = schema.nodes[nodeType]
-    if (!newNodeType.isTextblock) {
-      const transaction = tr.replaceSelectionWith(newNodeType.create())
+    if (newNodeType.isTextblock) {
+      const transaction = tr.setBlockType($cursor.before(), $cursor.after(), newNodeType, attrs)
+        .delete($cursor.before() + 1, $cursor.after() - 1)
       view.dispatch(transaction)
     } else {
-      const transaction = tr.setBlockType($cursor.before(), $cursor.after(), newNodeType, attrs)
+      const transaction = tr.replaceSelectionWith(newNodeType.create())
       view.dispatch(transaction)
     }
   }
@@ -283,27 +289,5 @@ export const blockTool = () => {
       editorView.dom.parentNode?.appendChild(blockTool.dom)
       return blockTool
     },
-    // props: {
-    //   handleTextInput(view, from, to, text) {
-    //     const $from = view.state.doc.resolve(from)
-    //     const selection = view.state.selection
-    //     if (!(selection instanceof TextSelection)) return
-    //     console.log('handleTextInput', startPos, selection.$cursor && view.domAtPos(selection.$cursor?.pos), selection.$cursor)
-    //     if (startPos !== null && $from.parentOffset > 0) {
-    //       console.log('search', startPos)
-    //     } else if ($from.parentOffset === 0 && selection instanceof TextSelection && selection.$cursor) {
-    //       if (text !== COMMAND_TRIGGER) return false
-    //       // 输入的字符位于首位，显示 command 列表
-    //       startPos = selection.$cursor.pos
-    //       tool.show(view)
-    //       const pos = view.coordsAtPos(selection.$cursor.pos)
-    //       view.dom.parentNode?.appendChild(tool.dom)
-    //       const rect = tool.dom.offsetParent!.getBoundingClientRect()
-    //       const top = pos.top - rect.top
-    //       const left = pos.left - rect.left
-    //       tool.position(left, top)
-    //     }
-    //   }
-    // }
   })
 }

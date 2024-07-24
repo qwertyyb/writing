@@ -33,7 +33,7 @@ onMounted(() => {
     dispatchTransaction(tr) {
       view.updateState(view.state.apply(tr));
       const value = view.state.doc.toJSON()
-      logger.i('change', value)
+      logger.i('change', value, view.state.selection.toJSON())
       emits('change', value)
     }
   })
