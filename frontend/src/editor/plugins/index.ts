@@ -7,9 +7,11 @@ import { gapCursor } from 'prosemirror-gapcursor'
 import type { Schema } from "prosemirror-model";
 import { buildKeymap } from "./keymap";
 import { blockTool } from "./block/block-tool";
+import { buildInputRules } from "./inputrules";
 
 export const createPlugins = (schema: Schema) => [
   keymap(baseKeymap),
+  buildInputRules(schema),
   history(),
   keymap({
     "Mod-z": undo,

@@ -1,17 +1,18 @@
 <template>
-  <div class="document-editor" ref="el">
+  <div class="document-editor">
+    <input type="text" placeholder="请输入标题" value="页面标题" class="document-editor-title" />
+    <div class="document-editor-content" ref="el"></div>
   </div>
 </template>
 
 <script lang="ts" setup>
 import {EditorState} from "prosemirror-state"
-import {Decoration, EditorView, type DecorationSource} from "prosemirror-view"
+import { EditorView } from "prosemirror-view"
 import {Node} from "prosemirror-model"
 import {schema} from "./schema"
 import { onBeforeMount, onMounted, ref } from "vue"
 import { createLogger } from "@/utils/logger"
 import { createPlugins } from './plugins'
-import { createImageNode } from "./nodes/ImageNode"
 
 const logger = createLogger('DocumentEditor')
 
@@ -21,19 +22,6 @@ const emits = defineEmits<{ change: any }>()
 
 const el = ref<HTMLElement>()
 let editor: EditorView | null = null
-
-const createImage = (node: Node, view: EditorView, getPos: () => number | undefined, decorations: readonly Decoration[], innerDecorations: DecorationSource) => {
-  const imageNode = createImageNode(node)
-  return {
-    dom: imageNode,
-    contentDOM: imageNode.querySelector('img'),
-    update(node: Node) {
-      imageNode.querySelector('img')!.style.width = node.attrs.size + '%'
-      // view.dispatch(view.state.tr.setSelection(view))
-      return false
-    }
-  }
-}
 
 
 onMounted(() => {
@@ -65,6 +53,18 @@ onBeforeMount(() => {
 <style lang="less" scoped>
 .document-editor {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  & > * {
+    width: 100%;
+  }
+  .document-editor-title {
+    font-size: 36px;
+    border: none;
+  }
+  .document-editor-content {
+    min-height: 60vh;
+  }
 }
 .document-editor:deep(*) {
   outline: none;
@@ -124,7 +124,7 @@ onBeforeMount(() => {
       display: flex;
       flex-direction: column;
       width: 200px;
-      height: 200px;
+      max-height: 200px;
       overflow: auto;
     }
     .block-tool-item {
