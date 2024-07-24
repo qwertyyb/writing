@@ -204,7 +204,11 @@ const updateNodeType = (view: EditorView, nodeType: string, attrs?: Attrs) => {
         .delete($cursor.before() + 1, $cursor.after() - 1)
       view.dispatch(transaction)
     } else {
-      const transaction = tr.replaceSelectionWith(newNodeType.create())
+      const newNode = newNodeType.createAndFill()
+      if (!newNode) {
+        throw new Error(`updateNodeType failed: ${nodeType}`)
+      }
+      const transaction = tr.replaceRangeWith($cursor.before(), $cursor.after(), newNode)
       view.dispatch(transaction)
     }
   }

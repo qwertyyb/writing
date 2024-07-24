@@ -10,6 +10,7 @@ import { blockTool } from "./block/block-tool";
 import { buildInputRules } from "./inputrules";
 
 export const createPlugins = (schema: Schema) => [
+  keymap(buildKeymap(schema)),
   keymap(baseKeymap),
   buildInputRules(schema),
   history(),
@@ -17,7 +18,6 @@ export const createPlugins = (schema: Schema) => [
     "Mod-z": undo,
     "Shift-Mod-z": redo
   }),
-  keymap(buildKeymap(schema)),
   dropCursor(),
   gapCursor(),
   toolbar(),
