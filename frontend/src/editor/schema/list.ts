@@ -3,7 +3,8 @@ import {
   liftTarget,
   canSplit,
   ReplaceAroundStep,
-  canJoin
+  canJoin,
+  ReplaceStep
 } from 'prosemirror-transform'
 import {
   Slice,
@@ -29,7 +30,7 @@ export const orderedList: NodeSpec = {
   attrs: { order: { default: 1 } },
   parseDOM: [
     {
-      tag: 'ol',
+      tag: 'ol'
     }
   ],
   toDOM(node) {
@@ -79,7 +80,7 @@ function add(obj: { [prop: string]: any }, props: { [prop: string]: any }) {
 export const listNodes = {
   orderedList: add(orderedList, { content: 'listItem+', group: 'block' }),
   unorderedList: add(bulletList, { content: 'listItem+', group: 'block' }),
-  listItem: add(listItem, { content: 'paragraph' })
+  listItem: add(listItem, { content: 'block+' })
 }
 
 /// Returns a command function that wraps the selection in a list with
