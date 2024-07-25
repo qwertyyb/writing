@@ -3,12 +3,11 @@ import {
   wrapIn, setBlockType, chainCommands, toggleMark, exitCode,
   joinUp, joinDown, lift, selectParentNode
 } from "prosemirror-commands"
-import { wrapInList } from "prosemirror-schema-list"
 import { redo } from 'prosemirror-history'
 import { undoInputRule } from "prosemirror-inputrules"
 import { Schema } from "prosemirror-model"
 import type { Command } from "prosemirror-state"
-import { liftListItem, sinkListItem, splitListItem } from "../schema/list"
+import { liftListItem, sinkListItem, splitListItem, wrapInList } from "prosemirror-schema-list"
 
 const mac = typeof navigator != "undefined" ? /Mac|iP(hone|[oa]d)/.test(navigator.platform) : false
 
@@ -78,7 +77,7 @@ export function buildKeymap(schema: Schema, mapKeys?: { [key: string]: false | s
     bind("Shift-Ctrl-9", wrapInList(type))
   if (type = schema.nodes.blockquote)
     bind("Ctrl->", wrapIn(type))
-  if (type = schema.nodes.listItem) {
+  if (type = schema.nodes.list_item) {
     bind("Enter", splitListItem(type))
     bind('Tab', sinkListItem(type))
     bind('Shift-Tab', liftListItem(type))

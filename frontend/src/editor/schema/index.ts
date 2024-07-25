@@ -1,6 +1,6 @@
 import { Schema, type NodeSpec, type MarkSpec } from 'prosemirror-model'
 import { createImageNode } from '../nodes/ImageNode'
-import { listNodes } from './list'
+import { addListNodes } from 'prosemirror-schema-list'
 
 /// [Specs](#model.NodeSpec) for the nodes defined in this schema.
 export const nodes: Record<string, NodeSpec> = {
@@ -72,7 +72,7 @@ export const nodes: Record<string, NodeSpec> = {
   /// A code listing. Disallows marks or non-text inline
   /// nodes by default. Represented as a `<pre>` element with a
   /// `<code>` element inside of it.
-  codeBlock: {
+  code_block: {
     content: 'text*',
     marks: '',
     group: 'block',
@@ -112,8 +112,6 @@ export const nodes: Record<string, NodeSpec> = {
     ],
     toDOM: createImageNode
   },
-
-  ...listNodes
 }
 
 /// [Specs](#model.MarkSpec) for the marks in the schema.
@@ -186,16 +184,71 @@ export const marks: Record<string, MarkSpec> = {
     }
   },
 
-  icon: {
-    parseDOM: [{ tag: 'img.icon' }],
-    toDOM(node) {
-      const { src, alt, title } = node.attrs
-      return ['img', { class: 'icon', src, alt, title }]
+  del: {
+    parseDOM: [{ tag: 'del' }, { style: 'text-decoration: line-through' }],
+    toDOM() {
+      return ['del', 0]
     }
   },
 
-  del: {
-    parseDOM: [{ tag: 'del' }, { style: 'text-decoration: line-through' }]
+  underline: {
+    parseDOM: [{ tag: 'u' }, { style: 'text-decoration: underline' }],
+    toDOM(mark, inline) {
+      if (inline) {
+        return ['span', { style: 'text-decoration: underline' }, 0]
+      }
+      return ['div', { style: 'text-decoration: underline' }, 0]
+    },
+  },
+
+  super: {
+    parseDOM: [{ tag: 'sup' }, { style: 'vertical-align: super' }],
+    toDOM() {
+      return ['sup', 0]
+    }
+  },
+
+  sub: {
+    parseDOM: [{ tag: 'sub' }, { style: 'vertical-align: sub' }],
+    toDOM() {
+      return ['sub', 0]
+    }
+  },
+
+  color: {
+    attrs: {
+      color: {}
+    },
+    parseDOM: [
+      {
+        style: 'color',
+        getAttrs(dom) {
+          const color = (dom as any)?.style?.color
+          return color ?? false
+        }
+      }
+    ],
+    toDOM(mark) {
+      return ['span', { style: `color: ${mark.attrs.color}`}, 0]
+    }
+  },
+
+  background: {
+    attrs: {
+      color: {}
+    },
+    parseDOM: [
+      {
+        style: 'background-color',
+        getAttrs(dom) {
+          const color = (dom as any)?.style?.backgroundColor
+          return color ?? false
+        }
+      }
+    ],
+    toDOM(mark) {
+      return ['span', { style: `background-color: ${mark.attrs.backgroundColor}`}, 0]
+    }
   }
 }
 
@@ -206,4 +259,9 @@ export const marks: Record<string, MarkSpec> = {
 ///
 /// To reuse elements from this schema, extend or read from its
 /// `spec.nodes` and `spec.marks` [properties](#model.Schema.spec).
-export const schema = new Schema({ nodes, marks })
+const baseSchema = new Schema({ nodes, marks })
+
+// 添加无序和有序列表
+const allNodes = addListNodes(baseSchema.spec.nodes, 'block+', 'block')
+
+export const schema: Schema = new Schema({ nodes: allNodes, marks: baseSchema.spec.marks })
