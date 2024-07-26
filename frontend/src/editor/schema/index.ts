@@ -12,6 +12,11 @@ export const nodes: Record<string, NodeSpec> = {
   /// A plain paragraph textblock. Represented in the DOM
   /// as a `<p>` element.
   paragraph: {
+    attrs: {
+      align: {
+        default: 'left'
+      }
+    },
     content: 'inline*',
     group: 'block',
     parseDOM: [{ tag: 'p' }],
@@ -31,9 +36,14 @@ export const nodes: Record<string, NodeSpec> = {
   /// should hold the number 1 to 6. Parsed and serialized as `<h1>` to
   /// `<h6>` elements.
   heading: {
+    attrs: {
+      level: { default: 2 },
+      align: {
+        default: 'left'
+      }
+    },
     content: 'inline*',
     marks: '',
-    attrs: { level: { default: 2 } },
     group: 'block',
     defining: true,
     parseDOM: [
@@ -90,11 +100,11 @@ export const nodes: Record<string, NodeSpec> = {
   image: {
     attrs: {
       src: {},
-      alt: { default: null },
       title: { default: null },
       size: { default: 50 },
-      align: { default: 'Center' }
+      align: { default: 'Center' },
     },
+    marks: "link",
     group: 'block',
     draggable: true,
     parseDOM: [
@@ -104,8 +114,7 @@ export const nodes: Record<string, NodeSpec> = {
           if (typeof dom === 'string') return false
           return {
             src: dom.getAttribute('src'),
-            title: dom.getAttribute('title'),
-            alt: dom.getAttribute('alt')
+            title: dom.getAttribute('title') || dom.getAttribute('alt'),
           }
         }
       }
@@ -242,14 +251,14 @@ export const marks: Record<string, MarkSpec> = {
         style: 'background-color',
         getAttrs(dom) {
           const color = (dom as any)?.style?.backgroundColor
-          return color ?? false
+          return color ? { color } : false
         }
       }
     ],
     toDOM(mark) {
       return ['span', { style: `background-color: ${mark.attrs.backgroundColor}`}, 0]
     }
-  }
+  },
 }
 
 /// This schema roughly corresponds to the document schema used by

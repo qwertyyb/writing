@@ -111,19 +111,18 @@ class ToolbarView implements PluginView {
       markTypes.forEach(markType => {
         if (markNames.has(markType.name)) return
         const allow = node.type.allowsMarkType(markType)
-        console.log(allow, node)
         if (allow) {
           markNames.add(markType.name)
         }
       })
     })
 
-    console.log([...markNames])
     const filteredToolbar = toolbar.filter(item => markNames.has(item.name))
     if (!filteredToolbar.length) {
       this.vmProps.visible = false
       return
     }
+    this.vmProps.toolbar = filteredToolbar
 
     const activeMarks = toolbar.reduce((acc, item) => ({ ...acc, [item.name]: isMarkActive(view, item.name) }), {})
     this.vmProps.activeMarks = activeMarks
