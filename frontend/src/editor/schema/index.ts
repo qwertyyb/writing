@@ -102,11 +102,12 @@ export const nodes: Record<string, NodeSpec> = {
       src: {},
       title: { default: null },
       size: { default: 50 },
-      align: { default: 'Center' },
+      align: { default: 'center' },
     },
+    content: 'inline*',
     marks: "link",
     group: 'block',
-    draggable: true,
+    // draggable: true,
     parseDOM: [
       {
         tag: 'img[src]',
@@ -194,6 +195,7 @@ export const marks: Record<string, MarkSpec> = {
   },
 
   del: {
+    excludes: 'underline',
     parseDOM: [{ tag: 'del' }, { style: 'text-decoration: line-through' }],
     toDOM() {
       return ['del', 0]
@@ -201,6 +203,7 @@ export const marks: Record<string, MarkSpec> = {
   },
 
   underline: {
+    excludes: 'del',
     parseDOM: [{ tag: 'u' }, { style: 'text-decoration: underline' }],
     toDOM(mark, inline) {
       if (inline) {
@@ -211,6 +214,7 @@ export const marks: Record<string, MarkSpec> = {
   },
 
   super: {
+    excludes: 'sub',
     parseDOM: [{ tag: 'sup' }, { style: 'vertical-align: super' }],
     toDOM() {
       return ['sup', 0]
@@ -218,6 +222,7 @@ export const marks: Record<string, MarkSpec> = {
   },
 
   sub: {
+    excludes: 'sub',
     parseDOM: [{ tag: 'sub' }, { style: 'vertical-align: sub' }],
     toDOM() {
       return ['sub', 0]

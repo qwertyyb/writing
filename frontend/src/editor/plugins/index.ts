@@ -8,7 +8,6 @@ import type { Schema } from 'prosemirror-model'
 import { buildKeymap } from './keymap'
 import { blockTool } from './block/block-tool'
 import { buildInputRules } from './inputrules'
-import { image } from './image'
 
 export const createPlugins = (schema: Schema) => [
   keymap(buildKeymap(schema)),
@@ -22,6 +21,5 @@ export const createPlugins = (schema: Schema) => [
   dropCursor(),
   gapCursor(),
   toolbarPlugin(),
-  blockTool(),
-  image()
+  blockTool()
 ]

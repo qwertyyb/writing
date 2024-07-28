@@ -77,6 +77,51 @@ const toolbar: ToolbarItemSpec[] = [
   }
 ]
 
+export interface AttrToolbarItemSpec extends ToolbarItemSpec {
+  handler?: (view: EditorView) => void
+  value: any,
+  attr: string,
+}
+
+const attrsToolbar: AttrToolbarItemSpec[] = [
+  {
+    name: 'align_left',
+    attr: 'align',
+    label: 'format_align_left',
+    value: 'left',
+  },
+  {
+    name: 'align_center',
+    attr: 'align',
+    label: 'format_align_center',
+    value: 'center'
+  },
+  {
+    name: 'align_right',
+    attr: 'align',
+    label: 'format_align_right',
+    value: 'right'
+  },
+  {
+    name: 'size_25',
+    attr: 'size',
+    label: 'zoom_out',
+    value: '25%'
+  },
+  {
+    name: 'size_50',
+    attr: 'size',
+    label: 'zoom_in',
+    value: '50%'
+  },
+  {
+    name: 'size_full',
+    attr: 'size',
+    label: 'pageless',
+    value: '100%'
+  }
+]
+
 class ToolbarView implements PluginView {
   vm: App
   vmProps = reactive({

@@ -103,7 +103,7 @@ export const createImageNode = (node: Node) => {
     class: 'image',
     src: node.attrs.src || 'https://via.placeholder.com/200',
     title: node.attrs.title,
-    style: `width:${node.attrs.size}%`
+    style: `width:${node.attrs.size}%;resize:both`
   })
   const dom = crelt('div', {
     class: ['image-node', `align-${node.attrs.align}`].join(' '),

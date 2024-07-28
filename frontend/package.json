@@ -38,6 +38,7 @@
     "prosemirror-transform": "^1.8.0",
     "prosemirror-view": "^1.33.1",
     "vue": "^3.3.11",
+    "vue-resizables": "^0.7.1",
     "vue-router": "^4.2.5"
   },
   "devDependencies": {
