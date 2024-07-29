@@ -222,7 +222,7 @@ export const marks: Record<string, MarkSpec> = {
   },
 
   sub: {
-    excludes: 'sub',
+    excludes: 'super',
     parseDOM: [{ tag: 'sub' }, { style: 'vertical-align: sub' }],
     toDOM() {
       return ['sub', 0]
@@ -247,9 +247,9 @@ export const marks: Record<string, MarkSpec> = {
     }
   },
 
-  background: {
+  backgroundColor: {
     attrs: {
-      color: {}
+      backgroundColor: {}
     },
     parseDOM: [
       {

@@ -55,6 +55,29 @@ onBeforeMount(() => {
   position: relative;
   display: flex;
   flex-direction: column;
+
+  --bg-default: transparent;
+  --bg-grey: #ebebeb;
+  --bg-dark: #dcdfe4;
+  --bg-light-grey: #f3f5f7;
+  --bg-blue: #c7dcff;
+  --bg-light-blue: #e5efff;
+  --bg-skyblue: #c7ecff;
+  --bg-light-skyblue: #e5f6ff;
+  --bg-green: #ace2c5;
+  --bg-light-green: #eafaf1;
+  --bg-yellow: #ffeead;
+  --bg-light-yellow: #fff9e3;
+  --bg-orange: #ffdcc4;
+  --bg-light-orange: #fff3eb;
+  --bg-red: #ffc9c7;
+  --bg-light-red: #ffe9e8;
+  --bg-rosered: #ffc7e2;
+  --bg-light-rosered: #ffecf4;
+  --bg-purple: #f2c7ff;
+  --bg-light-purple: #fdebff;
+  --bg-error: #ffeadb;
+
   & > * {
     width: 100%;
   }

@@ -1,11 +1,12 @@
 import { Plugin, type PluginView } from 'prosemirror-state'
 import { EditorView } from 'prosemirror-view'
-import { isMarkActive, toggleMark } from './mark';
+import { allowMarkTypes, getRangeMarks, setMark, toggleMark } from './mark';
 import { type App, createApp, reactive, h, markRaw } from 'vue';
 import EditorToolbar, { type ToolbarItemSpec } from './EditorToolbar.vue'
 
 const toolbar: ToolbarItemSpec[] = [
   {
+    type: 'mark',
     name: 'strong',
     label: 'format_bold',
     handler(view) {
@@ -13,6 +14,7 @@ const toolbar: ToolbarItemSpec[] = [
     },
   },
   {
+    type: 'mark',
     name: 'em',
     label: 'format_italic',
     handler(view) {
@@ -20,6 +22,7 @@ const toolbar: ToolbarItemSpec[] = [
     },
   },
   {
+    type: 'mark',
     name: 'underline',
     label: 'format_underlined',
     handler(view) {
@@ -27,6 +30,7 @@ const toolbar: ToolbarItemSpec[] = [
     },
   },
   {
+    type: 'mark',
     name: 'del',
     label: 'format_strikethrough',
     handler(view) {
@@ -34,6 +38,7 @@ const toolbar: ToolbarItemSpec[] = [
     },
   },
   {
+    type: 'mark',
     name: 'super',
     label: 'superscript',
     handler(view) {
@@ -41,6 +46,7 @@ const toolbar: ToolbarItemSpec[] = [
     },
   },
   {
+    type: 'mark',
     name: 'sub',
     label: 'subscript',
     handler(view) {
@@ -48,6 +54,7 @@ const toolbar: ToolbarItemSpec[] = [
     },
   },
   {
+    type: 'mark',
     name: 'code',
     label: 'code',
     handler(view) {
@@ -55,70 +62,27 @@ const toolbar: ToolbarItemSpec[] = [
     },
   },
   {
+    type: 'mark',
     name: 'link',
     label: 'link',
     handler(view) {
-      
     },
   },
   {
+    type: 'mark',
     name: 'color',
     label: 'format_color_text',
-    handler(view) {
-      
+    handler(view, color) {
+      setMark(view, view.state.schema.marks.color, { color })
     },
   },
   {
-    name: 'background',
+    type: 'mark',
+    name: 'backgroundColor',
     label: 'format_color_fill',
-    handler(view) {
-      
+    handler(view, color) {
+      setMark(view, view.state.schema.marks.backgroundColor, { backgroundColor: color })
     },
-  }
-]
-
-export interface AttrToolbarItemSpec extends ToolbarItemSpec {
-  handler?: (view: EditorView) => void
-  value: any,
-  attr: string,
-}
-
-const attrsToolbar: AttrToolbarItemSpec[] = [
-  {
-    name: 'align_left',
-    attr: 'align',
-    label: 'format_align_left',
-    value: 'left',
-  },
-  {
-    name: 'align_center',
-    attr: 'align',
-    label: 'format_align_center',
-    value: 'center'
-  },
-  {
-    name: 'align_right',
-    attr: 'align',
-    label: 'format_align_right',
-    value: 'right'
-  },
-  {
-    name: 'size_25',
-    attr: 'size',
-    label: 'zoom_out',
-    value: '25%'
-  },
-  {
-    name: 'size_50',
-    attr: 'size',
-    label: 'zoom_in',
-    value: '50%'
-  },
-  {
-    name: 'size_full',
-    attr: 'size',
-    label: 'pageless',
-    value: '100%'
   }
 ]
 
@@ -127,7 +91,7 @@ class ToolbarView implements PluginView {
   vmProps = reactive({
     editorView: null as EditorView | null,
     toolbar: markRaw(toolbar),
-    activeMarks: {},
+    marksValues: {},
     visible: false,
     position: { left: 0, bottom: 0 }
   })
@@ -150,27 +114,19 @@ class ToolbarView implements PluginView {
       return
     }
     const markTypes = toolbar.map(item => view.state.schema.marks[item.name]).filter(Boolean)
-    const markNames = new Set()
-    view.state.doc.nodesBetween(from, to, (node) => {
-      if (node.isInline) return
-      markTypes.forEach(markType => {
-        if (markNames.has(markType.name)) return
-        const allow = node.type.allowsMarkType(markType)
-        if (allow) {
-          markNames.add(markType.name)
-        }
-      })
-    })
+    const doc = view.state.doc
+    const allowedMarkTypes = allowMarkTypes(from, to, doc, markTypes)
 
-    const filteredToolbar = toolbar.filter(item => markNames.has(item.name))
+    const filteredToolbar = toolbar.filter(item => allowedMarkTypes.some(markType => markType.name === item.name))
     if (!filteredToolbar.length) {
       this.vmProps.visible = false
       return
     }
     this.vmProps.toolbar = filteredToolbar
 
-    const activeMarks = toolbar.reduce((acc, item) => ({ ...acc, [item.name]: isMarkActive(view, item.name) }), {})
-    this.vmProps.activeMarks = activeMarks
+    const marksValues = getRangeMarks(from, to, doc, allowedMarkTypes)
+
+    this.vmProps.marksValues = markRaw(marksValues)
 
     const start = view.coordsAtPos(from), end = view.coordsAtPos(to)
     const box = view.dom.parentElement!.offsetParent!.getBoundingClientRect()
