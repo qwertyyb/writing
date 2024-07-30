@@ -15,10 +15,10 @@ import type BaseView from '../node-views/BaseView.vue'
 
 export interface VueNodeViewProps<N extends Node = Node> {
   node: N
-  view: EditorView
-  getPos: () => number
-  decorations: readonly Decoration[]
-  innerDecorations: DecorationSource
+  view?: EditorView
+  getPos?: () => number
+  decorations?: readonly Decoration[]
+  innerDecorations?: DecorationSource
 }
 
 type BaseViewComponent = typeof BaseView
@@ -44,18 +44,22 @@ class VueNodeView<N extends Node = Node> implements NodeView {
   constructor(
     Component: Component,
     node: N,
-    view: EditorView,
-    getPos: () => number,
-    decorations: Decoration[],
-    innerDecorations: DecorationSource
+    view?: EditorView,
+    getPos?: () => number,
+    decorations?: Decoration[],
+    innerDecorations?: DecorationSource
   ) {
-    console.log('constructor')
     this.vmProps = shallowReactive({
       node: markRaw(node),
-      view: markRaw(view),
-      getPos: markRaw(getPos),
-      decorations: markRaw(decorations),
-      innerDecorations: markRaw(innerDecorations),
+      ...(Object.entries({view, getPos, decorations, innerDecorations}).reduce((acc, [key, value]) => {
+        if (value) {
+          return {
+            ...acc,
+            [key]: markRaw(value)
+          }
+        }
+        return acc
+      }, {})),
       ref: this.vm,
       onUpdateAttrs: this.updateAttrs
     })
@@ -67,7 +71,7 @@ class VueNodeView<N extends Node = Node> implements NodeView {
   updateAttrs = (attrs: Attrs) => {
     const view = this.vmProps?.view
     if (!view) return;
-    view.dispatch(view.state.tr.setNodeMarkup(this.vmProps!.getPos(), null, attrs))
+    view.dispatch(view.state.tr.setNodeMarkup(this.vmProps!.getPos!(), null, attrs))
   }
   update = (node: Node, decorations: readonly Decoration[], innerDecorations: DecorationSource) => {
     if (this.vmProps) {
@@ -116,4 +120,8 @@ export const vueNodeViews = (nodeViewsSpec: Record<string, Component>) => {
       nodeViews
     }
   })
+}
+
+export const toDOMRender = (node: Node, Component: Component) => {
+  return new VueNodeView(Component, node) as { dom: HTMLElement, contentDOM: HTMLElement | undefined }
 }

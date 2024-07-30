@@ -9,7 +9,18 @@
     }">
     <el-popover placement="top" trigger="click" width="fit-content" @after-leave="linkInputVisible = false">
       <template #reference>
+        <a :href="node.attrs.href"
+          v-if="node.attrs.href"
+          class="editor-image-node-link">
+          <img
+            draggable="false"
+            class="editor-image-node-image"
+            :src="node.attrs.src || 'https://fakeimg.pl/200'"
+            alt=""
+          >
+        </a>
         <img
+          v-else
           draggable="false"
           class="editor-image-node-image"
           :src="node.attrs.src || 'https://fakeimg.pl/200'"

@@ -94,18 +94,29 @@ export const nodes: Record<string, NodeSpec> = {
     }
   },
 
+
+  /// A blockquote (`<blockquote>`) wrapping one or more blocks.
+  plain_text: {
+    content: 'inline*',
+    group: 'plain',
+    marks: "",
+    parseDOM: [{ tag: 'p' }],
+    toDOM() {
+      return ['p', 0]
+    }
+  },
+
   /// An inline image (`<img>`) node. Supports `src`,
   /// `alt`, and `href` attributes. The latter two default to the empty
   /// string.
   image: {
     attrs: {
       src: {},
-      title: { default: null },
-      size: { default: 50 },
-      align: { default: 'center' },
+      size: { default: null },
+      align: { default: 'center' }, // left | center | right
       href: { default: null }
     },
-    content: 'inline*',
+    content: 'plain_text',
     marks: "",
     group: 'block',
     selectable: true,
@@ -120,6 +131,27 @@ export const nodes: Record<string, NodeSpec> = {
             title: dom.getAttribute('title') || dom.getAttribute('alt'),
           }
         }
+      },
+      {
+        tag: 'figure.editor-image-node',
+        getAttrs(node) {
+          if (typeof node === 'string') return false
+          const img = node.querySelector<HTMLImageElement>('img.editor-image-node-image')
+          const src = img?.src
+          if (!src) return false
+          const size = parseInt(node.style.width) > 100 ? null : parseInt(node.style.width)
+          const align = node.style.marginLeft === 'auto' && node.style.marginRight === 'auto'
+            ? 'center'
+            : node.style.marginLeft === 'auto' ? 'right' : 'left'
+          const link = node.querySelector<HTMLLinkElement>('a.editor-image-node-link')
+          return {
+            src,
+            size,
+            align,
+            href: link?.href ?? null
+          }
+        },
+        contentElement: 'figcaption.editor-image-node-title'
       }
     ],
     toDOM: createImageNode
