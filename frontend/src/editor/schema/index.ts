@@ -103,11 +103,13 @@ export const nodes: Record<string, NodeSpec> = {
       title: { default: null },
       size: { default: 50 },
       align: { default: 'center' },
+      href: { default: null }
     },
     content: 'inline*',
-    marks: "link",
+    marks: "",
     group: 'block',
-    // draggable: true,
+    selectable: true,
+    draggable: false,
     parseDOM: [
       {
         tag: 'img[src]',
@@ -132,7 +134,6 @@ export const marks: Record<string, MarkSpec> = {
   link: {
     attrs: {
       href: {},
-      title: { default: null }
     },
     inclusive: false,
     parseDOM: [
@@ -140,8 +141,7 @@ export const marks: Record<string, MarkSpec> = {
         tag: 'a[href]',
         getAttrs(dom) {
           return {
-            href: (dom as HTMLElement).getAttribute('href'),
-            title: (dom as HTMLElement).getAttribute('title')
+            href: (dom as HTMLElement).getAttribute('href')
           }
         }
       }

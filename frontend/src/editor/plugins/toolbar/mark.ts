@@ -87,7 +87,7 @@ export function isMarkActive(view: EditorView, markType: MarkType | string) {
  * @param view 
  * @param markType 
  */
-function unsetMark(view: EditorView, markType: MarkType | string) {
+export function unsetMark(view: EditorView, markType: MarkType | string) {
   const { schema, selection, tr } = view.state;
   const { $from, $to } = selection;
   
@@ -117,7 +117,7 @@ export function toggleMark(view: EditorView, markType: MarkType | string) {
 
 export const allowMarkTypes = (from: number, to: number, node: Node, markTypes: MarkType[]) => {
   node.nodesBetween(from, to, (node) => {
-    if (!node.isInline) return;
+    if (node.isInline) return;
     markTypes = markTypes.filter(markType => {
       return node.type.allowsMarkType(markType)
     })

@@ -1,7 +1,6 @@
-import type { EditorView } from 'codemirror'
-import type { Node } from 'prosemirror-model'
+import type { Attrs, Node } from 'prosemirror-model'
 import { Plugin } from 'prosemirror-state'
-import type { Decoration, DecorationSource, NodeView } from 'prosemirror-view'
+import type { Decoration, DecorationSource, EditorView, NodeView } from 'prosemirror-view'
 import {
   createApp,
   h,
@@ -50,29 +49,39 @@ class VueNodeView<N extends Node = Node> implements NodeView {
     decorations: Decoration[],
     innerDecorations: DecorationSource
   ) {
+    console.log('constructor')
     this.vmProps = shallowReactive({
       node: markRaw(node),
       view: markRaw(view),
       getPos: markRaw(getPos),
       decorations: markRaw(decorations),
       innerDecorations: markRaw(innerDecorations),
-      ref: this.vm
+      ref: this.vm,
+      onUpdateAttrs: this.updateAttrs
     })
     this.vmApp = createApp({
       render: () => h(Component, this.vmProps)
     })
     this.vmApp.mount(this.root)
   }
+  updateAttrs = (attrs: Attrs) => {
+    const view = this.vmProps?.view
+    if (!view) return;
+    view.dispatch(view.state.tr.setNodeMarkup(this.vmProps!.getPos(), null, attrs))
+  }
   update = (node: Node, decorations: readonly Decoration[], innerDecorations: DecorationSource) => {
     if (this.vmProps) {
       this.vmProps.node = markRaw(node as N)
       this.vmProps.decorations = markRaw(decorations)
       this.vmProps.innerDecorations = markRaw(innerDecorations)
-      return false
+      return true
     }
-    return true
+    return false
   }
   ignoreMutation = (mutation: MutationRecord) => {
+    if ((mutation.type as any) === 'selection') {
+      return false;
+    }
     if (this.contentDOM && (this.contentDOM === mutation.target || this.contentDOM.contains(mutation.target))) {
       return false
     }

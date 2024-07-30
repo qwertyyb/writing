@@ -1,15 +1,14 @@
 <template>
-  <div class="editor-toolbar" v-if="visible" :style="{left: position.left + 'px', bottom: position.bottom + 'px'}">
+  <div class="editor-toolbar" v-if="visible" :style="{left: position.left + 'px', top: position.top + 'px'}">
     <ul class="toolbar-list">
       <li class="toolbar-item material-symbols-outlined"
         :class="{ active: !!marksValues[item.name] }"
         v-for="item in toolbar"
         :key="item.name"
-        @pointerdown.prevent="handler(item)"
       >
         <el-popover trigger="click" width="fit-content" v-if="item.name === 'color' || item.name === 'backgroundColor'">
           <template #reference>
-            <div class="toolbar-item-label">{{ item.label }}</div>
+            <div class="toolbar-item-label" :title="item.title">{{ item.label }}</div>
           </template>
           <template #default>
             <ColorPanel
@@ -20,7 +19,18 @@
             />
           </template>
         </el-popover>
-        <div class="toolbar-item-label" v-else>{{ item.label }}</div>
+        <el-popover trigger="click" width="fit-content" v-else-if="item.name === 'link'">
+          <template #reference>
+            <div class="toolbar-item-label" :title="item.title">{{ item.label }}</div>
+          </template>
+          <template #default>
+            <LinkInput :href="marksValues[item.name]?.attrs?.href"
+              @change="linkChangeHandler(item, $event)"
+              @clear="linkChangeHandler(item, null)"
+            ></LinkInput>
+          </template>
+        </el-popover>
+        <div class="toolbar-item-label" :title="item.title" v-else @pointerdown.prevent="handler(item)">{{ item.label }}</div>
       </li>
     </ul>
   </div>
@@ -30,14 +40,15 @@
 import type { EditorView } from 'prosemirror-view';
 import { ElPopover } from 'element-plus';
 import ColorPanel from '@/editor/components/ColorPanel.vue';
+import LinkInput from '@/editor/components/LinkInput.vue';
 import { defineComponent, type PropType } from 'vue';
 import type { Mark } from 'prosemirror-model';
 
 export interface ToolbarItemSpec {
-  type: 'mark' | 'attr'
   name: string;
   label: string;
-  handler: (view: EditorView, value?: string) => void;
+  title: string;
+  handler: (view: EditorView, marksValues: Record<string, Mark>, value?: string | null | { href: string }) => void;
 }
 
 export interface EditorToolbarProps {
@@ -45,7 +56,7 @@ export interface EditorToolbarProps {
   toolbar: ToolbarItemSpec[]
   visible: boolean
   marksValues: Record<string, Mark>
-  position: { left: number, bottom: number }
+  position: { left: number, top: number }
 }
 
 export default defineComponent({
@@ -73,7 +84,8 @@ export default defineComponent({
   },
   components: {
     ColorPanel,
-    ElPopover
+    ElPopover,
+    LinkInput
   },
   data() {
     return {
@@ -116,10 +128,13 @@ export default defineComponent({
   methods: {
     handler(item: ToolbarItemSpec) {
       if (['color', 'backgroundColor'].includes(item.name)) return;
-      item.handler(this.editorView)
+      item.handler(this.editorView, this.marksValues)
     },
     handleColorSelect(item: ToolbarItemSpec, color: string) {
-      item.handler(this.editorView, color)
+      item.handler(this.editorView, this.marksValues, color)
+    },
+    linkChangeHandler(item: ToolbarItemSpec, value: { href: string } | null) {
+      item.handler(this.editorView, this.marksValues, value)
     }
   }
 })
@@ -128,6 +143,7 @@ export default defineComponent({
 <style lang="less" scoped>
 .editor-toolbar {
   position: absolute;
+  transform: translateY(-100%);
 }
 .toolbar-list {
   display: flex;
