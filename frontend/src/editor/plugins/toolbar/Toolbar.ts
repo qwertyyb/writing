@@ -67,7 +67,7 @@ const toolbar: ToolbarItemSpec[] = [
     title: '链接',
     label: 'link',
     handler(view, marksValues, value?: string | null | { href: string }) {
-      if (!value) {
+      if (!value || typeof value === 'object' && !value.href) {
         const start = view.state.selection.$from.start()
         const end = view.state.selection.$from.end()
         view.dispatch(view.state.tr.removeMark(start, end, view.state.schema.marks.link))

@@ -19,7 +19,9 @@
             />
           </template>
         </el-popover>
-        <el-popover trigger="click" width="fit-content" v-else-if="item.name === 'link'">
+        <el-popover trigger="click" width="fit-content"
+          ref="linkPopover"
+          v-else-if="item.name === 'link'">
           <template #reference>
             <div class="toolbar-item-label" :title="item.title">{{ item.label }}</div>
           </template>
@@ -134,6 +136,8 @@ export default defineComponent({
       item.handler(this.editorView, this.marksValues, color)
     },
     linkChangeHandler(item: ToolbarItemSpec, value: { href: string } | null) {
+      console.log(this.$refs.linkPopover as any);
+      (this.$refs.linkPopover as InstanceType<typeof ElPopover>[] | undefined)?.[0]?.hide()
       item.handler(this.editorView, this.marksValues, value)
     }
   }
