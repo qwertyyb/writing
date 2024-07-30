@@ -117,7 +117,7 @@ export function toggleMark(view: EditorView, markType: MarkType | string) {
 
 export const allowMarkTypes = (from: number, to: number, node: Node, markTypes: MarkType[]) => {
   node.nodesBetween(from, to, (node) => {
-    if (node.isInline) return;
+    if (!node.isTextblock) return;
     markTypes = markTypes.filter(markType => {
       return node.type.allowsMarkType(markType)
     })
