@@ -11,9 +11,33 @@ function defaultBlockAt(match: ContentMatch) {
   return null
 }
 
-export const createImageNode = (node: Node) => {
+export const toImageNode = (node: Node) => {
   return toDOMRender(node, ImageView)
 }
+
+export const parseImageNode = () => ({
+  tag: 'figure.editor-image-node',
+  getAttrs(node: string | HTMLElement) {
+    if (typeof node === 'string') return false
+    const img = node.querySelector<HTMLImageElement>('img.editor-image-node-image')
+    const src = img?.src
+    if (!src) return false
+    const size = parseInt(node.style.width) > 100 ? null : parseInt(node.style.width)
+    const ratio = node.style.aspectRatio ?? null
+    const align = node.style.marginLeft === 'auto' && node.style.marginRight === 'auto'
+      ? 'center'
+      : node.style.marginLeft === 'auto' ? 'right' : 'left'
+    const link = node.querySelector<HTMLLinkElement>('a.editor-image-node-link')
+    return {
+      src,
+      size,
+      align,
+      ratio,
+      href: link?.href ?? null
+    }
+  },
+  contentElement: 'figcaption.editor-image-node-title'
+})
 
 /**
  * selection 在图片的标题栏时，在图片后添加一个新的节点

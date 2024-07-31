@@ -16,6 +16,7 @@
             draggable="false"
             class="editor-image-node-image"
             :src="node.attrs.src || 'https://fakeimg.pl/200'"
+            :style="{ aspectRatio: node.attrs.ratio }"
             alt=""
           >
         </a>
@@ -24,11 +25,16 @@
           draggable="false"
           class="editor-image-node-image"
           :src="node.attrs.src || 'https://fakeimg.pl/200'"
+          :style="{ aspectRatio: node.attrs.ratio }"
           alt=""
         >
       </template>
       <template #default>
         <ul class="action-list" v-if="!linkInputVisible">
+          <li class="action-item replace-action material-symbols-outlined"
+            title="更换图片"
+            @click="selectImage"
+          >image</li>
           <li class="action-item align-action material-symbols-outlined"
             :class="{selected: node.attrs.align === 'left'}"
             @click="alignHandler('left')"
@@ -76,6 +82,7 @@ import type { VueNodeViewProps } from '@/editor/plugins/vueNodeViews';
 import LinkInput from '@/editor/components/LinkInput.vue';
 import type { Attrs } from 'prosemirror-model';
 import { onMounted, ref } from 'vue';
+import { getImageSize, selectFile } from '@/editor/utils';
 
 const props = defineProps<VueNodeViewProps>()
 const emits = defineEmits<{
@@ -91,16 +98,23 @@ onMounted(() => {
 })
 
 const sizeChangeHandler = (size: any) => {
-  emits('updateAttrs', { ...props.node.attrs, size })
+  emits('updateAttrs', { size })
 }
 
 const alignHandler = (align: 'left' | 'center' | 'right') => {
-  emits('updateAttrs', { ...props.node.attrs, align })
+  emits('updateAttrs', { align })
 }
 
 const hrefHandler = (href: string | null) => {
-  emits('updateAttrs', { ...props.node.attrs, href })
+  emits('updateAttrs', { href })
   linkInputVisible.value = false
+}
+
+const selectImage = async () => {
+  const image = await selectFile('image/*')
+  const url = URL.createObjectURL(image)
+  const size = await getImageSize(url)
+  emits('updateAttrs', { ratio: `${size.width}/${size.height}`, src: url })
 }
 
 </script>
@@ -139,7 +153,7 @@ const hrefHandler = (href: string | null) => {
   padding: 0;
   list-style: none;
   gap: 10px;
-  .action-item.align-action, .action-item.link-action {
+  .action-item.align-action, .action-item.link-action, .action-item.replace-action {
     cursor: pointer;
     transition: background .2s;
     font-size: 18px;
@@ -154,6 +168,7 @@ const hrefHandler = (href: string | null) => {
   }
   .action-item.size-action {
     width: 200px;
+    margin-left: 10px;
   }
 }
 </style>

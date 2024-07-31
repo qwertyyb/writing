@@ -71,7 +71,12 @@ class VueNodeView<N extends Node = Node> implements NodeView {
   updateAttrs = (attrs: Attrs) => {
     const view = this.vmProps?.view
     if (!view) return;
-    view.dispatch(view.state.tr.setNodeMarkup(this.vmProps!.getPos!(), null, attrs))
+    const tr = view.state.tr
+    const pos = this.vmProps!.getPos!()
+    Object.entries(attrs).forEach(([key, value]) => {
+      tr.setNodeAttribute(pos, key, value)
+    })
+    view.dispatch(tr)
   }
   update = (node: Node, decorations: readonly Decoration[], innerDecorations: DecorationSource) => {
     if (this.vmProps) {

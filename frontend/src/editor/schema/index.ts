@@ -1,6 +1,7 @@
 import { Schema, type NodeSpec, type MarkSpec } from 'prosemirror-model'
-import { createImageNode } from '../nodes/ImageNode'
-import { addListNodes } from 'prosemirror-schema-list'
+import { parseImageNode, toImageNode } from '../nodes/ImageNode'
+import { addListNodes, bulletList, listItem, orderedList } from 'prosemirror-schema-list'
+import { todoItem } from './todoList'
 
 /// [Specs](#model.NodeSpec) for the nodes defined in this schema.
 export const nodes: Record<string, NodeSpec> = {
@@ -112,6 +113,7 @@ export const nodes: Record<string, NodeSpec> = {
   image: {
     attrs: {
       src: {},
+      ratio: { default: null },
       size: { default: null },
       align: { default: 'center' }, // left | center | right
       href: { default: null }
@@ -132,30 +134,28 @@ export const nodes: Record<string, NodeSpec> = {
           }
         }
       },
-      {
-        tag: 'figure.editor-image-node',
-        getAttrs(node) {
-          if (typeof node === 'string') return false
-          const img = node.querySelector<HTMLImageElement>('img.editor-image-node-image')
-          const src = img?.src
-          if (!src) return false
-          const size = parseInt(node.style.width) > 100 ? null : parseInt(node.style.width)
-          const align = node.style.marginLeft === 'auto' && node.style.marginRight === 'auto'
-            ? 'center'
-            : node.style.marginLeft === 'auto' ? 'right' : 'left'
-          const link = node.querySelector<HTMLLinkElement>('a.editor-image-node-link')
-          return {
-            src,
-            size,
-            align,
-            href: link?.href ?? null
-          }
-        },
-        contentElement: 'figcaption.editor-image-node-title'
-      }
+      parseImageNode(),
     ],
-    toDOM: createImageNode
+    toDOM: toImageNode
   },
+
+  bullet_list: {
+    ...bulletList,
+    group: 'block',
+    content: 'group_list_item+'
+  },
+  ordered_list: {
+    ...orderedList,
+    group: 'block',
+    content: 'group_list_item+'
+  },
+  list_item: {
+    ...listItem,
+    group: 'group_list_item',
+    content: 'block+'
+  },
+
+  todo_item: todoItem,
 }
 
 /// [Specs](#model.MarkSpec) for the marks in the schema.
@@ -305,9 +305,5 @@ export const marks: Record<string, MarkSpec> = {
 ///
 /// To reuse elements from this schema, extend or read from its
 /// `spec.nodes` and `spec.marks` [properties](#model.Schema.spec).
-const baseSchema = new Schema({ nodes, marks })
+export const schema = new Schema({ nodes, marks })
 
-// 添加无序和有序列表
-const allNodes = addListNodes(baseSchema.spec.nodes, 'block+', 'block')
-
-export const schema: Schema = new Schema({ nodes: allNodes, marks: baseSchema.spec.marks })
