@@ -1,7 +1,7 @@
 import { toolbarPlugin } from './toolbar/toolbar'
 import { history, redo, undo } from 'prosemirror-history'
 import { keymap } from 'prosemirror-keymap'
-import { baseKeymap } from 'prosemirror-commands'
+import { baseKeymap, chainCommands } from 'prosemirror-commands'
 import { dropCursor } from 'prosemirror-dropcursor'
 import { gapCursor } from 'prosemirror-gapcursor'
 import type { Schema } from 'prosemirror-model'
@@ -11,10 +11,11 @@ import { buildInputRules } from './inputrules'
 import { vueNodeViews } from './vueNodeViews'
 import ImageNodeView from '../node-views/ImageView.vue'
 import { addBlockAfterImageNode } from '../nodes/ImageNode'
+import { splitListItem } from 'prosemirror-schema-list'
 
 export const createPlugins = (schema: Schema) => [
   keymap({
-    'Enter': addBlockAfterImageNode(schema.nodes.image)
+    'Enter': chainCommands(addBlockAfterImageNode(schema.nodes.image), splitListItem(schema.nodes.todo_item))
   }),
   keymap(buildKeymap(schema)),
   keymap(baseKeymap),
