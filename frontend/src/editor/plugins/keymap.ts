@@ -66,7 +66,6 @@ export function buildKeymap(schema: Schema, mapKeys?: { [key: string]: false | s
     bind("Mod-i", toggleMark(type))
     bind("Mod-I", toggleMark(type))
   }
-  console.log(schema.marks.icode)
   if (type = schema.marks.icode)
     // 不生效，问题待查
     bind("Mod-`", toggleMark(type))

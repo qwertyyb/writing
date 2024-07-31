@@ -10,8 +10,12 @@ import { blockTool } from './block/block-tool'
 import { buildInputRules } from './inputrules'
 import { vueNodeViews } from './vueNodeViews'
 import ImageNodeView from '../node-views/ImageView.vue'
+import { addBlockAfterImageNode } from '../nodes/ImageNode'
 
 export const createPlugins = (schema: Schema) => [
+  keymap({
+    'Enter': addBlockAfterImageNode(schema.nodes.image)
+  }),
   keymap(buildKeymap(schema)),
   keymap(baseKeymap),
   buildInputRules(schema),
