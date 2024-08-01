@@ -1,7 +1,7 @@
 import { toolbarPlugin } from './toolbar/toolbar'
 import { history, redo, undo } from 'prosemirror-history'
 import { keymap } from 'prosemirror-keymap'
-import { baseKeymap, chainCommands } from 'prosemirror-commands'
+import { baseKeymap, chainCommands, createParagraphNear, deleteSelection, joinBackward, liftEmptyBlock, newlineInCode, selectNodeBackward, splitBlock } from 'prosemirror-commands'
 import { dropCursor } from 'prosemirror-dropcursor'
 import { gapCursor } from 'prosemirror-gapcursor'
 import type { Schema } from 'prosemirror-model'
@@ -11,11 +11,14 @@ import { buildInputRules } from './inputrules'
 import { vueNodeViews } from './vueNodeViews'
 import ImageNodeView from '../node-views/ImageView.vue'
 import { addBlockAfterImageNode } from '../nodes/ImageNode'
-import { splitListItem } from 'prosemirror-schema-list'
+import { addNewTodoCommand, toggleTodoPlugin, toggleToParagraphCommmand } from '../schema/todoList'
 
 export const createPlugins = (schema: Schema) => [
+  toggleTodoPlugin(schema.nodes.todo),
   keymap({
-    'Enter': chainCommands(addBlockAfterImageNode(schema.nodes.image), splitListItem(schema.nodes.todo_item))
+    'Enter': chainCommands(addBlockAfterImageNode(schema.nodes.image), addNewTodoCommand(schema.nodes.todo, schema.nodes.list_item)),
+    'Shift-Enter': chainCommands(newlineInCode, createParagraphNear, liftEmptyBlock, splitBlock),
+    'Backspace': chainCommands(toggleToParagraphCommmand(schema.nodes.todo), deleteSelection, joinBackward, selectNodeBackward)
   }),
   keymap(buildKeymap(schema)),
   keymap(baseKeymap),
@@ -31,5 +34,5 @@ export const createPlugins = (schema: Schema) => [
   blockTool(),
   vueNodeViews({
     image: ImageNodeView
-  })
+  }),
 ]

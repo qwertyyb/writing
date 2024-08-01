@@ -1,7 +1,7 @@
 import { Schema, type NodeSpec, type MarkSpec } from 'prosemirror-model'
 import { parseImageNode, toImageNode } from '../nodes/ImageNode'
-import { addListNodes, bulletList, listItem, orderedList } from 'prosemirror-schema-list'
-import { todoItem } from './todoList'
+import { bulletList, listItem, orderedList } from 'prosemirror-schema-list'
+import { todo } from './todoList'
 
 /// [Specs](#model.NodeSpec) for the nodes defined in this schema.
 export const nodes: Record<string, NodeSpec> = {
@@ -152,10 +152,10 @@ export const nodes: Record<string, NodeSpec> = {
   list_item: {
     ...listItem,
     group: 'group_list_item',
-    content: 'block+'
+    content: '(block|todo_block)+'
   },
 
-  todo_item: todoItem,
+  todo: todo,
 }
 
 /// [Specs](#model.MarkSpec) for the marks in the schema.

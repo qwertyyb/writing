@@ -7,7 +7,6 @@ import {
   ellipsis
 } from 'prosemirror-inputrules'
 import { NodeType, Schema } from 'prosemirror-model'
-import { todoItemInputRule } from '../schema/todoList'
 
 /// Given a blockquote node type, returns an input rule that turns `"> "`
 /// at the start of a textblock into a blockquote.
@@ -49,6 +48,14 @@ export function headingRule(nodeType: NodeType, maxLevel: number) {
   }))
 }
 
+export function todoRule(nodeType: NodeType) {
+  return wrappingInputRule(
+    /^\[(\s|x)\]$/,
+    nodeType,
+    (match) => ({ checked: match[1] === 'x' }),
+  )
+}
+
 /// A set of input rules for creating the basic block quotes, lists,
 /// code blocks, and heading.
 export function buildInputRules(schema: Schema) {
@@ -59,6 +66,6 @@ export function buildInputRules(schema: Schema) {
   if ((type = schema.nodes.bullet_list)) rules.push(bulletListRule(type))
   if ((type = schema.nodes.code_block)) rules.push(codeBlockRule(type))
   if ((type = schema.nodes.heading)) rules.push(headingRule(type, 6))
-  if ((type = schema.nodes.todo_item)) rules.push(todoItemInputRule(type))
+  if ((type = schema.nodes.todo)) rules.push(todoRule(type))
   return inputRules({ rules })
 }
