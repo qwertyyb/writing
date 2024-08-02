@@ -72,7 +72,7 @@ export const nodes: Record<string, NodeSpec> = {
   },
 
   /// A horizontal rule (`<hr>`).
-  divider: {
+  horizontal_rule: {
     group: 'block',
     parseDOM: [{ tag: 'hr' }],
     toDOM() {
@@ -187,6 +187,7 @@ export const marks: Record<string, MarkSpec> = {
   /// An emphasis mark. Rendered as an `<em>` element. Has parse rules
   /// that also match `<i>` and `font-style: italic`.
   em: {
+    inclusive: false,
     parseDOM: [
       { tag: 'i' },
       { tag: 'em' },
@@ -201,6 +202,7 @@ export const marks: Record<string, MarkSpec> = {
   /// A strong mark. Rendered as `<strong>`, parse rules also match
   /// `<b>` and `font-weight: bold`.
   strong: {
+    inclusive: false,
     parseDOM: [
       { tag: 'strong' },
       // This works around a Google Docs misbehavior where
@@ -220,6 +222,7 @@ export const marks: Record<string, MarkSpec> = {
 
   /// Code font mark. Represented as a `<code>` element.
   code: {
+    inclusive: false,
     parseDOM: [{ tag: 'code' }],
     toDOM() {
       return ['code', 0]
@@ -227,6 +230,7 @@ export const marks: Record<string, MarkSpec> = {
   },
 
   del: {
+    inclusive: false,
     excludes: 'underline',
     parseDOM: [{ tag: 'del' }, { style: 'text-decoration: line-through' }],
     toDOM() {
@@ -235,6 +239,7 @@ export const marks: Record<string, MarkSpec> = {
   },
 
   underline: {
+    inclusive: false,
     excludes: 'del',
     parseDOM: [{ tag: 'u' }, { style: 'text-decoration: underline' }],
     toDOM(mark, inline) {
@@ -246,6 +251,7 @@ export const marks: Record<string, MarkSpec> = {
   },
 
   super: {
+    inclusive: false,
     excludes: 'sub',
     parseDOM: [{ tag: 'sup' }, { style: 'vertical-align: super' }],
     toDOM() {
@@ -254,6 +260,7 @@ export const marks: Record<string, MarkSpec> = {
   },
 
   sub: {
+    inclusive: false,
     excludes: 'super',
     parseDOM: [{ tag: 'sub' }, { style: 'vertical-align: sub' }],
     toDOM() {

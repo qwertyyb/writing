@@ -79,6 +79,10 @@ class VueNodeView<N extends Node = Node> implements NodeView {
     view.dispatch(tr)
   }
   update = (node: Node, decorations: readonly Decoration[], innerDecorations: DecorationSource) => {
+    if (node.type !== this.vmProps?.view?.state.schema.nodes.image) {
+      this.destroy()
+      return false
+    }
     if (this.vmProps) {
       this.vmProps.node = markRaw(node as N)
       this.vmProps.decorations = markRaw(decorations)
