@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import DocumentEditor from '@/components/DocumentEditor.vue';
+import DocumentEditor from '@writing/editor';
 import type { BlockModel } from '@/models/block';
 import { getDocumentByShareId } from '@/services/public';
 import { ref, watchEffect } from 'vue';

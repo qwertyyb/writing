@@ -19,6 +19,7 @@
     "@editorjs/editorjs": "^2.29.0",
     "@element-plus/icons-vue": "^2.3.1",
     "@simplewebauthn/browser": "^9.0.1",
+    "@writing/editor": "workspace:^",
     "codemirror": "^6.0.1",
     "crelt": "^1.0.6",
     "element-plus": "^2.5.3",

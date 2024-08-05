@@ -28,7 +28,7 @@ import { useDocumentStore } from '@/stores/document';
 import { Setting } from '@element-plus/icons-vue';
 import { ref, watchEffect } from 'vue';
 import DocumentAttribute from '@/components/DocumentAttribute.vue';
-import DocumentEditor from '@/editor/DocumentEditor.vue';
+import DocumentEditor from '@writing/editor';
 
 const props = defineProps<{
   id: number | string
