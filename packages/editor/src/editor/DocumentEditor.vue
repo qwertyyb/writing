@@ -59,6 +59,7 @@ onBeforeMount(() => {
   position: relative;
   display: flex;
   flex-direction: column;
+  padding: 0 var(--tool-size);
 
   --bg-default: transparent;
   --bg-grey: #ebebeb;
@@ -82,6 +83,8 @@ onBeforeMount(() => {
   --bg-light-purple: #fdebff;
   --bg-error: #ffeadb;
 
+  --tool-size: 20px;
+
   & > * {
     width: 100%;
   }
@@ -101,10 +104,18 @@ onBeforeMount(() => {
     padding-block-end: 0.5em;
     line-height: 1.4;
   }
+  .hover {
+    transition: background .2s;
+    background: rgba(72, 118, 125, 0.3);
+    border-radius: 4px;
+  }
   blockquote {
     margin: 0;
     border-left: 4px solid #ddd;
     padding: 1px 0 1px 16px;
+  }
+  .ProseMirror > p:last-child {
+    min-height: 40vh;
   }
 }
 </style>

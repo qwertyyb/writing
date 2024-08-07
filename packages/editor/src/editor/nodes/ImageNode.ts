@@ -1,6 +1,6 @@
 import type { ContentMatch, Node, NodeType } from "prosemirror-model";
 import { toDOMRender } from "../plugins/vueNodeViews";
-import ImageView from "../node-views/ImageView.vue";
+import ImageView from "../nodeViews/ImageView.vue";
 import { TextSelection, type Command } from "prosemirror-state";
 
 function defaultBlockAt(match: ContentMatch) {

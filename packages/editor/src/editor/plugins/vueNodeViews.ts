@@ -11,7 +11,7 @@ import {
   markRaw,
   ref,
 } from 'vue'
-import type BaseView from '../node-views/BaseView.vue'
+import type BaseView from '../nodeViews/BaseView.vue'
 
 export interface VueNodeViewProps<N extends Node = Node> {
   node: N
@@ -42,7 +42,6 @@ class VueNodeView<N extends Node = Node> implements NodeView {
   }
 
   constructor(
-    private nodeType: NodeType,
     Component: Component,
     node: N,
     view?: EditorView,
@@ -80,7 +79,7 @@ class VueNodeView<N extends Node = Node> implements NodeView {
     view.dispatch(tr)
   }
   update = (node: Node, decorations: readonly Decoration[], innerDecorations: DecorationSource) => {
-    if (node.type !== this.nodeType) {
+    if (node.type !== this.vmProps?.node.type) {
       this.destroy()
       return false
     }
@@ -124,7 +123,7 @@ export const vueNodeViews = (schema: Schema, nodeViewsSpec: Record<string, Compo
         decorations: Decoration[],
         innerDecorations: DecorationSource
       ) {
-        return new VueNodeView(nodeType, Component, node, view, getPos, decorations, innerDecorations)
+        return new VueNodeView(Component, node, view, getPos, decorations, innerDecorations)
       }
     }
   }, {})
@@ -137,5 +136,5 @@ export const vueNodeViews = (schema: Schema, nodeViewsSpec: Record<string, Compo
 }
 
 export const toDOMRender = (node: Node, Component: Component) => {
-  return new VueNodeView(node.type, Component, node) as { dom: HTMLElement, contentDOM: HTMLElement | undefined }
+  return new VueNodeView(Component, node) as { dom: HTMLElement, contentDOM: HTMLElement | undefined }
 }

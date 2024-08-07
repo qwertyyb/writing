@@ -84,6 +84,9 @@ export const nodes: Record<string, NodeSpec> = {
   /// nodes by default. Represented as a `<pre>` element with a
   /// `<code>` element inside of it.
   code_block: {
+    attrs: {
+      language: {}
+    },
     content: 'text*',
     marks: '',
     group: 'block',

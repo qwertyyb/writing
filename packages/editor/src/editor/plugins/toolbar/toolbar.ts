@@ -135,41 +135,6 @@ const linkToolbar: ToolbarItemSpec[] = [
   },
 ]
 
-const imageToolbar: ToolbarItemSpec[] = [
-  {
-    name: 'align:left',
-    label: 'format_align_left',
-    title: '左对齐',
-    handler(view, marksValues, value) {
-      
-    },
-  },
-  {
-    name: 'align:center',
-    label: 'format_align_center',
-    title: '居中对齐',
-    handler(view, marksValues, value) {
-      
-    },
-  },
-  {
-    name: 'align:right',
-    label: 'format_align_right',
-    title: '右对齐',
-    handler(view, marksValues, value) {
-      
-    },
-  },
-  {
-    name: 'size',
-    label: 'resize',
-    title: '尺寸',
-    handler(view, marksValues, value) {
-      
-    },
-  }
-]
-
 class ToolbarView implements PluginView {
   vm: App
   vmProps = reactive({
@@ -193,17 +158,6 @@ class ToolbarView implements PluginView {
   update(view: EditorView) {
     const { selection, doc, schema } = view.state
     const { from, to, empty, head } = selection
-    if (selection instanceof NodeSelection) {
-      if (selection.node.type === schema.nodes.type) {
-        this.vmProps.visible = true
-        this.vmProps.toolbar = markRaw(imageToolbar)
-        this.vmProps.marksValues = selection.node.marks.reduce<Record<string, Mark>>((acc, mark) => ({ ...acc, [mark.type.name]: mark }), {})
-        const curPos = view.coordsAtPos(from)
-        const box = view.dom.parentElement!.offsetParent!.getBoundingClientRect()
-        this.vmProps.position = { top: curPos.top - box.top, left: curPos.left - box.left }
-      }
-      return
-    }
     if (empty) {
       const marksValues = selection.$from.marks().reduce<Record<string, Mark>>((acc, mark) => ({ ...acc, [mark.type.name]: mark }), {})
       if (marksValues.link) {

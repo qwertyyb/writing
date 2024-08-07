@@ -9,10 +9,13 @@ import { buildKeymap } from './keymap'
 import { blockTool } from './block/block-tool'
 import { buildInputRules } from './inputrules'
 import { vueNodeViews } from './vueNodeViews'
-import ImageNodeView from '../node-views/ImageView.vue'
+import ImageNodeView from '../nodeViews/ImageView.vue'
 import { addBlockAfterImageNode } from '../nodes/ImageNode'
 import { addNewTodoCommand, toggleTodoPlugin, toggleToParagraphCommmand } from '../schema/todoList'
 import { undoInputRule } from 'prosemirror-inputrules'
+import { codeViewPlugin } from '../nodeViews/CodeView'
+import { blocksTool } from './blocksTool'
+import { appendParagraph } from './appendParagraph'
 
 export const createPlugins = (schema: Schema) => [
   toggleTodoPlugin(schema.nodes.todo),
@@ -34,4 +37,15 @@ export const createPlugins = (schema: Schema) => [
   vueNodeViews(schema, {
     image: ImageNodeView
   }),
+  codeViewPlugin(),
+  // appendParagraph(schema.nodes.paragraph),
+  blocksTool([
+    schema.nodes.list_item,
+    schema.nodes.image,
+    schema.nodes.paragraph,
+    schema.nodes.heading,
+    schema.nodes.horizontal_rule,
+    schema.nodes.blockquote,
+    schema.nodes.code_block
+  ])
 ]
