@@ -33,7 +33,7 @@ const updateNodeType = (view: EditorView, nodeType: string, attrs?: Attrs) => {
         throw new Error(`updateNodeType failed: ${nodeType}`)
       }
       const transaction = tr.replaceRangeWith($cursor.before(), $cursor.after(), newNode)
-      view.dispatch(transaction)
+      view.dispatch(transaction.setSelection(TextSelection.near(tr.doc.resolve($cursor.before() + 1), 1)))
     }
   }
 }
@@ -108,6 +108,20 @@ const blocks: BlockToolItemSpec[] = [
     handler(view) {
       updateNodeType(view, 'divider')
     }
+  },
+  {
+    label: '折叠内容',
+    keyword: 'details',
+    handler(view) {
+      updateNodeType(view, 'details')
+    }
+  },
+  {
+    label: 'Callout',
+    keyword: 'callout',
+    handler(view) {
+      updateNodeType(view, 'callout')
+    },
   }
 ]
 

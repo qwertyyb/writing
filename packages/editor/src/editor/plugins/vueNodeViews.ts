@@ -1,4 +1,4 @@
-import type { Attrs, Node, NodeType, Schema } from 'prosemirror-model'
+import type { Attrs, Node, Schema } from 'prosemirror-model'
 import { Plugin } from 'prosemirror-state'
 import type { Decoration, DecorationSource, EditorView, NodeView } from 'prosemirror-view'
 import {
@@ -91,9 +91,10 @@ class VueNodeView<N extends Node = Node> implements NodeView {
     }
     return false
   }
-  ignoreMutation = (mutation: MutationRecord) => {
-    if ((mutation.type as any) === 'selection') {
-      return false;
+  ignoreMutation = (mutation: MutationRecord | { type: 'selection', target: HTMLElement}) => {
+    console.log(mutation)
+    if (mutation.type === 'selection') {
+      return mutation.target.hasAttribute('data-prosemirror-ignore-selection-mutation')
     }
     if (this.contentDOM && (this.contentDOM === mutation.target || this.contentDOM.contains(mutation.target))) {
       return false

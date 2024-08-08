@@ -2,6 +2,8 @@ import { Schema, type NodeSpec, type MarkSpec } from 'prosemirror-model'
 import { parseImageNode, toImageNode } from '../nodes/ImageNode'
 import { bulletList, listItem, orderedList } from 'prosemirror-schema-list'
 import { todo } from './todoList'
+import { detailsSchema } from '../nodes/details'
+import { callout } from '../nodes/callout'
 
 /// [Specs](#model.NodeSpec) for the nodes defined in this schema.
 export const nodes: Record<string, NodeSpec> = {
@@ -13,6 +15,7 @@ export const nodes: Record<string, NodeSpec> = {
   /// A plain paragraph textblock. Represented in the DOM
   /// as a `<p>` element.
   paragraph: {
+    draggable: true,
     attrs: {
       align: {
         default: 'left'
@@ -37,6 +40,7 @@ export const nodes: Record<string, NodeSpec> = {
   /// should hold the number 1 to 6. Parsed and serialized as `<h1>` to
   /// `<h6>` elements.
   heading: {
+    draggable: true,
     attrs: {
       level: { default: 2 },
       align: {
@@ -62,6 +66,7 @@ export const nodes: Record<string, NodeSpec> = {
 
   /// A blockquote (`<blockquote>`) wrapping one or more blocks.
   blockquote: {
+    draggable: true,
     content: 'block+',
     group: 'block',
     defining: true,
@@ -73,6 +78,7 @@ export const nodes: Record<string, NodeSpec> = {
 
   /// A horizontal rule (`<hr>`).
   horizontal_rule: {
+    draggable: true,
     group: 'block',
     parseDOM: [{ tag: 'hr' }],
     toDOM() {
@@ -84,6 +90,7 @@ export const nodes: Record<string, NodeSpec> = {
   /// nodes by default. Represented as a `<pre>` element with a
   /// `<code>` element inside of it.
   code_block: {
+    draggable: true,
     attrs: {
       language: {}
     },
@@ -98,12 +105,11 @@ export const nodes: Record<string, NodeSpec> = {
     }
   },
 
-
   /// A blockquote (`<blockquote>`) wrapping one or more blocks.
   plain_text: {
     content: 'inline*',
     group: 'plain',
-    marks: "",
+    marks: '',
     parseDOM: [{ tag: 'p' }],
     toDOM() {
       return ['p', 0]
@@ -114,6 +120,7 @@ export const nodes: Record<string, NodeSpec> = {
   /// `alt`, and `href` attributes. The latter two default to the empty
   /// string.
   image: {
+    draggable: true,
     attrs: {
       src: {},
       ratio: { default: null },
@@ -122,10 +129,9 @@ export const nodes: Record<string, NodeSpec> = {
       href: { default: null }
     },
     content: 'plain_text',
-    marks: "",
+    marks: '',
     group: 'block',
     selectable: true,
-    draggable: false,
     parseDOM: [
       {
         tag: 'img[src]',
@@ -133,32 +139,39 @@ export const nodes: Record<string, NodeSpec> = {
           if (typeof dom === 'string') return false
           return {
             src: dom.getAttribute('src'),
-            title: dom.getAttribute('title') || dom.getAttribute('alt'),
+            title: dom.getAttribute('title') || dom.getAttribute('alt')
           }
         }
       },
-      parseImageNode(),
+      parseImageNode()
     ],
     toDOM: toImageNode
   },
 
+  ...detailsSchema({ summaryContent: 'inline*', detailsContent: 'block*', detailsGroup: 'block' }),
+
+  callout: callout({ content: 'block+', group: 'block' }),
+
   bullet_list: {
     ...bulletList,
+    draggable: false,
     group: 'block',
     content: 'group_list_item+'
   },
   ordered_list: {
     ...orderedList,
+    draggable: false,
     group: 'block',
     content: 'group_list_item+'
   },
   list_item: {
     ...listItem,
     group: 'group_list_item',
-    content: '(block|todo_block)+'
+    content: '(block|todo_block)+',
+    draggable: false,
   },
 
-  todo: todo,
+  todo
 }
 
 /// [Specs](#model.MarkSpec) for the marks in the schema.
@@ -168,7 +181,7 @@ export const marks: Record<string, MarkSpec> = {
   /// element.
   link: {
     attrs: {
-      href: {},
+      href: {}
     },
     inclusive: false,
     parseDOM: [
@@ -250,7 +263,7 @@ export const marks: Record<string, MarkSpec> = {
         return ['span', { style: 'text-decoration: underline' }, 0]
       }
       return ['div', { style: 'text-decoration: underline' }, 0]
-    },
+    }
   },
 
   super: {
@@ -285,7 +298,7 @@ export const marks: Record<string, MarkSpec> = {
       }
     ],
     toDOM(mark) {
-      return ['span', { style: `color: ${mark.attrs.color}`}, 0]
+      return ['span', { style: `color: ${mark.attrs.color}` }, 0]
     }
   },
 
@@ -303,9 +316,9 @@ export const marks: Record<string, MarkSpec> = {
       }
     ],
     toDOM(mark) {
-      return ['span', { style: `background-color: ${mark.attrs.backgroundColor}`}, 0]
+      return ['span', { style: `background-color: ${mark.attrs.backgroundColor}` }, 0]
     }
-  },
+  }
 }
 
 /// This schema roughly corresponds to the document schema used by
@@ -316,4 +329,3 @@ export const marks: Record<string, MarkSpec> = {
 /// To reuse elements from this schema, extend or read from its
 /// `spec.nodes` and `spec.marks` [properties](#model.Schema.spec).
 export const schema = new Schema({ nodes, marks })
-

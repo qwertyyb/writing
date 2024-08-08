@@ -23,6 +23,7 @@
     "@codemirror/theme-one-dark": "^6.1.2",
     "@codemirror/view": "^6.24.1",
     "element-plus": "^2.5.3",
+    "gemoji": "^8.1.0",
     "lodash-es": "^4.17.21",
     "prosemirror-commands": "^1.6.0",
     "prosemirror-dropcursor": "^1.8.1",

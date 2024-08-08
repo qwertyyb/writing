@@ -1,15 +1,8 @@
-import type { ContentMatch, Node, NodeType } from "prosemirror-model";
+import type { Node, NodeType } from "prosemirror-model";
 import { toDOMRender } from "../plugins/vueNodeViews";
 import ImageView from "../nodeViews/ImageView.vue";
 import { TextSelection, type Command } from "prosemirror-state";
-
-function defaultBlockAt(match: ContentMatch) {
-  for (let i = 0; i < match.edgeCount; i++) {
-    const {type} = match.edge(i)
-    if (type.isTextblock && !type.hasRequiredAttrs()) return type
-  }
-  return null
-}
+import { defaultBlockAt } from "../utils/editor";
 
 export const toImageNode = (node: Node) => {
   return toDOMRender(node, ImageView)

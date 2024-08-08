@@ -10,16 +10,14 @@ import {EditorState} from "prosemirror-state"
 import { EditorView } from "prosemirror-view"
 import {Node} from "prosemirror-model"
 import {schema} from "./schema"
-import { onBeforeMount, onMounted, ref, watch } from "vue"
+import { onBeforeMount, onMounted, ref } from "vue"
 import { createPlugins } from './plugins'
+import { isEqual } from "lodash-es"
 
 const model = defineModel<Pick<Node, 'type' | 'attrs' | 'content' | 'marks'>>()
 
-const emits = defineEmits<{ change: any }>()
-
 const el = ref<HTMLElement>()
 let editor: EditorView | null = null
-
 
 onMounted(() => {
   const view = new EditorView(el.value!, {
@@ -31,21 +29,13 @@ onMounted(() => {
     dispatchTransaction(tr) {
       view.updateState(view.state.apply(tr));
       const value = view.state.doc.toJSON()
-      console.log('change', value)
-      emits('change', value)
+      if (isEqual(value, model.value)) return
+      console.log('change', value, view.state.selection.from)
+      model.value = value
     }
   })
 
   editor = view
-})
-
-watch(model, () => {
-  if (!editor) return
-  editor.updateState(EditorState.create({
-    schema: editor.state.schema,
-    doc: model.value ? schema.nodeFromJSON(model.value) : undefined,
-    plugins: createPlugins(schema)
-  }))
 })
 
 onBeforeMount(() => {

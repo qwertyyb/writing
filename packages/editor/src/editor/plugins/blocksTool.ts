@@ -1,28 +1,8 @@
 import { Decoration, DecorationSet, type DecorationSource, type EditorView } from 'prosemirror-view'
-import { EditorState, Plugin, PluginKey } from 'prosemirror-state'
-import type { Node, NodeType, ResolvedPos } from 'prosemirror-model'
+import { Plugin, PluginKey } from 'prosemirror-state'
+import type { NodeType } from 'prosemirror-model'
 import { debounce } from 'lodash-es'
-
-const findParent = (state: EditorState, pos: ResolvedPos, pred: (node: Node, depth: number) => boolean) => {
-  for(let i = pos.depth; i >= 0; i -= 1) {
-    const node = pos.node(i)
-    if (node && pred(node, i)) {
-      return { node, depth: i }
-    }
-  }
-  return null
-}
-
-const findParentNode = (state: EditorState, pos: ResolvedPos, nodeType: NodeType) => {
-  return findParent(state, pos, (node) => node.type === nodeType)
-}
-
-const findParentNodeWithTypes = (state: EditorState, pos: ResolvedPos, nodeTypes: NodeType[]) => {
-  return nodeTypes.reduce<{ node: Node, depth: number } | null>((result, nodeType) => {
-    if (result) return result
-    return findParentNode(state, pos, nodeType)
-  }, null)
-}
+import { findParentNodeWithTypes } from '../utils/editor'
 
 
 const pointerMoveHandler = (nodeTypes: NodeType[], pluginKey: PluginKey) => {
@@ -75,7 +55,7 @@ export const blocksTool = (draggableNodeTypes: NodeType[]) => {
     },
     props: {
       handleDOMEvents: {
-        pointermove: debounce(pointerMoveHandler(draggableNodeTypes, pluginKey), 120),
+        pointermove: debounce(pointerMoveHandler(draggableNodeTypes, pluginKey), 60),
         pointerleave: (view) => {
           view.dispatch(view.state.tr.setMeta(pluginKey, null))
         }
