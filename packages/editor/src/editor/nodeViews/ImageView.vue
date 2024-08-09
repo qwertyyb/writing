@@ -81,13 +81,21 @@ import { ElPopover, ElSlider } from 'element-plus';
 import type { VueNodeViewProps } from '../plugins/vueNodeViews';
 import LinkInput from '../components/LinkInput.vue';
 import type { Attrs } from 'prosemirror-model';
-import { onMounted, ref } from 'vue';
+import { inject, onMounted, ref } from 'vue';
 import { getImageSize, selectFile } from '../utils';
+import { uploadSymbol } from '../const';
 
-const props = defineProps<VueNodeViewProps>()
+defineProps<VueNodeViewProps>()
 const emits = defineEmits<{
   updateAttrs: [Attrs]
 }>()
+
+const upload = inject<(file: Blob | File) => Promise<string>>(uploadSymbol)
+
+
+const hello = inject('hello')
+
+console.log('upload', upload, hello)
 
 const containerEl = ref<HTMLElement>()
 const maxWidth = ref(200)
@@ -114,7 +122,9 @@ const selectImage = async () => {
   const image = await selectFile('image/*')
   const url = URL.createObjectURL(image)
   const size = await getImageSize(url)
+  console.log(upload)
   emits('updateAttrs', { ratio: `${size.width}/${size.height}`, src: url })
+  upload && emits('updateAttrs', { src: await upload(image) })
 }
 
 </script>

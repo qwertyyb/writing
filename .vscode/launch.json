@@ -13,7 +13,9 @@
           "ts-node/register"
       ],
       "env": {
-        "TOKEN": "34dfercv"
+        "TOKEN": "34dfercv",
+        "DATABASE_URL": "file:../data/sqlite.db",
+        "BACKUP_PATH": "../data/backup"
       },
       "args": [
           "${workspaceFolder}/server/app.ts"

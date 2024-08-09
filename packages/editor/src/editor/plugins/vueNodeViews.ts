@@ -43,6 +43,7 @@ class VueNodeView<N extends Node = Node> implements NodeView {
 
   constructor(
     Component: Component,
+    provideData: any,
     node: N,
     view?: EditorView,
     getPos?: () => number,
@@ -66,6 +67,9 @@ class VueNodeView<N extends Node = Node> implements NodeView {
     this.vmApp = createApp({
       render: () => h(Component, this.vmProps)
     })
+    Reflect.ownKeys(provideData).forEach((key) => this.vmApp!.provide(key, provideData[key]))
+    console.log(provideData)
+    this.vmApp!.provide('hello', 'world')
     this.vmApp.mount(this.root)
   }
   updateAttrs = (attrs: Attrs) => {
@@ -109,7 +113,7 @@ class VueNodeView<N extends Node = Node> implements NodeView {
   }
 }
 
-export const vueNodeViews = (schema: Schema, nodeViewsSpec: Record<string, Component>) => {
+export const vueNodeViews = (schema: Schema, provideData: any, nodeViewsSpec: Record<string, Component>) => {
   const nodeViews = Object.entries(nodeViewsSpec).reduce((acc, [nodeName, Component]) => {
     const nodeType = schema.nodes[nodeName]
     if (!nodeType) {
@@ -124,7 +128,7 @@ export const vueNodeViews = (schema: Schema, nodeViewsSpec: Record<string, Compo
         decorations: Decoration[],
         innerDecorations: DecorationSource
       ) {
-        return new VueNodeView(Component, node, view, getPos, decorations, innerDecorations)
+        return new VueNodeView(Component, provideData, node, view, getPos, decorations, innerDecorations)
       }
     }
   }, {})
@@ -137,5 +141,5 @@ export const vueNodeViews = (schema: Schema, nodeViewsSpec: Record<string, Compo
 }
 
 export const toDOMRender = (node: Node, Component: Component) => {
-  return new VueNodeView(Component, node) as { dom: HTMLElement, contentDOM: HTMLElement | undefined }
+  return new VueNodeView(Component, {}, node) as { dom: HTMLElement, contentDOM: HTMLElement | undefined }
 }

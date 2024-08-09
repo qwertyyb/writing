@@ -20,8 +20,11 @@ import DetailsView from '../nodeViews/DetailsView.vue'
 import CalloutView from '../nodeViews/CalloutView.vue'
 import { addBlockAfterDetails, detailsPlugin } from '../nodes/details'
 import { toc } from './toc'
+import type { uploadSymbol } from '../const'
 
-export const createPlugins = (schema: Schema) => [
+export const createPlugins = (schema: Schema, props: {
+  [uploadSymbol]: (file: Blob | File) => Promise<string>;
+}) => [
   todoPlugin(schema.nodes.todo),
   detailsPlugin(schema.nodes.details),
   keymap({
@@ -43,7 +46,7 @@ export const createPlugins = (schema: Schema) => [
   gapCursor(),
   toolbarPlugin(),
   blockTool(),
-  vueNodeViews(schema, {
+  vueNodeViews(schema, props, {
     image: ImageNodeView,
     details: DetailsView,
     callout: CalloutView,

@@ -1,5 +1,5 @@
 <template>
-  <div class="toc-block">
+  <div class="toc-block" v-if="toc.length">
     <div class="toc-header">目录</div>
     <div class="toc-item"
       v-for="(item, index) in toc"

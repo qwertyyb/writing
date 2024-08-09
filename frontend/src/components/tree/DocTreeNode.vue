@@ -24,7 +24,7 @@
       </div>
       <div class="tree-action">
         <span class="material-symbols-outlined add-action" title="添加" @click.stop="addChild">add</span>
-        <el-dropdown trigger="click">
+        <el-dropdown trigger="hover">
           <span class="material-symbols-outlined more-acto" title="更多操作">more_vert</span>
           <template #dropdown>
             <el-dropdown-menu>

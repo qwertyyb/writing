@@ -14,22 +14,21 @@
 </template>
 
 <script setup lang="ts">
-import DocumentEditor from '@writing/editor';
-import type { BlockModel } from '@/models/block';
-import { getDocumentByShareId } from '@/services/public';
+import DocumentEditor, { type NodeValue } from '@writing/editor';
+import { documentService } from '@/services';
 import { ref, watchEffect } from 'vue';
 import { useRoute } from 'vue-router';
 
-const document = ref<BlockModel>()
+const document = ref<NodeValue>()
 
 const route = useRoute()
 
 watchEffect(async () => {
   const id = route.params.id as string
   if (!id) return
-  const { data } = await getDocumentByShareId({ id })
+  const { data } = await documentService.findByShareId({ id })
   
-  document.value = JSON.parse(data.doc.content)
+  document.value = JSON.parse(data.doc!.content)
 })
 
 </script>

@@ -1,13 +1,33 @@
 <template>
   <div class="auth-view">
-    <el-form :model="form" label-position="top" class="auth-form" @submit.prevent>
+    <el-form :model="form" label-position="top"
+      class="auth-form"
+      v-if="canRegister"
+      @submit.prevent>
       <el-form-item label="密码">
-        <el-input placeholder="请输入密码" type="password" v-model="form.password" @keydown.enter="login"></el-input>
+        <el-input placeholder="请输入密码" type="password" v-model.trim="form.password" @keydown.enter="login"></el-input>
+      </el-form-item>
+      <el-form-item label="重复密码">
+        <el-input placeholder="请重复密码" type="password" v-model.trim="form.password2" @keydown.enter="login"></el-input>
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" @click="register">注册</el-button>
+        <el-button type="success" @click="addAuthenticator" v-if="supportsWebAuthn">无密码注册</el-button>
+      </el-form-item>
+    </el-form>
+    <el-form :model="form" label-position="top"
+      v-else
+      class="auth-form"
+      @submit.prevent>
+      <el-form-item label="密码">
+        <el-input placeholder="请输入密码" type="password"
+          autocomplete="current-password webauthn"
+          v-model="form.password"
+          @keydown.enter="login"></el-input>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="login">登录</el-button>
-        <el-button type="success" @click="webAuthnLogin" v-if="supportsWebAuthn && !canRegisterWebAuthn">无密码登录</el-button>
-        <el-button @click="webAuthnRegister" v-if="supportsWebAuthn && canRegisterWebAuthn">无密码注册</el-button>
+        <el-button type="success" @click="webAuthnLogin" v-if="supportsWebAuthn">无密码登录</el-button>
       </el-form-item>
     </el-form>
   </div>
@@ -15,22 +35,53 @@
 
 <script lang="ts" setup>
 import { useAuthStore } from '@/stores/auth';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import { ref } from 'vue';
-import { startRegistration, startAuthentication, browserSupportsWebAuthn } from '@simplewebauthn/browser';
+import { browserSupportsWebAuthn, browserSupportsWebAuthnAutofill, startRegistration } from '@simplewebauthn/browser';
 import router from '@/router';
-import { checkLogin as checkLoginApi, getCanRegisterWebAuthn, getRegisterOptions, verifyRegister } from '@/services/auth';
-import { createLogger } from '@/utils/logger';
-
-const logger = createLogger('AuthView')
+import { checkLogin as checkLoginApi, getCanRegister, getRegisterOptions, verifyRegister, register as apiRegister } from '@/services/server/auth';
 
 const authStore = useAuthStore()
 
-const form = ref({ password: '' })
+const form = ref({ password: '', password2: '' })
 const supportsWebAuthn = ref(browserSupportsWebAuthn())
-const canRegisterWebAuthn = ref(false)
+const canRegister = ref(false)
+
+const register = async () => {
+  const { password, password2 } = form.value
+  if (!password.trim()) {
+    return ElMessage.error('请输入密码')
+  }
+  if (password !== password2) {
+    return ElMessage.error('两次密码输入不一致')
+  }
+  await apiRegister({ password })
+  ElMessage.success('注册成功，请输入密码登录')
+  form.value.password = ''
+  refreshCanRegister()
+}
+
+const webAuthnRegister = async (name: string) => {
+  const { data } = await getRegisterOptions()
+  const result = await startRegistration(data)
+  await verifyRegister({ name, body: result })
+}
+
+const addAuthenticator = async () => {
+  const { value: inputValue } = await ElMessageBox.prompt('请输入设备名', 'Tip', {
+    confirmButtonText: '确认',
+    cancelButtonText: '取消',
+    inputPattern: /\w+/,
+    inputErrorMessage: '请输入设备名',
+    inputPlaceholder: '请输入设备名'
+  })
+  await webAuthnRegister(inputValue.trim())
+  ElMessage.success('注册成功，请登录')
+  refreshCanRegister()
+}
 
 const redirectAfterLogin = () => {
+  console.log(router.currentRoute.value, router.currentRoute.value.query.ru)
   router.replace(router.currentRoute.value.query.ru as string | undefined || '/admin')
 }
 
@@ -42,25 +93,16 @@ const login = async () => {
   redirectAfterLogin()
 }
 
-const refreshCanRegisterWebAuthn = async () => {
-  const { data } = await getCanRegisterWebAuthn()
-  canRegisterWebAuthn.value = data.canRegister
+const refreshCanRegister = async () => {
+  const { data } = await getCanRegister()
+  canRegister.value = data.canRegister
 }
 
-refreshCanRegisterWebAuthn()
+refreshCanRegister()
 
 const webAuthnLogin = async () => {
   await authStore.webAuthnLogin()
   redirectAfterLogin()
-}
-
-const webAuthnRegister = async () => {
-  const { data } = await getRegisterOptions()
-  const result = await startRegistration(data)
-  const { data: regResult } = await verifyRegister(result)
-  logger.i('注册结果', regResult)
-
-  await refreshCanRegisterWebAuthn()
 }
 
 const checkLogin = async () => {
@@ -73,6 +115,15 @@ const checkLogin = async () => {
 }
 
 checkLogin()
+
+const autofill = async () => {
+  const support = await browserSupportsWebAuthnAutofill()
+  if (!support) return
+  await authStore.webAuthnLogin(true)
+  redirectAfterLogin()
+}
+
+autofill()
 
 </script>
 

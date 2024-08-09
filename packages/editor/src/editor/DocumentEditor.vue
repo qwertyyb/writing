@@ -8,13 +8,16 @@
 <script lang="ts" setup>
 import {EditorState} from "prosemirror-state"
 import { EditorView } from "prosemirror-view"
-import {Node} from "prosemirror-model"
 import {schema} from "./schema"
 import { onBeforeMount, onMounted, ref } from "vue"
 import { createPlugins } from './plugins'
 import { isEqual } from "lodash-es"
+import { type NodeValue } from "./types"
+import { uploadSymbol } from "./const"
 
-const model = defineModel<Pick<Node, 'type' | 'attrs' | 'content' | 'marks'>>()
+const model = defineModel<NodeValue>()
+
+const props = defineProps<{ upload: (file: Blob | File) => Promise<string> }>()
 
 const el = ref<HTMLElement>()
 let editor: EditorView | null = null
@@ -24,7 +27,7 @@ onMounted(() => {
     state: EditorState.create({
       schema,
       doc: model.value ? schema.nodeFromJSON(model.value) : undefined,
-      plugins: createPlugins(schema)
+      plugins: createPlugins(schema, { [uploadSymbol]: props.upload })
     }),
     dispatchTransaction(tr) {
       view.updateState(view.state.apply(tr));
