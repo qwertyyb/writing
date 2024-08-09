@@ -43,8 +43,8 @@ export class CodeBlockView implements NodeView {
 
     // The editor's outer node is our DOM representation
     const dom = document.createElement('div')
-    dom.classList.add('code_block')
-    dom.style.cssText = 'position:relative'
+    dom.classList.add('code_block_view')
+    dom.style.cssText = 'position:relative;margin:1em 0;border-radius:4px;overflow:hidden'
     const select = document.createElement('select')
     select.classList.add('code-language-selector')
     select.style.cssText = 'position:absolute;top:0;right:0;bottom:0;width:200px;height:26px'

@@ -19,7 +19,8 @@ const pointerMoveHandler = (nodeTypes: NodeType[], pluginKey: PluginKey) => {
       return
     }
     const $pos = view.state.doc.resolve(pos.pos)
-    const target = findParentNodeWithTypes(view.state, $pos, nodeTypes)
+    const curNode = $pos.parent.maybeChild($pos.index())
+    const target = findParentNodeWithTypes(view.state, $pos, nodeTypes) || (curNode && nodeTypes.includes(curNode.type) ? { node: curNode, depth: $pos.depth + 1 } : null)
     if (!target) {
       if (prev) {
         plugin.spec.prev = null
@@ -31,7 +32,7 @@ const pointerMoveHandler = (nodeTypes: NodeType[], pluginKey: PluginKey) => {
     const to = $pos.after(target.depth)
     if (prev?.from !== from && prev?.to !== to) {
       plugin.spec.prev = { from, to }
-      view.dispatch(view.state.tr.setMeta(pluginKey, { from: $pos.before(target.depth), to: $pos.after(target.depth) }))
+      view.dispatch(view.state.tr.setMeta(pluginKey, { from: $pos.before(target.depth), to: from + target.node.nodeSize }))
     }
     return false
   }

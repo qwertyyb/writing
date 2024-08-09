@@ -1,7 +1,7 @@
 import { Schema, type NodeSpec, type MarkSpec } from 'prosemirror-model'
 import { parseImageNode, toImageNode } from '../nodes/ImageNode'
 import { bulletList, listItem, orderedList } from 'prosemirror-schema-list'
-import { todo } from './todoList'
+import { todo } from '../nodes/todo'
 import { detailsSchema } from '../nodes/details'
 import { callout } from '../nodes/callout'
 
@@ -94,7 +94,7 @@ export const nodes: Record<string, NodeSpec> = {
     attrs: {
       language: {}
     },
-    content: 'text*',
+    content: 'inline*',
     marks: '',
     group: 'block',
     code: true,
@@ -171,7 +171,7 @@ export const nodes: Record<string, NodeSpec> = {
     draggable: false,
   },
 
-  todo
+  todo: todo({ group: 'todo_block', content: 'block+' })
 }
 
 /// [Specs](#model.MarkSpec) for the marks in the schema.

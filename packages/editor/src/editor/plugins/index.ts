@@ -11,7 +11,7 @@ import { buildInputRules } from './inputrules'
 import { vueNodeViews } from './vueNodeViews'
 import ImageNodeView from '../nodeViews/ImageView.vue'
 import { addBlockAfterImageNode } from '../nodes/ImageNode'
-import { addNewTodoCommand, toggleTodoPlugin, toggleToParagraphCommmand } from '../schema/todoList'
+import { addNewTodoCommand, todoPlugin, toggleToParagraphCommmand } from '../nodes/todo'
 import { undoInputRule } from 'prosemirror-inputrules'
 import { codeViewPlugin } from '../nodeViews/CodeView'
 import { blocksTool } from './blocksTool'
@@ -19,9 +19,10 @@ import { appendParagraph } from './appendParagraph'
 import DetailsView from '../nodeViews/DetailsView.vue'
 import CalloutView from '../nodeViews/CalloutView.vue'
 import { addBlockAfterDetails, detailsPlugin } from '../nodes/details'
+import { toc } from './toc'
 
 export const createPlugins = (schema: Schema) => [
-  toggleTodoPlugin(schema.nodes.todo),
+  todoPlugin(schema.nodes.todo),
   detailsPlugin(schema.nodes.details),
   keymap({
     'Enter': chainCommands(
@@ -58,5 +59,6 @@ export const createPlugins = (schema: Schema) => [
     schema.nodes.horizontal_rule,
     schema.nodes.blockquote,
     schema.nodes.code_block
-  ])
+  ]),
+  toc(),
 ]

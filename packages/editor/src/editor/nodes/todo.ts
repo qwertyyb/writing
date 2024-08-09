@@ -1,13 +1,13 @@
 import { Slice, type NodeSpec, type NodeType } from "prosemirror-model";
 import { Plugin, TextSelection, type Command } from "prosemirror-state";
 
-export const todo: NodeSpec = {
-  group: 'todo_block',
+export const todo = (options: { group: string, content: string }): NodeSpec => ({
+  group: options.group,
   attrs: {
     checked: { default: false }
   },
   defining: true,
-  content: 'block+',
+  content: options.content,
   parseDOM: [
     {
       tag: 'li.todo-item',
@@ -39,8 +39,14 @@ export const todo: NodeSpec = {
       contentDOM
     }
   }
-}
+})
 
+/**
+ * 按回车键时，添加一个新的 todo 项
+ * @param nodeType todo nodeType
+ * @param listItemNode list_item nodeType
+ * @returns 
+ */
 export const addNewTodoCommand = (nodeType: NodeType, listItemNode: NodeType): Command => {
   return (state, dispatch) => {
     if (!(state.selection instanceof TextSelection)) return false
@@ -61,6 +67,11 @@ export const addNewTodoCommand = (nodeType: NodeType, listItemNode: NodeType): C
   }
 }
 
+/**
+ * 按删除键时，把todo block 转化为 paragraph
+ * @param nodeType todo nodeType
+ * @returns 
+ */
 export const toggleToParagraphCommmand = (nodeType: NodeType): Command => {
   return (state, dispatch) => {
     if (!(state.selection instanceof TextSelection)) return false
@@ -82,16 +93,24 @@ export const toggleToParagraphCommmand = (nodeType: NodeType): Command => {
   }
 }
 
-export const toggleTodoPlugin = (todoItemNodeType: NodeType, event = 'change') => {
+/**
+ * 点击 checkbox 时，更新选中状态
+ * @param todoItemNodeType todo nodeType
+ * @param event change 事件
+ * @returns 
+ */
+export const todoPlugin = (todoItemNodeType: NodeType) => {
   return new Plugin({
     props: {
       handleDOMEvents: {
-        [event]: (view, event) => {
-          if (event.target.nodeName.toLowerCase() !== 'input' || event.target.type !== 'checkbox') return
-          const pos = view.posAtDOM(event.target, 0)
+        change: (view, event) => {
+          const target = event.target as HTMLInputElement | null
+          if (!target) return
+          if (target.nodeName.toLowerCase() !== 'input' || target.type !== 'checkbox') return
+          const pos = view.posAtDOM(target, 0)
           const $pos = view.state.doc.resolve(pos)
           if ($pos.parent.type !== todoItemNodeType) return
-          view.dispatch(view.state.tr.setNodeAttribute($pos.before(), 'checked', event.target.checked))
+          view.dispatch(view.state.tr.setNodeAttribute($pos.before(), 'checked', target.checked))
           return true
         }
       },

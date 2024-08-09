@@ -88,96 +88,7 @@ export const demo = {
             "content": [
                 {
                     "type": "text",
-                    "text": "有序列表"
-                }
-            ]
-        },
-        {
-            "type": "ordered_list",
-            "attrs": {
-                "order": 1
-            },
-            "content": [
-                {
-                    "type": "list_item",
-                    "content": [
-                        {
-                            "type": "paragraph",
-                            "attrs": {
-                                "align": "left"
-                            },
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": "1"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "type": "list_item",
-                    "content": [
-                        {
-                            "type": "paragraph",
-                            "attrs": {
-                                "align": "left"
-                            },
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": "2"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "type": "list_item",
-                    "content": [
-                        {
-                            "type": "paragraph",
-                            "attrs": {
-                                "align": "left"
-                            },
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": "3"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "type": "list_item",
-                    "content": [
-                        {
-                            "type": "paragraph",
-                            "attrs": {
-                                "align": "left"
-                            },
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": "4"
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "type": "heading",
-            "attrs": {
-                "level": 2,
-                "align": "left"
-            },
-            "content": [
-                {
-                    "type": "text",
-                    "text": "无序列表"
+                    "text": "列表"
                 }
             ]
         },
@@ -188,137 +99,15 @@ export const demo = {
                     "type": "list_item",
                     "content": [
                         {
-                            "type": "paragraph",
+                            "type": "heading",
                             "attrs": {
+                                "level": 3,
                                 "align": "left"
                             },
                             "content": [
                                 {
                                     "type": "text",
-                                    "text": "1"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "type": "list_item",
-                    "content": [
-                        {
-                            "type": "paragraph",
-                            "attrs": {
-                                "align": "left"
-                            },
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": "2"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "type": "list_item",
-                    "content": [
-                        {
-                            "type": "paragraph",
-                            "attrs": {
-                                "align": "left"
-                            },
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": "3"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "type": "list_item",
-                    "content": [
-                        {
-                            "type": "paragraph",
-                            "attrs": {
-                                "align": "left"
-                            },
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": "4"
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "type": "heading",
-            "attrs": {
-                "level": 2,
-                "align": "left"
-            },
-            "content": [
-                {
-                    "type": "text",
-                    "text": "嵌套列表"
-                }
-            ]
-        },
-        {
-            "type": "ordered_list",
-            "attrs": {
-                "order": 1
-            },
-            "content": [
-                {
-                    "type": "list_item",
-                    "content": [
-                        {
-                            "type": "paragraph",
-                            "attrs": {
-                                "align": "left"
-                            },
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": "1"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "type": "list_item",
-                    "content": [
-                        {
-                            "type": "paragraph",
-                            "attrs": {
-                                "align": "left"
-                            },
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": "2"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "type": "list_item",
-                    "content": [
-                        {
-                            "type": "paragraph",
-                            "attrs": {
-                                "align": "left"
-                            },
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": "3"
+                                    "text": "有序列表"
                                 }
                             ]
                         },
@@ -339,7 +128,7 @@ export const demo = {
                                             "content": [
                                                 {
                                                     "type": "text",
-                                                    "text": "1.1"
+                                                    "text": "1"
                                                 }
                                             ]
                                         }
@@ -356,7 +145,7 @@ export const demo = {
                                             "content": [
                                                 {
                                                     "type": "text",
-                                                    "text": "1.2"
+                                                    "text": "2"
                                                 }
                                             ]
                                         }
@@ -373,12 +162,149 @@ export const demo = {
                                             "content": [
                                                 {
                                                     "type": "text",
-                                                    "text": "1.3"
+                                                    "text": "3"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "list_item",
+                    "content": [
+                        {
+                            "type": "heading",
+                            "attrs": {
+                                "level": 3,
+                                "align": "left"
+                            },
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": "无序列表"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "bullet_list",
+                            "content": [
+                                {
+                                    "type": "list_item",
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "attrs": {
+                                                "align": "left"
+                                            },
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "1"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "list_item",
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "attrs": {
+                                                "align": "left"
+                                            },
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "2"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "list_item",
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "attrs": {
+                                                "align": "left"
+                                            },
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "3"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "list_item",
+                    "content": [
+                        {
+                            "type": "heading",
+                            "attrs": {
+                                "level": 3,
+                                "align": "left"
+                            },
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": "嵌套列表"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "ordered_list",
+                            "attrs": {
+                                "order": 1
+                            },
+                            "content": [
+                                {
+                                    "type": "list_item",
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "attrs": {
+                                                "align": "left"
+                                            },
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "1"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "list_item",
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "attrs": {
+                                                "align": "left"
+                                            },
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "2"
                                                 }
                                             ]
                                         },
                                         {
-                                            "type": "bullet_list",
+                                            "type": "ordered_list",
+                                            "attrs": {
+                                                "order": 1
+                                            },
                                             "content": [
                                                 {
                                                     "type": "list_item",
@@ -391,7 +317,7 @@ export const demo = {
                                                             "content": [
                                                                 {
                                                                     "type": "text",
-                                                                    "text": "无序 1"
+                                                                    "text": "2.1"
                                                                 }
                                                             ]
                                                         }
@@ -408,24 +334,7 @@ export const demo = {
                                                             "content": [
                                                                 {
                                                                     "type": "text",
-                                                                    "text": "无序 2"
-                                                                }
-                                                            ]
-                                                        }
-                                                    ]
-                                                },
-                                                {
-                                                    "type": "list_item",
-                                                    "content": [
-                                                        {
-                                                            "type": "paragraph",
-                                                            "attrs": {
-                                                                "align": "left"
-                                                            },
-                                                            "content": [
-                                                                {
-                                                                    "type": "text",
-                                                                    "text": "无序 3"
+                                                                    "text": "2.2"
                                                                 }
                                                             ]
                                                         }
@@ -434,47 +343,21 @@ export const demo = {
                                             ]
                                         }
                                     ]
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "type": "heading",
-            "attrs": {
-                "level": 2,
-                "align": "left"
-            },
-            "content": [
-                {
-                    "type": "text",
-                    "text": "todo"
-                }
-            ]
-        },
-        {
-            "type": "bullet_list",
-            "content": [
-                {
-                    "type": "list_item",
-                    "content": [
-                        {
-                            "type": "todo",
-                            "attrs": {
-                                "checked": false
-                            },
-                            "content": [
+                                },
                                 {
-                                    "type": "paragraph",
-                                    "attrs": {
-                                        "align": "left"
-                                    },
+                                    "type": "list_item",
                                     "content": [
                                         {
-                                            "type": "text",
-                                            "text": " todo1"
+                                            "type": "paragraph",
+                                            "attrs": {
+                                                "align": "left"
+                                            },
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "3"
+                                                }
+                                            ]
                                         }
                                     ]
                                 }
@@ -486,45 +369,93 @@ export const demo = {
                     "type": "list_item",
                     "content": [
                         {
-                            "type": "todo",
+                            "type": "heading",
                             "attrs": {
-                                "checked": false
+                                "level": 3,
+                                "align": "left"
                             },
                             "content": [
                                 {
-                                    "type": "paragraph",
-                                    "attrs": {
-                                        "align": "left"
-                                    },
-                                    "content": [
-                                        {
-                                            "type": "text",
-                                            "text": "todo2"
-                                        }
-                                    ]
+                                    "type": "text",
+                                    "text": "todo"
                                 }
                             ]
-                        }
-                    ]
-                },
-                {
-                    "type": "list_item",
-                    "content": [
+                        },
                         {
-                            "type": "todo",
-                            "attrs": {
-                                "checked": false
-                            },
+                            "type": "bullet_list",
                             "content": [
                                 {
-                                    "type": "paragraph",
-                                    "attrs": {
-                                        "align": "left"
-                                    },
+                                    "type": "list_item",
                                     "content": [
                                         {
-                                            "type": "text",
-                                            "text": "todo3"
+                                            "type": "todo",
+                                            "attrs": {
+                                                "checked": false
+                                            },
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "attrs": {
+                                                        "align": "left"
+                                                    },
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "todo1"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "list_item",
+                                    "content": [
+                                        {
+                                            "type": "todo",
+                                            "attrs": {
+                                                "checked": false
+                                            },
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "attrs": {
+                                                        "align": "left"
+                                                    },
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "todo2"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "list_item",
+                                    "content": [
+                                        {
+                                            "type": "todo",
+                                            "attrs": {
+                                                "checked": false
+                                            },
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "attrs": {
+                                                        "align": "left"
+                                                    },
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "todo3"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
                                         }
                                     ]
                                 }
