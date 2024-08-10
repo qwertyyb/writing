@@ -8,7 +8,7 @@ import { RouterView } from 'vue-router'
 
 <style>
 body {
-  font-family: Consolas, Monaco, monospace;
+  font-family: "LXGW WenKai";
 }
 html, body, #app {
   height: 100%;

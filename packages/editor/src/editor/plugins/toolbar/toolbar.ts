@@ -1,6 +1,6 @@
-import { NodeSelection, Plugin, type PluginView } from 'prosemirror-state'
+import { Plugin, PluginKey, type PluginView } from 'prosemirror-state'
 import { EditorView } from 'prosemirror-view'
-import { allowMarkTypes, getRangeMarks, setMark, toggleMark, unsetMark } from './mark';
+import { allowMarkTypes, getRangeMarks, setMark, toggleMark } from './mark';
 import { type App, createApp, reactive, h, markRaw, toRaw } from 'vue';
 import EditorToolbar, { type ToolbarItemSpec } from './EditorToolbar.vue'
 import type { Mark, Node } from 'prosemirror-model';
@@ -145,7 +145,7 @@ class ToolbarView implements PluginView {
     position: { left: 0, top: 0 }
   })
 
-  constructor(view: EditorView) {
+  constructor(view: EditorView, private pluginKey: PluginKey) {
     this.vmProps.editorView = markRaw(view)
     this.vm = createApp({
       render: () => h(EditorToolbar, this.vmProps as any)
@@ -156,6 +156,10 @@ class ToolbarView implements PluginView {
   }
 
   update(view: EditorView) {
+    if (!this.pluginKey.getState(view.state).pointerup) {
+      this.vmProps.visible = false
+      return
+    }
     const { selection, doc, schema } = view.state
     const { from, to, empty, head } = selection
     if (empty) {
@@ -190,6 +194,7 @@ class ToolbarView implements PluginView {
     const box = view.dom.parentElement!.offsetParent!.getBoundingClientRect()
     this.vmProps.position = { left: curPos.left - box.left, top: curPos.top - box.top }
     this.vmProps.visible = true
+    console.log(this.vmProps.position)
   }
 
   destroy() {
@@ -199,9 +204,32 @@ class ToolbarView implements PluginView {
 
 
 export const toolbarPlugin = () => {
+  const pluginKey = new PluginKey('toolbar')
   return new Plugin({
+    key: pluginKey,
+    state: {
+      init() {
+        return { pointerup: false } // 鼠标或手指是否已弹起
+      },
+      apply(tr, value) {
+        const meta = tr.getMeta(pluginKey)
+        if (!meta) return value
+        return { pointerup: meta.pointerup }
+      },
+    },
+    props: {
+      handleDOMEvents: {
+        pointerup(view) {
+          if (!pluginKey.get(view.state)) return;
+          view.dispatch(view.state.tr.setMeta(pluginKey, { pointerup: true }))
+        },
+        pointerdown(view) {
+          view.dispatch(view.state.tr.setMeta(pluginKey, { pointerup: false }))
+        }
+      }
+    },
     view(view) {
-      return new ToolbarView(view)
+      return new ToolbarView(view, pluginKey)
     }
   })
 }

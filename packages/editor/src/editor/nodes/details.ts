@@ -15,7 +15,6 @@ export const detailsSchema = (options: { summaryContent: string, detailsContent:
   
     details: {
       group: options.detailsGroup,
-      draggable: true,
       marks: '',
       attrs: {
         open: { default: true },

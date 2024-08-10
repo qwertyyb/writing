@@ -26,6 +26,7 @@
         v-model="documentStore.editing.title"
         @change="updateTitle"
         class="document-editor-title"
+        spellcheck="false"
       />
       <document-editor
         :key="documentStore.editing.id"
@@ -124,9 +125,11 @@ const commandHandler = (command: string) => {
   box-sizing: border-box;
   padding: 0 36px 0 12px;
   .document-editor-title {
+    width: calc(100% - 40px);
     font-size: 36px;
     border: none;
     outline: none;
+    margin: 0 20px;
   }
 }
 

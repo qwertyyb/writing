@@ -1,5 +1,20 @@
 <template>
-  <div class="editor-toolbar" v-if="visible" :style="{left: position.left + 'px', top: position.top + 'px'}">
+  <div class="editor-toolbar"
+    ref="posRef"
+    :style="{left: position.left + 'px', top: position.top + 'px' }"
+  >
+  </div>
+  <el-popover
+    v-if="visible"
+    :popper-style="{ padding: 0, minWidth: '100px' }"
+    placement="top"
+    ref="popoverRef"
+    :virtual-ref="$refs.posRef"
+    :visible="visible"
+    trigger="click"
+    width="auto"
+    virtual-triggering
+  >
     <ul class="toolbar-list">
       <li class="toolbar-item material-symbols-outlined"
         :class="{ active: !!marksValues[item.name] }"
@@ -35,7 +50,7 @@
         <div class="toolbar-item-label" :title="item.title" v-else @pointerdown.prevent="handler(item)">{{ item.label }}</div>
       </li>
     </ul>
-  </div>
+  </el-popover>
 </template>
 
 <script lang="ts">
@@ -43,7 +58,7 @@ import type { EditorView } from 'prosemirror-view';
 import { ElPopover } from 'element-plus';
 import ColorPanel from '../../components/ColorPanel.vue';
 import LinkInput from '../../components/LinkInput.vue';
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, triggerRef, type PropType } from 'vue';
 import type { Mark } from 'prosemirror-model';
 
 export interface ToolbarItemSpec {
@@ -148,11 +163,13 @@ export default defineComponent({
 .editor-toolbar {
   position: absolute;
   transform: translateY(-100%);
+  height: 2px;
+  width: 2px;
 }
 .toolbar-list {
   display: flex;
-  background: #000;
-  color: #fff;
+  // background: #000;
+  // color: #fff;
   list-style: none;
   padding: 0;
   margin: 0;
@@ -161,7 +178,7 @@ export default defineComponent({
     padding: 6px 10px;
     font-size: 20px;
     &.active {
-      background: gray;
+      background: rgb(211, 211, 211);
     }
   }
 }

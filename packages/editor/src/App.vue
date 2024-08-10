@@ -8,7 +8,6 @@ const value = shallowRef<NodeValue>(demo)
 </script>
 
 <template>
-
   <main>
     <DocumentEditor v-model="value"></DocumentEditor>
   </main>

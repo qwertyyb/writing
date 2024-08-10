@@ -1,15 +1,11 @@
 <template>
-  <main class="home-view">
-    <div class="spliter"></div>
-    <div class="doc-editor">
-      <div class="doc-editor-wrapper">
-        <document-editor
-          mode="Readonly"
-          v-if="document"
-          :model-value="document"
-        ></document-editor>
-      </div>
-    </div>
+  <main class="public-view" v-if="document">
+    <h1 class="document-title">{{ document.title }}</h1>
+    <document-editor
+      class="document-editor"
+      :editable="false"
+      :model-value="document.content"
+    ></document-editor>
   </main>
 </template>
 
@@ -19,7 +15,7 @@ import { documentService } from '@/services';
 import { ref, watchEffect } from 'vue';
 import { useRoute } from 'vue-router';
 
-const document = ref<NodeValue>()
+const document = ref<{ title: string, content: NodeValue }>()
 
 const route = useRoute()
 
@@ -28,24 +24,30 @@ watchEffect(async () => {
   if (!id) return
   const { data } = await documentService.findByShareId({ id })
   
-  document.value = JSON.parse(data.doc!.content)
+  document.value = {
+    title: data.doc.title,
+    content: JSON.parse(data.doc!.content)
+  }
 })
 
 </script>
 
 <style lang="less" scoped>
-.home-view {
-  display: flex;
-  .doc-editor {
-    flex: 4;
-    max-height: 100vh;
-    height: 100%;
-    overflow: auto;
-    .doc-editor-wrapper {
-      width: 80%;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
+.public-view {
+  width: 80vw;
+  margin: 20px auto 60px auto;
+  max-width: 1200px;
+  .document-title {
+    width: calc(100% - 40px);
+    font-size: 36px;
+    border: none;
+    outline: none;
+    margin: 0 20px;
+  }
+}
+@media screen and (max-width: 540px) {
+  .public-view {
+    width: 100%;
   }
 }
 </style>

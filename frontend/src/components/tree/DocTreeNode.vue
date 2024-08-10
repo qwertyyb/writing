@@ -23,9 +23,9 @@
         </div>
       </div>
       <div class="tree-action">
-        <span class="material-symbols-outlined add-action" title="添加" @click.stop="addChild">add</span>
+        <span class="material-symbols-outlined add-action action-item" title="添加" @click.stop="addChild">add</span>
         <el-dropdown trigger="hover">
-          <span class="material-symbols-outlined more-acto" title="更多操作" @click.stop>more_vert</span>
+          <span class="material-symbols-outlined more-action action-item" title="更多操作" @click.stop>more_vert</span>
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item :icon="Plus" @click.stop="addBefore">在上方插入</el-dropdown-item>
@@ -214,13 +214,16 @@ const setHeight = (el: Element) => {
       color: #333;
       opacity: 0;
       transition: opacity .2s;
-      .add-action {
+      .action-item {
         cursor: pointer;
         border-radius: 4px;
         transition: background .2s;
         &:hover {
           background: #bbb;
         }
+      }
+      .more-action {
+        outline: none;
       }
     }
   }

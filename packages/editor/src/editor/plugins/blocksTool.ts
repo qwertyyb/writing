@@ -7,6 +7,7 @@ import { findParentNodeWithTypes } from '../utils/editor'
 
 const pointerMoveHandler = (nodeTypes: NodeType[], pluginKey: PluginKey) => {
   return function(view: EditorView, event: PointerEvent) {
+    if (!view.editable) return
     const plugin = pluginKey.get(view.state)
     if (!plugin) return;
     const prev = plugin.spec.prev

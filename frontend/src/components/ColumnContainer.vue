@@ -135,6 +135,7 @@ const pointerupHandler = (event: PointerEvent) => {
     background: #fff;
     width: 80vw !important;
     box-shadow: 7px 14px 28px rgba(0, 0, 0, .1);
+    --left-width: 80vw !important;
   }
 }
 </style>

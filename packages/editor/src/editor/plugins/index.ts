@@ -23,45 +23,48 @@ import { toc } from './toc'
 import type { uploadSymbol } from '../const'
 
 export const createPlugins = (schema: Schema, props: {
-  [uploadSymbol]: (file: Blob | File) => Promise<string>;
+  [uploadSymbol]?: ((file: Blob | File) => Promise<string>);
+  editable?: boolean
 }) => [
+  toc(),
   todoPlugin(schema.nodes.todo),
   detailsPlugin(schema.nodes.details),
-  keymap({
-    'Enter': chainCommands(
-      addBlockAfterImage(schema.nodes.image),
-      addNewTodoAfterTodo(schema.nodes.todo, schema.nodes.list_item),
-      addBlockAfterDetails(schema.nodes.details_summary)
-    ),
-    'Shift-Enter': chainCommands(newlineInCode, createParagraphNear, liftEmptyBlock, splitBlock),
-    'Backspace': chainCommands(undoInputRule, toggleToParagraph(schema.nodes.todo), deleteSelection, joinBackward, selectNodeBackward),
-    'Mod-z': undo,
-    'Shift-Mod-z': redo
-  }),
-  keymap(buildKeymap(schema)),
-  keymap(baseKeymap),
-  buildInputRules(schema),
-  history(),
-  dropCursor({ color: '#f00' }),
-  gapCursor(),
-  toolbarPlugin(),
-  blockTool(),
   vueNodeViews(schema, props, {
     image: ImageNodeView,
     details: DetailsView,
     callout: CalloutView,
   }),
   codeViewPlugin(),
-  appendParagraph(schema.nodes.paragraph),
-  blocksTool([
-    schema.nodes.list_item,
-    schema.nodes.image,
-    schema.nodes.paragraph,
-    schema.nodes.details,
-    schema.nodes.heading,
-    schema.nodes.horizontal_rule,
-    schema.nodes.blockquote,
-    schema.nodes.code_block
-  ]),
-  toc(),
+  ...(props.editable ? [
+    keymap({
+      'Enter': chainCommands(
+        addBlockAfterImage(schema.nodes.image),
+        addNewTodoAfterTodo(schema.nodes.todo, schema.nodes.list_item),
+        addBlockAfterDetails(schema.nodes.details_summary)
+      ),
+      'Shift-Enter': chainCommands(newlineInCode, createParagraphNear, liftEmptyBlock, splitBlock),
+      'Backspace': chainCommands(undoInputRule, toggleToParagraph(schema.nodes.todo), deleteSelection, joinBackward, selectNodeBackward),
+      'Mod-z': undo,
+      'Shift-Mod-z': redo
+    }),
+    keymap(buildKeymap(schema)),
+    keymap(baseKeymap),
+    buildInputRules(schema),
+    history(),
+    dropCursor({ color: '#f00' }),
+    gapCursor(),
+    toolbarPlugin(),
+    blockTool(),
+    appendParagraph(schema.nodes.paragraph),
+    blocksTool([
+      schema.nodes.list_item,
+      schema.nodes.image,
+      schema.nodes.paragraph,
+      schema.nodes.details,
+      schema.nodes.heading,
+      schema.nodes.horizontal_rule,
+      schema.nodes.blockquote,
+      schema.nodes.code_block
+    ]),
+  ] : []),
 ]

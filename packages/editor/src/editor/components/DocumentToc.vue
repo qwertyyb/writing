@@ -4,9 +4,10 @@
     <div class="toc-item"
       v-for="(item, index) in toc"
       @click="clickHandler(item)"
-      :style="{paddingLeft: (item.level - 1) * 18 + 'px'}"
-      :key="index">
-        {{ item.text }}
+      :style="{paddingLeft: (item.level + 1) * 2 + 'em'}"
+      :key="index"
+    >
+      {{ item.text }}
     </div>
   </div>
 </template>
@@ -28,6 +29,7 @@ const clickHandler = (item: TocItem) => {
 
 <style lang="less" scoped>
 .toc-block {
+  opacity: 0.7;
   .toc-header {
     padding: 6px 0;
     font-size: 18px;
@@ -38,6 +40,7 @@ const clickHandler = (item: TocItem) => {
     cursor: pointer;
     transition: background .2s;
     border-radius: 4px;
+    font-weight: bold;
     &:hover {
       background: #eee;
     }

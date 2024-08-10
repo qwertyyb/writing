@@ -16,7 +16,10 @@ import { uploadSymbol } from "./const"
 
 const model = defineModel<NodeValue>()
 
-const props = defineProps<{ upload: (file: Blob | File) => Promise<string> }>()
+const props = defineProps<{
+  upload?: (file: Blob | File) => Promise<string>,
+  editable?: boolean,
+}>()
 
 const el = ref<HTMLElement>()
 let editor: EditorView | null = null
@@ -26,8 +29,13 @@ onMounted(() => {
     state: EditorState.create({
       schema,
       doc: model.value ? schema.nodeFromJSON(model.value) : undefined,
-      plugins: createPlugins(schema, { [uploadSymbol]: props.upload })
+      plugins: createPlugins(schema, {
+        [uploadSymbol]: props.upload,
+        editable: props.editable,
+      })
     }),
+    attributes: { spellcheck: 'false' },
+    editable: () => props.editable,
     dispatchTransaction(tr) {
       view.updateState(view.state.apply(tr));
       const value = view.state.doc.toJSON()

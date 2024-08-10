@@ -29,7 +29,6 @@ const parseImageViewRule = () => ({
 })
 
 export const imageSchema = (options: { content: string, group: string }): NodeSpec => ({
-  draggable: true,
   attrs: {
     src: {},
     ratio: { default: null },

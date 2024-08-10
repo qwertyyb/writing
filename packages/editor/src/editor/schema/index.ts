@@ -15,7 +15,6 @@ export const nodes: Record<string, NodeSpec> = {
   /// A plain paragraph textblock. Represented in the DOM
   /// as a `<p>` element.
   paragraph: {
-    draggable: true,
     attrs: {
       align: {
         default: 'left'
@@ -40,7 +39,6 @@ export const nodes: Record<string, NodeSpec> = {
   /// should hold the number 1 to 6. Parsed and serialized as `<h1>` to
   /// `<h6>` elements.
   heading: {
-    draggable: true,
     attrs: {
       level: { default: 2 },
       align: {
@@ -66,7 +64,6 @@ export const nodes: Record<string, NodeSpec> = {
 
   /// A blockquote (`<blockquote>`) wrapping one or more blocks.
   blockquote: {
-    draggable: true,
     content: 'block+',
     group: 'block',
     defining: true,
@@ -78,7 +75,6 @@ export const nodes: Record<string, NodeSpec> = {
 
   /// A horizontal rule (`<hr>`).
   horizontal_rule: {
-    draggable: true,
     group: 'block',
     parseDOM: [{ tag: 'hr' }],
     toDOM() {
@@ -90,7 +86,6 @@ export const nodes: Record<string, NodeSpec> = {
   /// nodes by default. Represented as a `<pre>` element with a
   /// `<code>` element inside of it.
   code_block: {
-    draggable: true,
     attrs: {
       language: {}
     },
