@@ -1,6 +1,5 @@
 <template>
   <div class="document-editor">
-    <input type="text" placeholder="请输入标题" value="页面标题" class="document-editor-title" />
     <div class="document-editor-content" ref="el"></div>
   </div>
 </template>
@@ -81,10 +80,6 @@ onBeforeMount(() => {
   & > * {
     width: 100%;
   }
-  .document-editor-title {
-    font-size: 36px;
-    border: none;
-  }
   .document-editor-content {
     min-height: 60vh;
   }
@@ -96,6 +91,17 @@ onBeforeMount(() => {
     padding-block-start: 0.5em;
     padding-block-end: 0.5em;
     line-height: 1.4;
+  }
+  code {
+    font-size: 14px;
+    word-wrap: break-word;
+    padding: 2px 4px;
+    border-radius: 4px;
+    margin: 0 2px;
+    color: #1e6bb8;
+    background-color: rgba(27, 31, 35, .05);
+    font-family: Operator Mono, Consolas, Monaco, Menlo, monospace;
+    word-break: break-all;
   }
   .hover {
     transition: background .2s;

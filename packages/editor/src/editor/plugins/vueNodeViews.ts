@@ -68,8 +68,6 @@ class VueNodeView<N extends Node = Node> implements NodeView {
       render: () => h(Component, this.vmProps)
     })
     Reflect.ownKeys(provideData).forEach((key) => this.vmApp!.provide(key, provideData[key]))
-    console.log(provideData)
-    this.vmApp!.provide('hello', 'world')
     this.vmApp.mount(this.root)
   }
   updateAttrs = (attrs: Attrs) => {

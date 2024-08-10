@@ -10,8 +10,8 @@ import { blockTool } from './block/block-tool'
 import { buildInputRules } from './inputrules'
 import { vueNodeViews } from './vueNodeViews'
 import ImageNodeView from '../nodeViews/ImageView.vue'
-import { addBlockAfterImageNode } from '../nodes/ImageNode'
-import { addNewTodoCommand, todoPlugin, toggleToParagraphCommmand } from '../nodes/todo'
+import { addBlockAfterImage } from '../nodes/image'
+import { addNewTodoAfterTodo, todoPlugin, toggleToParagraph } from '../nodes/todo'
 import { undoInputRule } from 'prosemirror-inputrules'
 import { codeViewPlugin } from '../nodeViews/CodeView'
 import { blocksTool } from './blocksTool'
@@ -29,12 +29,12 @@ export const createPlugins = (schema: Schema, props: {
   detailsPlugin(schema.nodes.details),
   keymap({
     'Enter': chainCommands(
-      addBlockAfterImageNode(schema.nodes.image),
-      addNewTodoCommand(schema.nodes.todo, schema.nodes.list_item),
+      addBlockAfterImage(schema.nodes.image),
+      addNewTodoAfterTodo(schema.nodes.todo, schema.nodes.list_item),
       addBlockAfterDetails(schema.nodes.details_summary)
     ),
     'Shift-Enter': chainCommands(newlineInCode, createParagraphNear, liftEmptyBlock, splitBlock),
-    'Backspace': chainCommands(undoInputRule, toggleToParagraphCommmand(schema.nodes.todo), deleteSelection, joinBackward, selectNodeBackward),
+    'Backspace': chainCommands(undoInputRule, toggleToParagraph(schema.nodes.todo), deleteSelection, joinBackward, selectNodeBackward),
     'Mod-z': undo,
     'Shift-Mod-z': redo
   }),

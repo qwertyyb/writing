@@ -1,10 +1,11 @@
 <template>
   <column-container class="layout-view"
-    v-model="runtimeStore.settings.layout.siderWidth"
+    ref="container"
+    :model-value="runtimeStore.settings.layout.siderWidth"
     :side-hidden="runtimeStore.settings.layout.collapsed"
     @openSide="runtimeStore.updateSettings('layout', { ...runtimeStore.settings.layout, collapsed: false })"
     @closeSide="runtimeStore.updateSettings('layout', { ...runtimeStore.settings.layout, collapsed: true })"
-    @change="runtimeStore.updateSettings('layout', { ...runtimeStore.settings.layout, siderWidth: $event })">
+    @update:model-value="runtimeStore.updateSettings('layout', { ...runtimeStore.settings.layout, siderWidth: $event })">
     <template v-slot:side>
       <div class="layout-side-wrapper">
         <search-by-title
@@ -32,8 +33,14 @@
               @click="$router.push({ name: 'settings' })">settings</span>
             <span class="material-symbols-outlined action-item" title="折叠" @click="unExpandAll">unfold_less</span>
             <span class="material-symbols-outlined action-item location-opened" title="定位打开的文档" @click="locateEditing">my_location</span>
-            <span class="material-symbols-outlined action-item logout-action" title="退出登录" @click="logout" v-if="hasAuth">logout</span>
-            <span class="material-symbols-outlined action-item close-action" title="关闭侧边栏" @click="runtimeStore.updateSettings('layout', { ...runtimeStore.settings.layout, collapsed: true })">start</span>
+            <span class="material-symbols-outlined action-item logout-action"
+              title="退出登录"
+              @click="logout"
+              v-if="hasAuth"
+            >logout</span>
+            <span class="material-symbols-outlined action-item close-action"
+              title="关闭侧边栏"
+              @click="runtimeStore.updateSettings('layout', { ...runtimeStore.settings.layout, collapsed: true })">start</span>
           </div>
         </template>
       </div>

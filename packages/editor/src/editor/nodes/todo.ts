@@ -47,7 +47,7 @@ export const todo = (options: { group: string, content: string }): NodeSpec => (
  * @param listItemNode list_item nodeType
  * @returns 
  */
-export const addNewTodoCommand = (nodeType: NodeType, listItemNode: NodeType): Command => {
+export const addNewTodoAfterTodo = (nodeType: NodeType, listItemNode: NodeType): Command => {
   return (state, dispatch) => {
     if (!(state.selection instanceof TextSelection)) return false
     const { $from, empty } = state.selection
@@ -72,7 +72,7 @@ export const addNewTodoCommand = (nodeType: NodeType, listItemNode: NodeType): C
  * @param nodeType todo nodeType
  * @returns 
  */
-export const toggleToParagraphCommmand = (nodeType: NodeType): Command => {
+export const toggleToParagraph = (nodeType: NodeType): Command => {
   return (state, dispatch) => {
     if (!(state.selection instanceof TextSelection)) return false
     const { $from, empty, from } = state.selection

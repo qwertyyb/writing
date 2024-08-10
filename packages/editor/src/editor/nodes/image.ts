@@ -1,14 +1,10 @@
-import type { Node, NodeType } from "prosemirror-model";
+import type { Node, NodeSpec, NodeType } from "prosemirror-model";
 import { toDOMRender } from "../plugins/vueNodeViews";
 import ImageView from "../nodeViews/ImageView.vue";
 import { TextSelection, type Command } from "prosemirror-state";
 import { defaultBlockAt } from "../utils/editor";
 
-export const toImageNode = (node: Node) => {
-  return toDOMRender(node, ImageView)
-}
-
-export const parseImageNode = () => ({
+const parseImageViewRule = () => ({
   tag: 'figure.editor-image-node',
   getAttrs(node: string | HTMLElement) {
     if (typeof node === 'string') return false
@@ -32,12 +28,41 @@ export const parseImageNode = () => ({
   contentElement: 'figcaption.editor-image-node-title'
 })
 
+export const imageSchema = (options: { content: string, group: string }): NodeSpec => ({
+  draggable: true,
+  attrs: {
+    src: {},
+    ratio: { default: null },
+    size: { default: null },
+    align: { default: 'center' }, // left | center | right
+    href: { default: null }
+  },
+  content: options.content,
+  marks: '',
+  group: options.group,
+  selectable: true,
+  parseDOM: [
+    {
+      tag: 'img[src]',
+      getAttrs(dom) {
+        if (typeof dom === 'string') return false
+        return {
+          src: dom.getAttribute('src'),
+          title: dom.getAttribute('title') || dom.getAttribute('alt')
+        }
+      }
+    },
+    parseImageViewRule()
+  ],
+  toDOM: node => toDOMRender(node, ImageView)
+})
+
 /**
  * selection 在图片的标题栏时，在图片后添加一个新的节点
  * @param imageNode 
  * @returns 
  */
-export const addBlockAfterImageNode = (imageNode: NodeType): Command => {
+export const addBlockAfterImage = (imageNode: NodeType): Command => {
   return (state, dispatch) => {
     const { selection } = state
     if (!(selection instanceof TextSelection)) return false

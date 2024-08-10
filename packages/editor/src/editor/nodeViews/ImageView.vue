@@ -92,11 +92,6 @@ const emits = defineEmits<{
 
 const upload = inject<(file: Blob | File) => Promise<string>>(uploadSymbol)
 
-
-const hello = inject('hello')
-
-console.log('upload', upload, hello)
-
 const containerEl = ref<HTMLElement>()
 const maxWidth = ref(200)
 const linkInputVisible = ref(false)

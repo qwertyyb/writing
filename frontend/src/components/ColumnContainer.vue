@@ -1,33 +1,35 @@
 <template>
   <div class="column-container" ref="container">
-    <transition enter-active-class="animate__animated animate__slideInLeft"
-      leave-active-class="animate__animated animate__slideOutLeft">
-      <div class="column-left-divider"
-        v-if="!sideHidden"
-        :style="{ width: leftWidth + '%' }">
-        <div class="column-left">
-          <slot name="side"></slot>
-        </div>
-        <div class="column-divider" @pointerdown="pointerdownHandler"
-          @pointermove="pointermoveHandler"
-          @pointerup="pointerupHandler"></div>
+    <div class="column-left-divider"
+      :class="{ hidden: sideHidden }"
+      :style="{
+        '--left-width': leftWidth + '%'
+      }">
+      <div class="column-left">
+        <slot name="side"></slot>
       </div>
-    </transition>
+      <div class="column-divider"
+        @pointerdown="pointerdownHandler"
+        @pointermove="pointermoveHandler"
+        @pointerup="pointerupHandler"
+      ></div>
+    </div>
     <div class="column-right">
       <span class="material-symbols-outlined open-side-icon"
-        @click="$emit('openSide')"
-        v-if="sideHidden" title="打开侧边栏">menu</span>
+        @click="emtis('openSide')"
+        title="打开侧边栏"
+        v-if="sideHidden"
+      >menu</span>
       <slot></slot>
     </div>
-    <div class="menu-mask" @click="$emit('closeSide')" v-if="!sideHidden"></div>
+    <div class="menu-mask" @click="emtis('closeSide')" v-if="!sideHidden"></div>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { ref } from 'vue';
-import { debounce } from 'lodash-es'
 
-const MinSideWidth = 200
+const MinSideWidth = 100
 
 const leftWidth = defineModel<number>()
 
@@ -36,16 +38,11 @@ defineProps<{
 }>()
 
 const emtis = defineEmits<{
-  change: [value: number],
   openSide: [],
   closeSide: [],
 }>()
 
 const container = ref<HTMLElement>()
-
-const changeHandler = debounce((value: number) => {
-  emtis('change', value)
-})
 
 let dragging = false
 const pointerdownHandler = (event: PointerEvent) => {
@@ -58,7 +55,6 @@ const pointermoveHandler = (event: PointerEvent) => {
   const { width } = container.value!.getBoundingClientRect()
   const maxWidth = width * 0.9
   leftWidth.value = Math.min(Math.max(MinSideWidth, event.clientX), maxWidth) / width * 100
-  changeHandler(leftWidth.value)
 }
 
 const pointerupHandler = (event: PointerEvent) => {
@@ -77,6 +73,12 @@ const pointerupHandler = (event: PointerEvent) => {
   .column-left-divider {
     height: 100%;
     display: flex;
+    transition: margin-left .2s;
+    --left-width: 200px;
+    width: var(--left-width);
+    &.hidden {
+      margin-left: calc(0px - var(--left-width));
+    }
   }
   .column-left {
     height: 100%;

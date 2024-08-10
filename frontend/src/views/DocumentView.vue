@@ -20,9 +20,14 @@
         :attributes="documentStore.editing?.attributes"
         @change="documentStore.updateAttributes(documentStore.editing!.id, $event)"></document-attribute>
     </el-dialog>
-    <div class="document-editor-wrapper">
+    <div class="document-editor-wrapper"
+      v-if="documentStore.editing">
+      <input type="text" placeholder="请输入标题"
+        v-model="documentStore.editing.title"
+        @change="updateTitle"
+        class="document-editor-title"
+      />
       <document-editor
-        v-if="documentStore.editing"
         :key="documentStore.editing.id"
         v-model="documentStore.editing.content"
         @update:model-value="updateHandler"
@@ -54,6 +59,7 @@ const documentStore = useDocumentStore()
 const updateHandler = debounce(async (content: any) => {
   documentStore.updateEditingContent(content)
 })
+const updateTitle = debounce(() => documentStore.updateEditingTitle(documentStore.editing!.title))
 
 const settingDialogVisible = ref(false)
 
@@ -117,6 +123,11 @@ const commandHandler = (command: string) => {
 .document-editor-wrapper {
   box-sizing: border-box;
   padding: 0 36px 0 12px;
+  .document-editor-title {
+    font-size: 36px;
+    border: none;
+    outline: none;
+  }
 }
 
 @media screen and (max-width: 540px) {

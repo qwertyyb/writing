@@ -235,10 +235,7 @@ export const useDocumentStore = defineStore('document', {
         throw new Error('没有正在编辑的文档')
       }
       this.editing.title = title
-      this.editing.content = {
-        ...this.editing.content
-      }
-      await documentService.update({ id: this.editing.id, title, content: JSON.stringify(this.editing.content) })
+      await documentService.update({ id: this.editing.id, title })
     },
     async updateAttributes(id: number, attributes: Omit<Attribute, 'docId'>[]) {
       const { data } = await attributeService.setAttributes(id, attributes)

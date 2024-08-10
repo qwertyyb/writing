@@ -1,9 +1,9 @@
 import { Schema, type NodeSpec, type MarkSpec } from 'prosemirror-model'
-import { parseImageNode, toImageNode } from '../nodes/ImageNode'
 import { bulletList, listItem, orderedList } from 'prosemirror-schema-list'
 import { todo } from '../nodes/todo'
 import { detailsSchema } from '../nodes/details'
 import { callout } from '../nodes/callout'
+import { imageSchema } from '../nodes/image'
 
 /// [Specs](#model.NodeSpec) for the nodes defined in this schema.
 export const nodes: Record<string, NodeSpec> = {
@@ -116,37 +116,7 @@ export const nodes: Record<string, NodeSpec> = {
     }
   },
 
-  /// An inline image (`<img>`) node. Supports `src`,
-  /// `alt`, and `href` attributes. The latter two default to the empty
-  /// string.
-  image: {
-    draggable: true,
-    attrs: {
-      src: {},
-      ratio: { default: null },
-      size: { default: null },
-      align: { default: 'center' }, // left | center | right
-      href: { default: null }
-    },
-    content: 'plain_text',
-    marks: '',
-    group: 'block',
-    selectable: true,
-    parseDOM: [
-      {
-        tag: 'img[src]',
-        getAttrs(dom) {
-          if (typeof dom === 'string') return false
-          return {
-            src: dom.getAttribute('src'),
-            title: dom.getAttribute('title') || dom.getAttribute('alt')
-          }
-        }
-      },
-      parseImageNode()
-    ],
-    toDOM: toImageNode
-  },
+  image: imageSchema({ content: 'plain_text', group: 'block' }),
 
   ...detailsSchema({ summaryContent: 'inline*', detailsContent: 'block*', detailsGroup: 'block' }),
 
