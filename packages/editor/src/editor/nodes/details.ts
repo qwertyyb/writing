@@ -1,6 +1,7 @@
-import type { NodeSpec, NodeType } from "prosemirror-model"
+import type { Node, NodeSpec, NodeType } from "prosemirror-model"
 import { Plugin, TextSelection, type Command } from "prosemirror-state"
 import { defaultBlockAt, findParentNode } from "../utils/editor"
+import type { MarkdownSerializerState } from "prosemirror-markdown"
 
 export const detailsSchema = (options: { summaryContent: string, detailsContent: string, detailsGroup: string }): { details_summary: NodeSpec, details: NodeSpec } => {
   return {
@@ -80,3 +81,27 @@ export const detailsPlugin = (nodeType: NodeType) => {
   })
 }
 
+export const markdownDetailsSerialize = (state: MarkdownSerializerState, node: Node, parent: Node, index: number) => {
+  const renderContent = () => {
+    for(let i = 1; i < node.childCount; i += 1) {
+      state.render(node.child(i), node, i)
+    }
+  }
+  state.write('<details>')
+  state.ensureNewLine()
+  if (node.firstChild) {
+    state.render(node.firstChild, node, 0)
+    renderContent()
+  }
+  state.write('</details>')
+  state.ensureNewLine()
+}
+
+export const markdownDetailsSummarySerialize = (state: MarkdownSerializerState, node: Node, parent: Node, index: number) => {
+  state.write('<summary>')
+  state.ensureNewLine()
+  state.renderContent(node)
+  state.ensureNewLine()
+  state.write('</summary>')
+  state.ensureNewLine()
+}

@@ -1,5 +1,6 @@
-import { Slice, type NodeSpec, type NodeType } from "prosemirror-model";
+import { Node, Slice, type NodeSpec, type NodeType } from "prosemirror-model";
 import { Plugin, TextSelection, type Command } from "prosemirror-state";
+import { MarkdownSerializerState } from 'prosemirror-markdown';
 
 export const todo = (options: { group: string, content: string }): NodeSpec => ({
   group: options.group,
@@ -116,4 +117,13 @@ export const todoPlugin = (todoItemNodeType: NodeType) => {
       },
     }
   })
+}
+
+export const markdownSerialize = (state: MarkdownSerializerState, node: Node, parent: Node, index: number) => {
+  if (node.attrs.checked) {
+    state.write('[ ] ')
+  } else {
+    state.write('[x] ')
+  }
+  state.renderContent(node)
 }

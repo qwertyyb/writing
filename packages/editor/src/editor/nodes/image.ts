@@ -3,6 +3,7 @@ import { toDOMRender } from "../plugins/vueNodeViews";
 import ImageView from "../nodeViews/ImageView.vue";
 import { TextSelection, type Command } from "prosemirror-state";
 import { defaultBlockAt } from "../utils/editor";
+import type { MarkdownSerializerState } from "prosemirror-markdown";
 
 const parseImageViewRule = () => ({
   tag: 'figure.editor-image-node',
@@ -82,4 +83,11 @@ export const addBlockAfterImage = (imageNode: NodeType): Command => {
     }
     return false
   }
+}
+
+export const markdownSerialize = (state: MarkdownSerializerState, node: Node, parent: Node, index: number) => {
+  const image = `![${state.esc(node.textContent)}](${node.attrs.src}#align-${node.attrs.align} ${JSON.stringify(node.textContent)})`
+  const linkImage = node.attrs.href ? `[${image}](${node.attrs.href || ''})` : image
+  state.write(linkImage)
+  state.ensureNewLine()
 }

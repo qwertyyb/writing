@@ -86,6 +86,9 @@ export class CodeBlockView implements NodeView {
         effects: this.languageConfig.reconfigure(support)
       })
     })
+    if (value !== this.node.attrs.language) {
+      this.view.dispatch(this.view.state.tr.setNodeAttribute(this.getPos()!, 'language', value))
+    }
   }
 
   forwardUpdate(update: ViewUpdate) {

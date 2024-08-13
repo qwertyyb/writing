@@ -1,6 +1,7 @@
-import type { NodeSpec } from 'prosemirror-model'
+import type { Node, NodeSpec } from 'prosemirror-model'
 import CalloutView from '../nodeViews/CalloutView.vue'
 import { toDOMRender } from '../plugins/vueNodeViews'
+import type { MarkdownSerializerState } from 'prosemirror-markdown';
 
 export const callout = (options: { content: string; group: string }): NodeSpec => ({
   selectable: true,
@@ -27,3 +28,12 @@ export const callout = (options: { content: string; group: string }): NodeSpec =
     return toDOMRender(node, CalloutView)
   }
 })
+
+export const calloutMarkdownSerialize = (state: MarkdownSerializerState, node: Node) => {
+  state.write('<aside>')
+  state.ensureNewLine()
+  state.write(node.attrs.icon)
+  state.renderContent(node)
+  state.ensureNewLine()
+  state.write('</aside>')
+}

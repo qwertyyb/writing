@@ -9,7 +9,7 @@ const value = shallowRef<NodeValue>(demo)
 
 <template>
   <main>
-    <DocumentEditor v-model="value"></DocumentEditor>
+    <DocumentEditor v-model="value" editable></DocumentEditor>
   </main>
 </template>
 

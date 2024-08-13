@@ -31,6 +31,8 @@
       <document-editor
         :key="documentStore.editing.id"
         v-model="documentStore.editing.content"
+        ref="editor"
+        editable
         @update:model-value="updateHandler"
         :upload="uploadHandler"
       ></document-editor>
@@ -54,6 +56,8 @@ const logger = createLogger('DocumentView')
 const props = defineProps<{
   id: number | string
 }>()
+
+const editor = ref<InstanceType<typeof DocumentEditor>>()
 
 const documentStore = useDocumentStore()
 
@@ -83,10 +87,10 @@ const commandHandler = (command: string) => {
     settingDialogVisible.value = true
     return
   } else if (command === 'export.markdown') {
-    // const markdown = toMarkdown(documentStore.editing!.content)
-    // logger.i('commandHandler', command, markdown)
-    // const blob = new Blob([markdown], { type: 'text/plain;charset=utf-8' })
-    // saveAs(blob, documentStore.editing!.title + '.md')
+    const markdown = editor.value?.export('markdown')
+    if (!markdown) return null
+    const blob = new Blob([markdown], { type: 'text/plain;charset=utf-8' })
+    saveAs(blob, documentStore.editing!.title + '.md')
   }
 }
 

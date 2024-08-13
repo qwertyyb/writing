@@ -7,6 +7,7 @@
 <script lang="ts" setup>
 import {EditorState} from "prosemirror-state"
 import { EditorView } from "prosemirror-view"
+import { markdownSerializer } from './markdown'
 import {schema} from "./schema"
 import { onBeforeMount, onMounted, ref } from "vue"
 import { createPlugins } from './plugins'
@@ -50,6 +51,15 @@ onMounted(() => {
 
 onBeforeMount(() => {
   editor?.destroy()
+})
+
+defineExpose({
+  export(fileType: 'markdown') {
+    if (!editor) return null
+    if (fileType === 'markdown') {
+      return markdownSerializer.serialize(editor.state.doc)
+    }
+  }
 })
 
 </script>

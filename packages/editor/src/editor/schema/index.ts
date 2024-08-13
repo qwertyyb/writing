@@ -4,6 +4,7 @@ import { todo } from '../nodes/todo'
 import { detailsSchema } from '../nodes/details'
 import { callout } from '../nodes/callout'
 import { imageSchema } from '../nodes/image'
+import { codeBlockSchema } from '../nodes/code'
 
 /// [Specs](#model.NodeSpec) for the nodes defined in this schema.
 export const nodes: Record<string, NodeSpec> = {
@@ -85,20 +86,7 @@ export const nodes: Record<string, NodeSpec> = {
   /// A code listing. Disallows marks or non-text inline
   /// nodes by default. Represented as a `<pre>` element with a
   /// `<code>` element inside of it.
-  code_block: {
-    attrs: {
-      language: {}
-    },
-    content: 'inline*',
-    marks: '',
-    group: 'block',
-    code: true,
-    defining: true,
-    parseDOM: [{ tag: 'pre', preserveWhitespace: 'full' }],
-    toDOM() {
-      return ['pre', ['code', 0]]
-    }
-  },
+  code_block: codeBlockSchema({ content: 'inline*', group: 'block' }),
 
   /// A blockquote (`<blockquote>`) wrapping one or more blocks.
   plain_text: {
