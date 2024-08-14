@@ -37,7 +37,7 @@
 import { ref } from 'vue';
 import * as R from 'ramda'
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { getRegisterOptions, verifyRegister } from '@/services/server/auth';
+import { authService } from '@/services';
 import { startRegistration, browserSupportsWebAuthn } from '@simplewebauthn/browser';
 import { configService } from '@/services/server/config';
 
@@ -93,9 +93,9 @@ const removeAuthenticator = async (index: number) => {
 }
 
 const webAuthnRegister = async (name: string) => {
-  const { data } = await getRegisterOptions()
+  const { data } = await authService.getRegisterOptions()
   const result = await startRegistration(data)
-  await verifyRegister({ name, body: result })
+  await authService.verifyRegister({ name, body: result })
 }
 
 const addAuthenticator = async () => {

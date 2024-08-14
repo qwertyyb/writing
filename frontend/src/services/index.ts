@@ -1,28 +1,14 @@
-import router from '@/router'
-import * as service from './server'
-import { AuthError } from './types'
+import { type IAttributeService, type IConfigService, type IDocumentService, type IFileService } from './types'
 
-// let service = null
-// if (import.meta.env.MODE === 'indexeddb') {
-//   service = await import('./indexeddb')
-// } else {
-//   service = await import('./server/index')
-// }
+let service = null
+if (import.meta.env.VITE_DATABASE === 'indexeddb') {
+  service = await import('./indexeddb')
+} else {
+  service = await import('./server/index')
+}
 
-export const documentService = service.documentService
-export const configService = service.configService
-export const attributeService = service.attributeService
-export const fileService = service.fileService
-
-window.addEventListener('error', (event) => {
-  if (event.error instanceof AuthError) {
-    if (router.currentRoute.value.name !== 'auth') {
-      router.replace({
-        name: 'auth',
-        query: {
-          ru: router.currentRoute.value.fullPath || ''
-        }
-      })
-    }
-  }
-})
+export const documentService = service.documentService as IDocumentService
+export const configService = service.configService as IConfigService
+export const attributeService = service.attributeService as IAttributeService
+export const fileService = service.fileService as IFileService
+export const authService = service.authService

@@ -23,7 +23,7 @@
       <el-table-column type="selection" width="55" />
       <el-table-column label="预览">
         <template #default="scope">
-          <img :src="`/api/v1/file?name=${scope.row.name}`" class="file-preview image-preview" alt="" >
+          <img :src="scope.row.url" class="file-preview image-preview" alt="" >
         </template>
       </el-table-column>
       <el-table-column label="文件名" align="center" prop="name"></el-table-column>

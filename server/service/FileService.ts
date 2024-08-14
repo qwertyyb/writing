@@ -24,7 +24,7 @@ export class FileService {
     return files.map(file => {
       const reg = new RegExp(`/api/v1/file\\?name=${file.name}`);
       const results = documents.filter(document => reg.exec(document.content)).map(item => ({ id: item.id, title: item.title }));
-      return { ...file, documents: results };
+      return { ...file, url: `/api/v1/file?name=${file.name}`, documents: results };
     });
   };
 }

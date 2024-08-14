@@ -36,6 +36,10 @@ const toggleHandler = () => {
   }
   .details {
     flex: 1;
+    & > :deep(summary)::marker {
+      content: "";
+      display: none;
+    }
   }
   &.close {
     .expand-icon {

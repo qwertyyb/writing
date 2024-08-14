@@ -9,6 +9,8 @@ import {
 } from 'prosemirror-inputrules'
 import { MarkType, NodeType, Schema } from 'prosemirror-model'
 import { TextSelection } from 'prosemirror-state'
+import { languages } from '@codemirror/language-data'
+import { LanguageDescription } from '@codemirror/language'
 
 /// Given a blockquote node type, returns an input rule that turns `"> "`
 /// at the start of a textblock into a blockquote.
@@ -43,7 +45,11 @@ export function bulletListRule(nodeType: NodeType) {
 /// Given a code block node type, returns an input rule that turns a
 /// textblock starting with three backticks into a code block.
 export function codeBlockRule(nodeType: NodeType) {
-  return textblockTypeInputRule(/^```$/, nodeType)
+  return textblockTypeInputRule(
+    /^```(\S*)\s$/,
+    nodeType,
+    match => ({ language: LanguageDescription.matchLanguageName(languages, match[1])?.name || match[1] })
+  )
 }
 
 /// Given a node type and a maximum level, creates an input rule that

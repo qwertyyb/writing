@@ -89,6 +89,7 @@ const commandHandler = (command: string) => {
   } else if (command === 'export.markdown') {
     const markdown = editor.value?.export('markdown')
     if (!markdown) return null
+    logger.i('markdown content', markdown)
     const blob = new Blob([markdown], { type: 'text/plain;charset=utf-8' })
     saveAs(blob, documentStore.editing!.title + '.md')
   }

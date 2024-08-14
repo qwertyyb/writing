@@ -29,7 +29,6 @@
           <div class="side-actions">
             <span class="material-symbols-outlined action-item"
               title="设置"
-              v-if="hasAuth"
               @click="$router.push({ name: 'settings' })">settings</span>
             <span class="material-symbols-outlined action-item" title="折叠" @click="unExpandAll">unfold_less</span>
             <span class="material-symbols-outlined action-item location-opened" title="定位打开的文档" @click="locateEditing">my_location</span>
@@ -62,11 +61,12 @@ import SearchByTitle from '@/components/SearchByTitle.vue';
 import { ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { ElMessageBox } from 'element-plus';
+import { authService } from '@/services';
 
 const logger = createLogger('LayoutView')
 
 const treeVisible = ref(true)
-const hasAuth = ref(import.meta.env.MODE !== 'indexeddb')
+const hasAuth = ref(authService.supportAuth())
 
 const runtimeStore = useRuntime()
 const documentStore = useDocumentStore()

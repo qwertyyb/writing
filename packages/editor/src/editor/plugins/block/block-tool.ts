@@ -5,7 +5,7 @@ import BlockTools from './BlockTools.vue'
 import { createApp, h, markRaw, reactive, type App } from 'vue'
 
 const COMMAND_TRIGGER = '/'
-const MAX_QUERY_LENGTH = 6
+const MAX_QUERY_LENGTH = 18
 
 interface BlockToolItemSpec {
   label: string
@@ -106,7 +106,7 @@ const blocks: BlockToolItemSpec[] = [
     label: '分隔线',
     keyword: 'divider',
     handler(view) {
-      updateNodeType(view, 'divider')
+      updateNodeType(view, 'horizontal_rule')
     }
   },
   {

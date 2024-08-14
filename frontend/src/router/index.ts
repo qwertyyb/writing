@@ -2,6 +2,7 @@ import { RouterView, createRouter, createWebHistory } from 'vue-router'
 import PublicView from '@/views/PublicView.vue'
 import LayoutViewVue from '@/views/LayoutView.vue'
 import DocumentViewVue from '@/views/DocumentView.vue'
+import { AuthError } from '@/services/types'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -60,6 +61,19 @@ const router = createRouter({
       component: PublicView
     }
   ]
+})
+
+window.addEventListener('error', (event) => {
+  if (event.error instanceof AuthError) {
+    if (router.currentRoute.value.name !== 'auth') {
+      router.replace({
+        name: 'auth',
+        query: {
+          ru: router.currentRoute.value.fullPath || ''
+        }
+      })
+    }
+  }
 })
 
 export default router

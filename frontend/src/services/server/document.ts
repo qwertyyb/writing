@@ -1,7 +1,7 @@
-import type { Document } from "../types"
+import type { Document, IDocumentService } from "../types"
 import { apiFetch } from "./fetch"
 
-class DocumentService {
+class DocumentService implements IDocumentService {
   findMany = () => {
     return apiFetch<{ total: number, list: Omit<Document, 'content'>[] }>('/api/v1/document/list')
   }
@@ -24,13 +24,10 @@ class DocumentService {
     },
     body: JSON.stringify(data)
   })
-  remove = (where: { id: number } | { path: string }) => {
+  remove = (where: { id: number }) => {
     const searchParams = new URLSearchParams()
     if ('id' in where) {
       searchParams.append('id', `${where.id}`)
-    }
-    if ('path' in where) {
-      searchParams.append('path', where.path)
     }
     return apiFetch('/api/v1/document/remove?' + searchParams.toString(), {
       method: 'DELETE',

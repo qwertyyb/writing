@@ -4,7 +4,7 @@
       <el-menu class="settings-menu" router
         :default-active="$route.path"
         :collapse="size === ScreenSize.Small">
-        <el-menu-item index="/admin/settings/auth">
+        <el-menu-item index="/admin/settings/auth" v-if="supportAuth">
           <el-icon><Lock /></el-icon>
           <template #title>鉴权</template>
         </el-menu-item>
@@ -24,8 +24,18 @@
 import { Folder, Lock } from '@element-plus/icons-vue';
 import { useSize } from '@/hooks/useSize';
 import { ScreenSize } from '@/utils/resize';
+import { ref } from 'vue';
+import { authService } from '@/services';
+import router from '@/router';
 
 const { size } = useSize();
+const supportAuth = ref(authService.supportAuth())
+
+if (supportAuth.value) {
+  router.replace('/admin/settings/auth')
+} else {
+  router.replace('/admin/settings/file')
+}
 </script>
 
 <style lang="less" scoped>
