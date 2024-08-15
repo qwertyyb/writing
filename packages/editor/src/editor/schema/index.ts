@@ -5,6 +5,7 @@ import { detailsSchema } from '../nodes/details'
 import { callout } from '../nodes/callout'
 import { imageSchema } from '../nodes/image'
 import { codeBlockSchema } from '../nodes/code'
+import { katexSchema } from '../nodes/katex'
 
 /// [Specs](#model.NodeSpec) for the nodes defined in this schema.
 export const nodes: Record<string, NodeSpec> = {
@@ -104,6 +105,8 @@ export const nodes: Record<string, NodeSpec> = {
   ...detailsSchema({ summaryContent: 'inline*', detailsContent: 'block*', detailsGroup: 'block' }),
 
   callout: callout({ content: 'block+', group: 'block' }),
+
+  katex: katexSchema({ group: 'block' }),
 
   bullet_list: {
     ...bulletList,

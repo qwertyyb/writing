@@ -34,7 +34,7 @@ class VueNodeView<N extends Node = Node> implements NodeView {
   }
 
   get contentDOM() {
-    return this.root.querySelector<HTMLElement>('[data-prosemirror-content-dom]') || (this.vm.value?.$el as HTMLElement).querySelector('[data-prosemirror-content-dom]') || null
+    return this.root.querySelector<HTMLElement>('[data-prosemirror-content-dom]') || (this.vm.value?.$el as HTMLElement | undefined)?.querySelector('[data-prosemirror-content-dom]') || null
   }
 
   get selectNode() {

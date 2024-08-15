@@ -21,6 +21,8 @@ import CalloutView from '../nodeViews/CalloutView.vue'
 import { addBlockAfterDetails, detailsPlugin } from '../nodes/details'
 import { toc } from './toc'
 import type { uploadSymbol } from '../const'
+import { emojiPlugin } from './emoji/emoji'
+import KatexView from '../nodeViews/KatexView.vue'
 
 export const createPlugins = (schema: Schema, props: {
   [uploadSymbol]?: ((file: Blob | File) => Promise<string>);
@@ -33,6 +35,7 @@ export const createPlugins = (schema: Schema, props: {
     image: ImageNodeView,
     details: DetailsView,
     callout: CalloutView,
+    katex: KatexView
   }),
   codeViewPlugin(),
   ...(props.editable ? [
@@ -55,6 +58,7 @@ export const createPlugins = (schema: Schema, props: {
     gapCursor(),
     toolbarPlugin(),
     blockTool(),
+    emojiPlugin(),
     appendParagraph(schema.nodes.paragraph),
     blocksTool([
       schema.nodes.list_item,
