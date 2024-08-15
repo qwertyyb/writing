@@ -11,6 +11,7 @@ import { MarkType, NodeType, Schema } from 'prosemirror-model'
 import { TextSelection } from 'prosemirror-state'
 import { languages } from '@codemirror/language-data'
 import { LanguageDescription } from '@codemirror/language'
+import { katexBlockRule, katexRule } from '../nodes/katex'
 
 /// Given a blockquote node type, returns an input rule that turns `"> "`
 /// at the start of a textblock into a blockquote.
@@ -154,6 +155,8 @@ export function buildInputRules(schema: Schema) {
   if ((type = schema.nodes.horizontal_rule)) rules.push(horizontalRule(type))
   if ((type = schema.nodes.image)) rules.push(imageNodeTypeInputRule(type))
   if ((type = schema.nodes.todo)) rules.push(todoRule(type))
+  if ((type = schema.nodes.katex_block)) rules.push(katexBlockRule(type))
+  if ((type = schema.nodes.katex)) rules.push(katexRule(type))
 
   if (schema.marks.strong) rules.push(boldMarkTypeInputRule(schema.marks.strong))
   if (schema.marks.em) rules.push(italicMarkTypeInputRule(schema.marks.em))

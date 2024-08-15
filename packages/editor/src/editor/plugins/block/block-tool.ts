@@ -127,7 +127,7 @@ const blocks: BlockToolItemSpec[] = [
     label: '公式',
     keyword: 'katex',
     handler(view) {
-      updateNodeType(view, 'katex')
+      updateNodeType(view, 'katex_block')
     }
   }
 ]

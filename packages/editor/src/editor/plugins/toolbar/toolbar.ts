@@ -1,4 +1,4 @@
-import { Plugin, PluginKey, type PluginView } from 'prosemirror-state'
+import { Plugin, PluginKey, TextSelection, type PluginView } from 'prosemirror-state'
 import { EditorView } from 'prosemirror-view'
 import { allowMarkTypes, getRangeMarks, setMark, toggleMark } from './mark';
 import { type App, createApp, reactive, h, markRaw, toRaw } from 'vue';
@@ -162,6 +162,10 @@ class ToolbarView implements PluginView {
     }
     const { selection, doc, schema } = view.state
     const { from, to, empty, head } = selection
+    if (!(selection instanceof TextSelection)) {
+      this.vmProps.visible = false
+      return
+    }
     if (empty) {
       const marksValues = selection.$from.marks().reduce<Record<string, Mark>>((acc, mark) => ({ ...acc, [mark.type.name]: mark }), {})
       if (marksValues.link) {

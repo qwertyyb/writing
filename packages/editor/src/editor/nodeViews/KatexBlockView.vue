@@ -1,26 +1,28 @@
 <template>
-  <div class="katex-view" data-prosemirror-dom>
-    <el-popover content="请输入" width="auto" :disabled="readonly">
+  <div class="katex-block-view" data-prosemirror-dom :data-katex-source="node.attrs.source" :class="{editable: editable}">
+    <el-popover width="auto" trigger="click" :disabled="!editable">
       <template #reference>
-        <div class="katex-view"
+        <div class="katex-container"
           :class="{'is-empty': !node.attrs.source}"
-          ref="viewEl">{{ readonly ? '' : '点击填写公式' }}</div>
+          ref="viewEl"
+        >{{ editable ? '点击填写公式' : '' }}</div>
       </template>
       <template #default>
         <div class="katex-input-content">
+          <h5 class="input-title">请输入公式</h5>
           <textarea name="katex" cols="30" rows="5"
             class="katex-source"
-            placeholder="|x| = \begin{cases}             
-    x, &\quad x \geq 0 \\           
-  -x, &\quad x < 0             
-  \end{cases}"
+            placeholder="e=mc^2"
             :value="node.attrs.source || ''"
-            @input="updateData({ source: ($event.target as HTMLTextAreaElement).value })"></textarea>
+            spellcheck="false"
+            @input="updateData({ source: ($event.target as HTMLTextAreaElement).value })"
+          ></textarea>
           <a href="https://katex.org/docs/supported"
-          class="intro"
-          target="_blank"
-          referrerpolicy="strict-origin-when-cross-origin"
-          rel="noopener">Supported Functions</a>
+            class="intro"
+            target="_blank"
+            referrerpolicy="strict-origin-when-cross-origin"
+            rel="noopener"
+          >Supported Functions</a>
       </div>
       </template>
     </el-popover>
@@ -28,9 +30,8 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { ElPopover } from 'element-plus';
-import katex from 'katex';
 import { type VueNodeViewProps } from '../plugins/vueNodeViews';
 import { type Attrs } from 'prosemirror-model';
 
@@ -41,7 +42,7 @@ const emits = defineEmits<{
 
 const viewEl = ref<HTMLElement>();
 
-const readonly = false
+const editable = computed(() => props.view?.editable === undefined || props.view.editable === true)
 
 const updateData = (val: Partial<{ source: string }>) => {
   emits('updateAttrs', { source: val.source || '' })
@@ -50,13 +51,15 @@ const updateData = (val: Partial<{ source: string }>) => {
 watch(
   () => props.node.attrs.source,
   async (val) => {
+    console.log('watch', val)
     if (!val) return;
     if (!viewEl.value) {
       await nextTick();
     }
-    console.log(val)
-    katex.render('e=mc^2', viewEl.value, {
-      throwOnError: false
+    const { default: katex } = await import('katex')
+    katex.render(val, viewEl.value!, {
+      throwOnError: false,
+      output: 'mathml'
     });
   },
   {
@@ -67,17 +70,25 @@ watch(
 </script>
 
 <style lang="less" scoped>
-.katex-view {
+.katex-container {
   text-align: center;
   padding: 16px 0;
+  cursor: pointer;
   &.is-empty {
     color: #bbb;
+  }
+  &.editable:hover {
+    background: rgba(0, 0, 0, .1);
   }
 }
 .katex-input-content {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+}
+.input-title {
+  margin: 0 auto 6px 0;
+  color: #000;
 }
 .katex-source {
   font-family: 'Courier New', Courier, monospace;

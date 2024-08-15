@@ -7,7 +7,13 @@
       marginLeft: node.attrs.align === 'left' ? '0' : 'auto',
       marginRight: node.attrs.align === 'right' ? '0' : 'auto'
     }">
-    <el-popover placement="top" trigger="click" width="fit-content" @after-leave="linkInputVisible = false">
+    <el-popover
+      placement="top"
+      trigger="click"
+      width="fit-content"
+      @after-leave="linkInputVisible = false"
+      :disabled="!editable"
+    >
       <template #reference>
         <a :href="node.attrs.href"
           v-if="node.attrs.href"
@@ -81,11 +87,11 @@ import { ElPopover, ElSlider } from 'element-plus';
 import type { VueNodeViewProps } from '../plugins/vueNodeViews';
 import LinkInput from '../components/LinkInput.vue';
 import type { Attrs } from 'prosemirror-model';
-import { inject, onMounted, ref } from 'vue';
+import { computed, inject, onMounted, ref } from 'vue';
 import { getImageSize, selectFile } from '../utils';
 import { uploadSymbol } from '../const';
 
-defineProps<VueNodeViewProps>()
+const props = defineProps<VueNodeViewProps>()
 const emits = defineEmits<{
   updateAttrs: [Attrs]
 }>()
@@ -95,6 +101,8 @@ const upload = inject<(file: Blob | File) => Promise<string>>(uploadSymbol)
 const containerEl = ref<HTMLElement>()
 const maxWidth = ref(200)
 const linkInputVisible = ref(false)
+
+const editable = computed(() => props.view?.editable)
 
 onMounted(() => {
   maxWidth.value = containerEl.value!.parentElement!.getBoundingClientRect().width
@@ -129,7 +137,6 @@ const selectImage = async () => {
   width: fit-content;
   margin: 0;
   position: relative;
-  user-select: none;
   transition: width .1s;
   &.align-center {
     margin: 0 auto;

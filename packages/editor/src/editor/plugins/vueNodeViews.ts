@@ -94,7 +94,6 @@ class VueNodeView<N extends Node = Node> implements NodeView {
     return false
   }
   ignoreMutation = (mutation: MutationRecord | { type: 'selection', target: HTMLElement}) => {
-    console.log(mutation)
     if (mutation.type === 'selection') {
       return mutation.target.hasAttribute('data-prosemirror-ignore-selection-mutation')
     }
