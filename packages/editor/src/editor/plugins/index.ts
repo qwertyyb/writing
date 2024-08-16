@@ -19,23 +19,23 @@ import { appendParagraph } from './appendParagraph'
 import DetailsView from '../nodeViews/DetailsView.vue'
 import CalloutView from '../nodeViews/CalloutView.vue'
 import { addBlockAfterDetails, detailsPlugin } from '../nodes/details'
-import { toc } from './toc'
 import type { uploadSymbol } from '../const'
 import { emojiPlugin } from './emoji/emoji'
 import KatexBlockView from '../nodeViews/KatexBlockView.vue'
+import TocView from '../nodeViews/TocView.vue'
 
 export const createPlugins = (schema: Schema, props: {
   [uploadSymbol]?: ((file: Blob | File) => Promise<string>);
   editable?: boolean
 }) => [
-  toc(),
   todoPlugin(schema.nodes.todo),
   detailsPlugin(schema.nodes.details),
   vueNodeViews(schema, props, {
     image: ImageNodeView,
     details: DetailsView,
     callout: CalloutView,
-    katex_block: KatexBlockView
+    katex_block: KatexBlockView,
+    toc: TocView
   }),
   codeViewPlugin(),
   ...(props.editable ? [

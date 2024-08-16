@@ -129,6 +129,13 @@ const blocks: BlockToolItemSpec[] = [
     handler(view) {
       updateNodeType(view, 'katex_block')
     }
+  },
+  {
+    label: '目录',
+    keyword: 'toc',
+    handler(view) {
+      updateNodeType(view, 'toc')
+    },
   }
 ]
 
@@ -158,9 +165,15 @@ class BlockTool implements PluginView {
 
   update(view: EditorView) {
     const selection = view.state.selection
-    if (!(selection instanceof TextSelection)) return
+    if (!(selection instanceof TextSelection)) {
+      this.vmProps.visible = false
+      return
+    }
     const cursor = selection.$cursor
-    if (!cursor) return
+    if (!cursor)  {
+      this.vmProps.visible = false
+      return
+    }
 
     const text = cursor.parent.textContent
     if (text.startsWith(COMMAND_TRIGGER) && text.length < MAX_QUERY_LENGTH) {

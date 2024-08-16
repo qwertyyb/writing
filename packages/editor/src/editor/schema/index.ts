@@ -6,6 +6,7 @@ import { callout } from '../nodes/callout'
 import { imageSchema } from '../nodes/image'
 import { codeBlockSchema } from '../nodes/code'
 import { katexBlockSchema, katexSchema } from '../nodes/katex'
+import { tocSchema } from '../nodes/toc'
 
 /// [Specs](#model.NodeSpec) for the nodes defined in this schema.
 export const nodes: Record<string, NodeSpec> = {
@@ -109,6 +110,8 @@ export const nodes: Record<string, NodeSpec> = {
   katex_block: katexBlockSchema({ group: 'block' }),
 
   katex: katexSchema({ group: 'inline' }),
+
+  toc: tocSchema({ group: 'block' }),
 
   bullet_list: {
     ...bulletList,
