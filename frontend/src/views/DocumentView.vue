@@ -27,6 +27,7 @@
         @change="updateTitle"
         class="document-editor-title"
         spellcheck="false"
+        @keydown.enter="enterKeydownHandler"
       />
       <document-editor
         :key="documentStore.editing.id"
@@ -80,6 +81,13 @@ const uploadHandler = async (file: Blob | File) => {
   const { data } = await fileService.upload(file)
   if (data.url) return data.url
   throw new Error('上传失败')
+}
+
+const enterKeydownHandler = (event: KeyboardEvent) => {
+  if (event.isComposing) return
+  event.preventDefault()
+  event.stopPropagation()
+  document.querySelector<HTMLElement>('.document-editor-wrapper [contenteditable]')?.focus()
 }
 
 const commandHandler = (command: string) => {

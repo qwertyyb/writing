@@ -1,6 +1,6 @@
 <template>
   <div class="katex-block-view" data-prosemirror-dom :data-katex-source="node.attrs.source" :class="{editable: editable}">
-    <el-popover width="auto" trigger="click" :disabled="!editable">
+    <el-popover width="auto" trigger="click" :disabled="!editable" transition="none" :hide-after="1">
       <template #reference>
         <div class="katex-container"
           :class="{'is-empty': !node.attrs.source}"
@@ -22,7 +22,7 @@
             target="_blank"
             referrerpolicy="strict-origin-when-cross-origin"
             rel="noopener"
-          >Supported Functions</a>
+          >查看文档</a>
       </div>
       </template>
     </el-popover>
@@ -51,7 +51,6 @@ const updateData = (val: Partial<{ source: string }>) => {
 watch(
   () => props.node.attrs.source,
   async (val) => {
-    console.log('watch', val)
     if (!val) return;
     if (!viewEl.value) {
       await nextTick();
@@ -70,15 +69,15 @@ watch(
 </script>
 
 <style lang="less" scoped>
+.katex-block-view.editable:hover {
+  background: rgba(0, 0, 0, .1);
+}
 .katex-container {
   text-align: center;
   padding: 16px 0;
   cursor: pointer;
   &.is-empty {
     color: #bbb;
-  }
-  &.editable:hover {
-    background: rgba(0, 0, 0, .1);
   }
 }
 .katex-input-content {

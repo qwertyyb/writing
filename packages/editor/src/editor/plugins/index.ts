@@ -60,15 +60,15 @@ export const createPlugins = (schema: Schema, props: {
     blockTool(),
     emojiPlugin(),
     appendParagraph(schema.nodes.paragraph),
-    blocksTool([
-      schema.nodes.list_item,
-      schema.nodes.image,
-      schema.nodes.paragraph,
-      schema.nodes.details,
-      schema.nodes.heading,
-      schema.nodes.horizontal_rule,
-      schema.nodes.blockquote,
-      schema.nodes.code_block
-    ]),
+    // blocksTool([
+    //   schema.nodes.list_item,
+    //   schema.nodes.image,
+    //   schema.nodes.paragraph,
+    //   schema.nodes.details,
+    //   schema.nodes.heading,
+    //   schema.nodes.horizontal_rule,
+    //   schema.nodes.blockquote,
+    //   schema.nodes.code_block
+    // ]),
   ] : []),
 ]

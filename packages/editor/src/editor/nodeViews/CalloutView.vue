@@ -1,27 +1,11 @@
 <template>
   <div class="callout-view">
-    <el-popover trigger="click" width="auto">
+    <el-popover trigger="click" width="auto" v-model:visible="visible">
       <template #reference>
         <div class="callout-icon">{{ node.attrs.icon }}</div>
       </template>
-      <div class="callout-icon-select-panel">
-        <div class="select-bar">
-          <el-input size="small" v-model.trim="keyword"></el-input>
-          <el-button size="small"
-            style="width:24px;margin-left:8px"
-            title="随机"
-            @click="random">
-            <span class="material-symbols-outlined">shuffle</span>
-          </el-button>
-        </div>
-        <div class="emoji-panel">
-          <div class="emoji-item"
-            v-for="item in emojis"
-            :key="item.emoji"
-            :title="`${item.names[0]}: ${item.description}`"
-            @click="update({ icon: item.emoji })"
-          >{{ item.emoji }}</div>
-        </div>
+      <div class="emoji-selector-panel">
+        <emoji-panel search @change="update({ icon: $event })" v-if="visible"></emoji-panel>
       </div>
     </el-popover>
     <div class="callout-content" data-prosemirror-content-dom>
@@ -30,37 +14,23 @@
 </template>
 
 <script lang="ts" setup>
-import { ElPopover, ElInput, ElButton } from 'element-plus';
-import { gemoji } from 'gemoji';
 import type { VueNodeViewProps } from '../plugins/vueNodeViews';
 import type { Attrs } from 'prosemirror-model';
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
+import EmojiPanel from '../components/EmojiPanel.vue';
+import { ElPopover } from 'element-plus';
 
-
-const props = defineProps<VueNodeViewProps>()
+defineProps<VueNodeViewProps>()
 const emits = defineEmits<{
   updateAttrs: [Attrs]
 }>()
 
-const keyword = ref('');
-const emojis = computed(() => {
-  if (!keyword.value) return gemoji;
-  const value = keyword.value;
-  return gemoji.filter(item => item.names.some(name => name.includes(value)));
-});
+const visible = ref(false)
 
 const update = (attrs: { icon: string }) => {
   emits('updateAttrs', attrs )
+  visible.value = false
 }
-
-const random = () => {
-  const index = Math.floor(emojis.value.length * Math.random());
-  update({
-    icon: emojis.value[index].emoji
-  });
-};
-
-
 </script>
 
 <style lang="less" scoped>
@@ -89,40 +59,6 @@ const random = () => {
   .callout-content {
     margin-left: 8px;
     flex: 1;
-  }
-}
-.select-bar {
-  display: flex;
-}
-.emoji-panel {
-  width: 300px;
-  height: 320px;
-  overflow: auto;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, 32px);
-  font-size: 26px;
-  align-content: start;
-  margin-top: 8px;
-  &::-webkit-scrollbar {
-    width: 6px;
-    background: #ddd;
-    border-radius: 2px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: #999;
-    border-radius: 2px;
-  }
-  .emoji-item {
-    text-align: center;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: background .2s, transform .2s;
-    content-visibility: auto;
-    contain-intrinsic-size: 32px;
-    &:hover {
-      background: #dedede;
-      transform: scale(1.2);
-    }
   }
 }
 </style>
