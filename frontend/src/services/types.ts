@@ -67,7 +67,7 @@ export interface IConfigService {
 }
 
 export interface IFileService {
-  upload: (file: File | Blob) => Promise<ResponseData<{ url: string }>>
+  upload: (file: File | Blob, options?: Partial<{ name: string, mimetype: string }>) => Promise<ResponseData<{ url: string }>>
   check: (query?: Partial<{
     start: Date;
     end: Date;

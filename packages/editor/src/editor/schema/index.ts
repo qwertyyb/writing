@@ -7,6 +7,7 @@ import { imageSchema } from '../nodes/image'
 import { codeBlockSchema } from '../nodes/code'
 import { katexBlockSchema, katexSchema } from '../nodes/katex'
 import { tocSchema } from '../nodes/toc'
+import { excalidrawSchema } from '../nodes/excalidraw'
 
 /// [Specs](#model.NodeSpec) for the nodes defined in this schema.
 export const nodes: Record<string, NodeSpec> = {
@@ -100,19 +101,7 @@ export const nodes: Record<string, NodeSpec> = {
       return ['p', 0]
     }
   },
-
-  image: imageSchema({ content: 'plain_text', group: 'block' }),
-
-  ...detailsSchema({ summaryContent: 'inline*', detailsContent: 'block*', detailsGroup: 'block' }),
-
-  callout: callout({ content: 'block+', group: 'block' }),
-
-  katex_block: katexBlockSchema({ group: 'block' }),
-
-  katex: katexSchema({ group: 'inline' }),
-
-  toc: tocSchema({ group: 'block' }),
-
+  
   bullet_list: {
     ...bulletList,
     draggable: false,
@@ -132,7 +121,21 @@ export const nodes: Record<string, NodeSpec> = {
     draggable: false,
   },
 
-  todo: todo({ group: 'todo_block', content: 'block+' })
+  todo: todo({ group: 'todo_block', content: 'block+' }),
+
+  image: imageSchema({ content: 'plain_text', group: 'block' }),
+
+  ...detailsSchema({ summaryContent: 'inline*', detailsContent: 'block*', detailsGroup: 'block' }),
+
+  callout: callout({ content: 'block+', group: 'block' }),
+
+  katex_block: katexBlockSchema({ group: 'block' }),
+
+  katex: katexSchema({ group: 'inline' }),
+
+  toc: tocSchema({ group: 'block' }),
+
+  excalidraw: excalidrawSchema({ group: 'block' }),
 }
 
 /// [Specs](#model.MarkSpec) for the marks in the schema.

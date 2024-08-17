@@ -23,6 +23,7 @@ import type { uploadSymbol } from '../const'
 import { emojiPlugin } from './emoji/emoji'
 import KatexBlockView from '../nodeViews/KatexBlockView.vue'
 import TocView from '../nodeViews/TocView.vue'
+import ExcalidrawView from '../nodeViews/ExcalidrawView.vue'
 
 export const createPlugins = (schema: Schema, props: {
   [uploadSymbol]?: ((file: Blob | File) => Promise<string>);
@@ -35,7 +36,8 @@ export const createPlugins = (schema: Schema, props: {
     details: DetailsView,
     callout: CalloutView,
     katex_block: KatexBlockView,
-    toc: TocView
+    toc: TocView,
+    excalidraw: ExcalidrawView,
   }),
   codeViewPlugin(),
   ...(props.editable ? [

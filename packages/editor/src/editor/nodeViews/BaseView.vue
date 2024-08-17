@@ -15,6 +15,9 @@ defineExpose({
   },
   deselectNode() {
     
+  },
+  stopEvent() {
+    return false
   }
 })
 </script>

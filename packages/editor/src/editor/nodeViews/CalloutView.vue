@@ -1,6 +1,8 @@
 <template>
-  <div class="callout-view">
-    <el-popover trigger="click" width="auto" v-model:visible="visible">
+  <div class="callout-view" :class="{editable}">
+    <el-popover trigger="click" width="auto"
+      :disabled="!editable"
+      v-model:visible="visible">
       <template #reference>
         <div class="callout-icon">{{ node.attrs.icon }}</div>
       </template>
@@ -16,16 +18,18 @@
 <script lang="ts" setup>
 import type { VueNodeViewProps } from '../plugins/vueNodeViews';
 import type { Attrs } from 'prosemirror-model';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import EmojiPanel from '../components/EmojiPanel.vue';
 import { ElPopover } from 'element-plus';
 
-defineProps<VueNodeViewProps>()
+const props = defineProps<VueNodeViewProps>()
 const emits = defineEmits<{
   updateAttrs: [Attrs]
 }>()
 
 const visible = ref(false)
+
+const editable = computed(() => props.view?.editable !== false)
 
 const update = (attrs: { icon: string }) => {
   emits('updateAttrs', attrs )
@@ -40,21 +44,23 @@ const update = (attrs: { icon: string }) => {
   background: rgb(241, 241, 239);
   border-radius: 4px;
   align-items: first baseline;
-  .callout-icon {
-    font-size: 22px;
+  &.editable .callout-icon {
     cursor: pointer;
-    transition: background .2s, transform .2s;
-    height: 32px;
-    width: 32px;
-    line-height: 32px;
-    text-align: center;
-    border-radius: 4px;
     &:hover {
       background: #dedede;
     }
     &:active {
       transform: scale(1.2);
     }
+  }
+  .callout-icon {
+    font-size: 22px;
+    transition: background .2s, transform .2s;
+    height: 32px;
+    width: 32px;
+    line-height: 32px;
+    text-align: center;
+    border-radius: 4px;
   }
   .callout-content {
     margin-left: 8px;

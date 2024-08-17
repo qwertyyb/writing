@@ -2,9 +2,14 @@ import type { IFileService } from "../types"
 import { apiFetch } from "./fetch"
 
 class FileService implements IFileService {
-  upload = async (file: File | Blob) => {
+  upload = async (file: File | Blob, options?: Partial<{ name: string, mimetype: string }>) => {
     const formData = new FormData()
     formData.set('file', file)
+    if (options) {
+      Object.entries(options).forEach(([name, value]) => {
+        formData.set(name, value)
+      })
+    }
     return apiFetch<{ url: string }>('/api/v1/upload', {
       method: 'POST',
       body: formData

@@ -136,6 +136,13 @@ const blocks: BlockToolItemSpec[] = [
     handler(view) {
       updateNodeType(view, 'toc')
     },
+  },
+  {
+    label: 'Excalidraw绘图',
+    keyword: 'excalidraw',
+    handler(view) {
+      updateNodeType(view, 'excalidraw')
+    },
   }
 ]
 

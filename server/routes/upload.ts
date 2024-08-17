@@ -16,10 +16,14 @@ router.post('/api/v1/upload', needAuth, async (ctx) => {
     };
     return;
   }
+  const { name, mimetype } = ctx.request.body
+  const options = {
+    name: name || file.newFilename,
+    mimetype: mimetype || file.mimetype || 'unknown'
+  }
   const data = await prisma.file.create({
     data: {
-      name: file.newFilename,
-      mimetype: file.mimetype,
+      ...options,
       content: readFileSync(file.filepath),
       createdAt: new Date(),
     },
