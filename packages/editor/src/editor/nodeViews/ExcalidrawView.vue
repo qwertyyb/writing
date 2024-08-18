@@ -1,23 +1,64 @@
 <template>
   <div class="excalidraw-view">
-    <div class="excalidraw-wrapper"
-      :class="{fullsize}"
-      ref="el"
-    ></div>
+    <el-popover
+      placement="top"
+      width="fit-content"
+      :disabled="!editable"
+    >
+      <template #reference>
+        <div class="excalidraw-view-wrapper"
+          :class="{fullsize}"
+          :style="{
+            width: node.attrs.size + '%',
+            marginLeft: node.attrs.align === 'left' ? '0' : 'auto',
+            marginRight: node.attrs.align === 'right' ? '0' : 'auto'
+          }"
+          ref="el"
+        ></div>
+      </template>
+      <template #default>
+        <ul class="action-list">
+          <li class="action-item remove-action material-symbols-outlined"
+            @click="remove"
+            title="删除"
+          >delete</li>
+          <li class="action-item align-action material-symbols-outlined"
+            :class="{selected: node.attrs.align === 'left'}"
+            @click="$emit('updateAttrs', { align: 'left' })"
+            title="左对齐"
+          >align_horizontal_left</li>
+          <li class="action-item align-action material-symbols-outlined"
+            :class="{selected: node.attrs.align === 'center'}"
+            @click="$emit('updateAttrs', { align: 'center' })"
+            title="居中对齐"
+          >align_horizontal_center</li>
+          <li class="action-item align-action material-symbols-outlined"
+            :class="{selected: node.attrs.align === 'right'}"
+            @click="$emit('updateAttrs', { align: 'right' })"
+            title="右对齐"
+          >align_horizontal_right</li>
+          <li class="action-item size-action" title="调整大小">
+            <ElSlider
+              :model-value="node.attrs.size"
+              :min="10" :max="100"
+              @update:model-value="$emit('updateAttrs', { size: $event })"
+            ></ElSlider>
+          </li>
+        </ul>
+      </template>
+    </el-popover>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import type { VueNodeViewProps } from '../plugins/vueNodeViews';
-import type { AppState, BinaryFiles, ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types/types';
+import type { AppState, BinaryFiles } from '@excalidraw/excalidraw/types/types';
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/types/element/types';
-import { cloneDeep, debounce, isEqual, pick } from 'lodash-es';
-import type { Attrs } from 'prosemirror-model';
-import { closeHistory } from 'prosemirror-history';
+import { debounce, isEqual, pick } from 'lodash-es';
+import { ElPopover, ElSlider } from 'element-plus';
 
 const props = defineProps<VueNodeViewProps>()
-const emits = defineEmits<{ updateAttrs: [Attrs] }>()
 
 declare global {
   interface Window {
@@ -31,19 +72,12 @@ const el = ref<HTMLDivElement>();
 
 const editable = computed(() => props.view?.editable !== false)
 const fullsize = ref(false)
-let ignoreNextChange = false
 
-// watch(() => props.node, (node) => {
-//   if (!excalidrawAPI) return
-//   const state = JSON.parse(node.attrs.content)
-//   if (isEqual(state, getExportedState(excalidrawAPI.getAppState()))) {
-//     return
-//   }
-//   console.log('updateFromParent before')
-//   ignoreNextChange = true
-//   excalidrawAPI.updateScene(state)
-//   console.log('updateFromParent after')
-// })
+const remove = () => {
+  if (!props.view || !props.getPos) return
+  const from = props.getPos()
+  props.view.dispatch(props.view.state.tr.delete(from, from + 1))
+}
 
 const getExportedState = (state: {
   elements: ExcalidrawElement[], appState: AppState, files: BinaryFiles
@@ -56,31 +90,19 @@ const getExportedState = (state: {
   }
 }
 
-const changeHandler = (() => {
-  let prevData: any = null
-  return debounce((elements: ExcalidrawElement[], appState: AppState, files: BinaryFiles) => {
-    // if (ignoreNextChange) {
-    //   ignoreNextChange = false
-    //   return
-    // }
-    ignoreNextChange = false
-    console.log('changeHandler')
-    const data = getExportedState({ elements, appState, files })
-    if (isEqual(data, JSON.parse(props.node.attrs.content))) {
-      return
-    }
-    prevData = cloneDeep(data)
-    // emits('updateAttrs', { content: JSON.stringify(data) })
-    if (!props.view) return
-    let tr = props.view.state.tr
-    tr = tr.setMeta('addToHistory', false)
-    tr.setNodeAttribute(props.getPos!(), 'content', JSON.stringify(data) )
-    props.view.dispatch(tr)
-  }, 200)
-})()
+const changeHandler = debounce((elements: ExcalidrawElement[], appState: AppState, files: BinaryFiles) => {
+  if (!props.view) return
+  const data = getExportedState({ elements, appState, files })
+  if (isEqual(data, JSON.parse(props.node.attrs.content))) {
+    return
+  }
+  let tr = props.view.state.tr
+  tr = tr.setMeta('addToHistory', false)
+  tr.setNodeAttribute(props.getPos!(), 'content', JSON.stringify(data) )
+  props.view.dispatch(tr)
+}, 200)
 
 let reactRoot: any = null
-let excalidrawAPI: ExcalidrawImperativeAPI | null = null
 const renderExcalidraw = () => {
   const { content } = props.node.attrs
   let initialData = null
@@ -102,13 +124,12 @@ const renderExcalidraw = () => {
             ...initialData,
             scrollToContent: true,
           },
-          excalidrawAPI: (api: ExcalidrawImperativeAPI) => { excalidrawAPI = api },
           renderTopRightUI: () => {
             return window.React.createElement(
               'button',
               {
                 className: 'material-symbols-outlined',
-                style: { border: 'none', borderRadius: '6px' },
+                style: { border: 'none', borderRadius: '6px', width: '36px', height: '36px', fontSize: '14px' },
                 onClick: () => {
                   fullsize.value = !fullsize.value
                 }
@@ -153,7 +174,7 @@ defineExpose({
 
 <style lang="less" scoped>
 .excalidraw-view {
-  .excalidraw-wrapper {
+  .excalidraw-view-wrapper {
     width: 100%;
     height: 100%;
     aspect-ratio: 1 / 1;
@@ -172,6 +193,31 @@ defineExpose({
       inset: 0;
       z-index: 1;
     }
+  }
+}
+.action-list {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  gap: 10px;
+  .action-item {
+    cursor: pointer;
+    transition: background .2s;
+    font-size: 18px;
+    padding: 3px;
+    border-radius: 4px;
+    &.selected {
+      background: rgb(198, 198, 198);
+    }
+    &:hover {
+      background: gainsboro;
+    }
+  }
+  .action-item.size-action {
+    width: 200px;
+    margin-left: 10px;
   }
 }
 </style>

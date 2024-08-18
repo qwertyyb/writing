@@ -69,9 +69,6 @@ watch(
 </script>
 
 <style lang="less" scoped>
-.katex-block-view.editable:hover {
-  background: rgba(0, 0, 0, .1);
-}
 .katex-container {
   text-align: center;
   padding: 16px 0;

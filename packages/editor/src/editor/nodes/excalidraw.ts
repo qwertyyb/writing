@@ -2,7 +2,9 @@ import type { NodeSpec } from "prosemirror-model";
 
 export const excalidrawSchema = (options: Partial<NodeSpec>): NodeSpec => ({
   attrs: {
-    content: { default: null }
+    content: { default: null },
+    align: { default: 'center' }, // left | center | right
+    size: { default: 100 }, // 0 - 100
   },
   atom: true,
   selectable: true,

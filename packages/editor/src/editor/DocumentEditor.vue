@@ -123,11 +123,6 @@ defineExpose({
     font-family: Operator Mono, Consolas, Monaco, Menlo, monospace;
     word-break: break-all;
   }
-  .hover {
-    transition: background .2s;
-    background: rgba(72, 118, 125, 0.3);
-    border-radius: 4px;
-  }
   blockquote {
     margin: 0;
     border-left: 4px solid #ddd;
