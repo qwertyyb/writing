@@ -90,6 +90,9 @@ importers:
       lodash-es:
         specifier: ^4.17.21
         version: 4.17.21
+      material-symbols:
+        specifier: ^0.22.1
+        version: 0.22.1
       pinia:
         specifier: ^2.1.7
         version: 2.2.0(typescript@5.3.3)(vue@3.4.35(typescript@5.3.3))
@@ -205,6 +208,9 @@ importers:
       lodash-es:
         specifier: ^4.17.21
         version: 4.17.21
+      material-symbols:
+        specifier: ^0.22.1
+        version: 0.22.1
       prosemirror-commands:
         specifier: ^1.6.0
         version: 1.6.0
@@ -308,58 +314,6 @@ importers:
       vitest:
         specifier: ^1.6.0
         version: 1.6.0(@types/node@20.14.14)(jsdom@24.1.1)(less@4.2.0)
-      vue-tsc:
-        specifier: ^2.0.21
-        version: 2.0.29(typescript@5.4.5)
-
-  packages/excalidraw:
-    dependencies:
-      vue:
-        specifier: ^3.4.29
-        version: 3.4.35(typescript@5.4.5)
-    devDependencies:
-      '@rushstack/eslint-patch':
-        specifier: ^1.8.0
-        version: 1.10.4
-      '@tsconfig/node20':
-        specifier: ^20.1.4
-        version: 20.1.4
-      '@types/node':
-        specifier: ^20.14.5
-        version: 20.14.14
-      '@vitejs/plugin-vue':
-        specifier: ^5.0.5
-        version: 5.1.2(vite@5.3.5(@types/node@20.14.14)(less@4.2.0))(vue@3.4.35(typescript@5.4.5))
-      '@vitejs/plugin-vue-jsx':
-        specifier: ^4.0.0
-        version: 4.0.0(vite@5.3.5(@types/node@20.14.14)(less@4.2.0))(vue@3.4.35(typescript@5.4.5))
-      '@vue/eslint-config-prettier':
-        specifier: ^9.0.0
-        version: 9.0.0(eslint@8.57.0)(prettier@3.3.3)
-      '@vue/eslint-config-typescript':
-        specifier: ^13.0.0
-        version: 13.0.0(eslint-plugin-vue@9.27.0(eslint@8.57.0))(eslint@8.57.0)(typescript@5.4.5)
-      '@vue/tsconfig':
-        specifier: ^0.5.1
-        version: 0.5.1
-      eslint:
-        specifier: ^8.57.0
-        version: 8.57.0
-      eslint-plugin-vue:
-        specifier: ^9.23.0
-        version: 9.27.0(eslint@8.57.0)
-      npm-run-all2:
-        specifier: ^6.2.0
-        version: 6.2.2
-      prettier:
-        specifier: ^3.2.5
-        version: 3.3.3
-      typescript:
-        specifier: ~5.4.0
-        version: 5.4.5
-      vite:
-        specifier: ^5.3.1
-        version: 5.3.5(@types/node@20.14.14)(less@4.2.0)
       vue-tsc:
         specifier: ^2.0.21
         version: 2.0.29(typescript@5.4.5)
@@ -966,55 +920,46 @@ packages:
     resolution: {integrity: sha512-jMYvxZwGmoHFBTbr12Xc6wOdc2xA5tF5F2q6t7Rcfab68TT0n+r7dgawD4qhPEvasDsVpQi+MgDzj2faOLsZjA==}
     cpu: [arm]
     os: [linux]
-    libc: [glibc]
 
   '@rollup/rollup-linux-arm-musleabihf@4.20.0':
     resolution: {integrity: sha512-1asSTl4HKuIHIB1GcdFHNNZhxAYEdqML/MW4QmPS4G0ivbEcBr1JKlFLKsIRqjSwOBkdItn3/ZDlyvZ/N6KPlw==}
     cpu: [arm]
     os: [linux]
-    libc: [musl]
 
   '@rollup/rollup-linux-arm64-gnu@4.20.0':
     resolution: {integrity: sha512-COBb8Bkx56KldOYJfMf6wKeYJrtJ9vEgBRAOkfw6Ens0tnmzPqvlpjZiLgkhg6cA3DGzCmLmmd319pmHvKWWlQ==}
     cpu: [arm64]
     os: [linux]
-    libc: [glibc]
 
   '@rollup/rollup-linux-arm64-musl@4.20.0':
     resolution: {integrity: sha512-+it+mBSyMslVQa8wSPvBx53fYuZK/oLTu5RJoXogjk6x7Q7sz1GNRsXWjn6SwyJm8E/oMjNVwPhmNdIjwP135Q==}
     cpu: [arm64]
     os: [linux]
-    libc: [musl]
 
   '@rollup/rollup-linux-powerpc64le-gnu@4.20.0':
     resolution: {integrity: sha512-yAMvqhPfGKsAxHN8I4+jE0CpLWD8cv4z7CK7BMmhjDuz606Q2tFKkWRY8bHR9JQXYcoLfopo5TTqzxgPUjUMfw==}
     cpu: [ppc64]
     os: [linux]
-    libc: [glibc]
 
   '@rollup/rollup-linux-riscv64-gnu@4.20.0':
     resolution: {integrity: sha512-qmuxFpfmi/2SUkAw95TtNq/w/I7Gpjurx609OOOV7U4vhvUhBcftcmXwl3rqAek+ADBwSjIC4IVNLiszoj3dPA==}
     cpu: [riscv64]
     os: [linux]
-    libc: [glibc]
 
   '@rollup/rollup-linux-s390x-gnu@4.20.0':
     resolution: {integrity: sha512-I0BtGXddHSHjV1mqTNkgUZLnS3WtsqebAXv11D5BZE/gfw5KoyXSAXVqyJximQXNvNzUo4GKlCK/dIwXlz+jlg==}
     cpu: [s390x]
     os: [linux]
-    libc: [glibc]
 
   '@rollup/rollup-linux-x64-gnu@4.20.0':
     resolution: {integrity: sha512-y+eoL2I3iphUg9tN9GB6ku1FA8kOfmF4oUEWhztDJ4KXJy1agk/9+pejOuZkNFhRwHAOxMsBPLbXPd6mJiCwew==}
     cpu: [x64]
     os: [linux]
-    libc: [glibc]
 
   '@rollup/rollup-linux-x64-musl@4.20.0':
     resolution: {integrity: sha512-hM3nhW40kBNYUkZb/r9k2FKK+/MnKglX7UYd4ZUy5DJs8/sMsIbqWK2piZtVGE3kcXVNj3B2IrUYROJMMCikNg==}
     cpu: [x64]
     os: [linux]
-    libc: [musl]
 
   '@rollup/rollup-win32-arm64-msvc@4.20.0':
     resolution: {integrity: sha512-psegMvP+Ik/Bg7QRJbv8w8PAytPA7Uo8fpFjXyCRHWm6Nt42L+JtoqH8eDQ5hRP7/XW2UiIriy1Z46jf0Oa1kA==}
@@ -2513,6 +2458,9 @@ packages:
   markdown-it@14.1.0:
     resolution: {integrity: sha512-a54IwgWPaeBCAAsv13YgmALOF1elABB08FxO9i+r4VFk5Vl4pKokRPeX8u5TCgSsPi6ec1otfLjdOpVcgbpshg==}
     hasBin: true
+
+  material-symbols@0.22.1:
+    resolution: {integrity: sha512-MWZB/53EMWzL3RYpr7plQRAWuqW73C/21PhvSwh/dptEGUk7SpG8h45eCqe37wfQoq6YZvuYfwLEYGfK2dgUqQ==}
 
   mdn-data@2.0.30:
     resolution: {integrity: sha512-GaqWWShW4kv/G9IEucWScBx9G1/vsFZZJUO+tD26M8J8z3Kw5RDQjaoZe03YAClgeS/SWPOcb4nkFBTEi5DUEA==}
@@ -6227,6 +6175,8 @@ snapshots:
       mdurl: 2.0.0
       punycode.js: 2.3.1
       uc.micro: 2.1.0
+
+  material-symbols@0.22.1: {}
 
   mdn-data@2.0.30: {}
 

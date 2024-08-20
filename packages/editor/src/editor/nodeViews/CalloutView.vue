@@ -2,6 +2,8 @@
   <div class="callout-view" :class="{editable}">
     <el-popover trigger="click" width="auto"
       :disabled="!editable"
+      transition="none"
+      :hide-after="0"
       v-model:visible="visible">
       <template #reference>
         <div class="callout-icon">{{ node.attrs.icon }}</div>

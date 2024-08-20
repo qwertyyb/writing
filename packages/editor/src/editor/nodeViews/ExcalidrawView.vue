@@ -1,22 +1,21 @@
 <template>
   <div class="excalidraw-view">
-    <el-popover
+    <el-tooltip
       placement="top"
       width="fit-content"
       :disabled="!editable"
+      :trigger-keys="[]"
     >
-      <template #reference>
-        <div class="excalidraw-view-wrapper"
-          :class="{fullsize}"
-          :style="{
-            width: node.attrs.size + '%',
-            marginLeft: node.attrs.align === 'left' ? '0' : 'auto',
-            marginRight: node.attrs.align === 'right' ? '0' : 'auto'
-          }"
-          ref="el"
-        ></div>
-      </template>
-      <template #default>
+      <div class="excalidraw-view-wrapper"
+        :class="{fullsize}"
+        :style="{
+          width: node.attrs.size + '%',
+          marginLeft: node.attrs.align === 'left' ? '0' : 'auto',
+          marginRight: node.attrs.align === 'right' ? '0' : 'auto'
+        }"
+        ref="el"
+      ></div>
+      <template #content>
         <ul class="action-list">
           <li class="action-item remove-action material-symbols-outlined"
             @click="remove"
@@ -46,7 +45,7 @@
           </li>
         </ul>
       </template>
-    </el-popover>
+    </el-tooltip>
   </div>
 </template>
 
@@ -56,7 +55,7 @@ import type { VueNodeViewProps } from '../plugins/vueNodeViews';
 import type { AppState, BinaryFiles } from '@excalidraw/excalidraw/types/types';
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/types/element/types';
 import { debounce, isEqual, pick } from 'lodash-es';
-import { ElPopover, ElSlider } from 'element-plus';
+import { ElTooltip, ElSlider } from 'element-plus';
 
 const props = defineProps<VueNodeViewProps>()
 
@@ -173,6 +172,11 @@ defineExpose({
 </script>
 
 <style lang="less" scoped>
+// 中文手写体
+@font-face {
+  font-family: "Virgil";
+  src: url("../../assets/Muyao-Softbrush-2.ttf");
+}
 .excalidraw-view {
   .excalidraw-view-wrapper {
     width: 100%;
@@ -180,11 +184,10 @@ defineExpose({
     aspect-ratio: 1 / 1;
     border: 1px solid #ddd;
     max-height: 100vh;
-    box-sizing: border-box;
     border-radius: 4px;
     overflow: hidden;
     &:focus-within {
-      border: 2px solid #17789e;
+      outline: 2px solid #17789e;
     }
     &.fullsize {
       width: 100vw;
@@ -192,6 +195,8 @@ defineExpose({
       position: fixed;
       inset: 0;
       z-index: 1;
+      margin: 0 !important;
+      width: 100% !important;
     }
   }
 }
@@ -213,6 +218,9 @@ defineExpose({
     }
     &:hover {
       background: gainsboro;
+    }
+    &.size-action:hover {
+      background: none;
     }
   }
   .action-item.size-action {

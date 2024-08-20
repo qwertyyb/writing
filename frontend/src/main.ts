@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus, { ClickOutside } from 'element-plus'
 import 'element-plus/dist/index.css'
+import 'material-symbols';
 
 import App from './App.vue'
 import router from './router'

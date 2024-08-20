@@ -7,35 +7,34 @@
       marginLeft: node.attrs.align === 'left' ? '0' : 'auto',
       marginRight: node.attrs.align === 'right' ? '0' : 'auto'
     }">
-    <el-popover
+    <el-tooltip
       placement="top"
       trigger="click"
       width="fit-content"
       @after-leave="linkInputVisible = false"
       :disabled="!editable"
+      :trigger-keys="[]"
     >
-      <template #reference>
-        <a :href="node.attrs.href"
-          v-if="node.attrs.href"
-          class="editor-image-node-link">
-          <img
-            draggable="false"
-            class="editor-image-node-image"
-            :src="node.attrs.src || 'https://fakeimg.pl/200'"
-            :style="{ aspectRatio: node.attrs.ratio }"
-            alt=""
-          >
-        </a>
+      <a :href="node.attrs.href"
+        v-if="node.attrs.href"
+        class="editor-image-node-link">
         <img
-          v-else
           draggable="false"
           class="editor-image-node-image"
           :src="node.attrs.src || 'https://fakeimg.pl/200'"
           :style="{ aspectRatio: node.attrs.ratio }"
           alt=""
         >
-      </template>
-      <template #default>
+      </a>
+      <img
+        v-else
+        draggable="false"
+        class="editor-image-node-image"
+        :src="node.attrs.src || 'https://fakeimg.pl/200'"
+        :style="{ aspectRatio: node.attrs.ratio }"
+        alt=""
+      >
+      <template #content>
         <ul class="action-list" v-if="!linkInputVisible">
           <li class="action-item replace-action material-symbols-outlined"
             title="更换图片"
@@ -77,13 +76,13 @@
         </ul>
         <LinkInput :href="node.attrs.href" v-else @change="hrefHandler($event.href)" @clear="hrefHandler(null)"></LinkInput>
       </template>
-    </el-popover>
+    </el-tooltip>
     <figcaption data-prosemirror-content-dom class="editor-image-node-title"></figcaption>
   </figure>
 </template>
 
 <script lang="ts" setup>
-import { ElPopover, ElSlider } from 'element-plus';
+import { ElTooltip, ElSlider } from 'element-plus';
 import type { VueNodeViewProps } from '../plugins/vueNodeViews';
 import LinkInput from '../components/LinkInput.vue';
 import type { Attrs } from 'prosemirror-model';

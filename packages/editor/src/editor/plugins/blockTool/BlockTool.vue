@@ -23,6 +23,7 @@
         <div class="block-tool-item material-symbols-outlined"
           draggable="true"
           @dragstart="dragstartHandler"
+          @dragend="$emit('dragEnd')"
         >drag_indicator</div>
       </template>
       <ul class="menu-list">
@@ -62,12 +63,14 @@ const props = defineProps<{
   view: EditorView,
 }>()
 
-const emits = defineEmits<{ dragStart: [] }>()
+const emits = defineEmits<{
+  dragStart: [],
+  dragEnd: []
+}>()
 
 const dragstartHandler = (event: DragEvent) => {
   if (!event.dataTransfer) return
 
-  console.log('dragstart', event)
   emits('dragStart')
   props.view.dispatch(
     props.view.state.tr.setSelection(NodeSelection.create(props.view.state.doc, props.pos))
@@ -79,7 +82,10 @@ const dragstartHandler = (event: DragEvent) => {
   event.dataTransfer.clearData()
   event.dataTransfer.setData('text/html', dom.innerHTML)
   event.dataTransfer.setData('text/plain', text)
-  event.dataTransfer.setDragImage(dom as Element, 0, 0)
+  const nodeDOM = props.view.nodeDOM(props.pos)
+  if (nodeDOM) {
+    event.dataTransfer.setDragImage(nodeDOM as HTMLElement, 0, 0)
+  }
   // eslint-disable-next-line vue/no-mutating-props
   props.view.dragging = { slice, move: true }
 }

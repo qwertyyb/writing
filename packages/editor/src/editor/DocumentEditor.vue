@@ -41,7 +41,6 @@ onMounted(() => {
       view.updateState(view.state.apply(tr));
       const value = view.state.doc.toJSON()
       if (isEqual(value, model.value)) return
-      console.log(value)
       console.log('change', value, view.state.selection.from)
       view.dom.dispatchEvent(new CustomEvent('datachange', { detail: { view } }))
       model.value = value

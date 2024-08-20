@@ -2,6 +2,9 @@ export const demo = {
     "type": "doc",
     "content": [
         {
+            "type": "toc"
+        },
+        {
             "type": "heading",
             "attrs": {
                 "level": 1,
@@ -720,6 +723,29 @@ export const demo = {
                             ]
                         }
                     ]
+                },
+                {
+                    "type": "list_item",
+                    "content": [
+                        {
+                            "type": "paragraph",
+                            "attrs": {
+                                "align": "left"
+                            },
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": "内联公式： "
+                                },
+                                {
+                                    "type": "katex",
+                                    "attrs": {
+                                        "source": "e=mc^2"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
                 }
             ]
         },
@@ -932,6 +958,46 @@ export const demo = {
                     ]
                 }
             ]
+        },
+        {
+            "type": "heading",
+            "attrs": {
+                "level": 2,
+                "align": "left"
+            },
+            "content": [
+                {
+                    "type": "text",
+                    "text": "公式块"
+                }
+            ]
+        },
+        {
+            "type": "katex_block",
+            "attrs": {
+                "source": "E = mc^2"
+            }
+        },
+        {
+            "type": "heading",
+            "attrs": {
+                "level": 2,
+                "align": "left"
+            },
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Excalidraw 绘图"
+                }
+            ]
+        },
+        {
+            "type": "excalidraw",
+            "attrs": {
+                "content": "{\"elements\":[{\"id\":\"iN4wWz_jkiqNM5ES7V_w7\",\"type\":\"rectangle\",\"x\":456.8203125,\"y\":192.953125,\"width\":301.5546875,\"height\":114.578125,\"angle\":0,\"strokeColor\":\"#1e1e1e\",\"backgroundColor\":\"transparent\",\"fillStyle\":\"solid\",\"strokeWidth\":2,\"strokeStyle\":\"solid\",\"roughness\":1,\"opacity\":100,\"groupIds\":[],\"frameId\":null,\"roundness\":{\"type\":3},\"seed\":1731020025,\"version\":23,\"versionNonce\":196961337,\"isDeleted\":false,\"boundElements\":null,\"updated\":1724155226044,\"link\":null,\"locked\":false},{\"id\":\"8SZzA_m_hxON5kxTyHW6T\",\"type\":\"ellipse\",\"x\":818.03125,\"y\":208.515625,\"width\":124.40234375,\"height\":102.04296875,\"angle\":0,\"strokeColor\":\"#1e1e1e\",\"backgroundColor\":\"transparent\",\"fillStyle\":\"solid\",\"strokeWidth\":2,\"strokeStyle\":\"solid\",\"roughness\":1,\"opacity\":100,\"groupIds\":[],\"frameId\":null,\"roundness\":{\"type\":2},\"seed\":1658221849,\"version\":11,\"versionNonce\":2074712537,\"isDeleted\":false,\"boundElements\":null,\"updated\":1724155228211,\"link\":null,\"locked\":false},{\"id\":\"4SfUZxWo3p6wChtnzMV3Q\",\"type\":\"ellipse\",\"x\":306.46484375,\"y\":195.62890625,\"width\":118.49609375,\"height\":97.7734375,\"angle\":0,\"strokeColor\":\"#1e1e1e\",\"backgroundColor\":\"transparent\",\"fillStyle\":\"solid\",\"strokeWidth\":2,\"strokeStyle\":\"solid\",\"roughness\":1,\"opacity\":100,\"groupIds\":[],\"frameId\":null,\"roundness\":{\"type\":2},\"seed\":518715065,\"version\":37,\"versionNonce\":1529163321,\"isDeleted\":false,\"boundElements\":null,\"updated\":1724155230761,\"link\":null,\"locked\":false},{\"id\":\"Vdo72-2B4jFZFqy9N9BME\",\"type\":\"text\",\"x\":505.35546875,\"y\":396.859375,\"width\":160,\"height\":25,\"angle\":0,\"strokeColor\":\"#1e1e1e\",\"backgroundColor\":\"transparent\",\"fillStyle\":\"solid\",\"strokeWidth\":2,\"strokeStyle\":\"solid\",\"roughness\":1,\"opacity\":100,\"groupIds\":[],\"frameId\":null,\"roundness\":null,\"seed\":1186266905,\"version\":30,\"versionNonce\":1423526807,\"isDeleted\":false,\"boundElements\":null,\"updated\":1724155241845,\"link\":null,\"locked\":false,\"text\":\"支持中文手写字体\",\"fontSize\":20,\"fontFamily\":1,\"textAlign\":\"left\",\"verticalAlign\":\"top\",\"baseline\":20,\"containerId\":null,\"originalText\":\"支持中文手写字体\",\"lineHeight\":1.25},{\"id\":\"JvQONsvcgNAhKjYc8t8-4\",\"type\":\"text\",\"x\":633.12109375,\"y\":186.25,\"width\":7.8125,\"height\":25,\"angle\":0,\"strokeColor\":\"#1e1e1e\",\"backgroundColor\":\"transparent\",\"fillStyle\":\"solid\",\"strokeWidth\":2,\"strokeStyle\":\"solid\",\"roughness\":1,\"opacity\":100,\"groupIds\":[],\"frameId\":null,\"roundness\":null,\"seed\":1376005431,\"version\":2,\"versionNonce\":996510583,\"isDeleted\":true,\"boundElements\":null,\"updated\":1724155253127,\"link\":null,\"locked\":false,\"text\":\"\",\"fontSize\":20,\"fontFamily\":1,\"textAlign\":\"left\",\"verticalAlign\":\"top\",\"baseline\":20,\"containerId\":null,\"originalText\":\"\",\"lineHeight\":1.25},{\"id\":\"hdHFkjobdLSiyc6zkAc9E\",\"type\":\"text\",\"x\":534.5078125,\"y\":564.671875,\"width\":43.984375,\"height\":25,\"angle\":0,\"strokeColor\":\"#1e1e1e\",\"backgroundColor\":\"transparent\",\"fillStyle\":\"solid\",\"strokeWidth\":2,\"strokeStyle\":\"solid\",\"roughness\":1,\"opacity\":100,\"groupIds\":[],\"frameId\":null,\"roundness\":null,\"seed\":36985271,\"version\":10,\"versionNonce\":283228537,\"isDeleted\":false,\"boundElements\":null,\"updated\":1724155267233,\"link\":null,\"locked\":false,\"text\":\"hello\",\"fontSize\":20,\"fontFamily\":1,\"textAlign\":\"left\",\"verticalAlign\":\"top\",\"baseline\":20,\"containerId\":null,\"originalText\":\"hello\",\"lineHeight\":1.25}],\"files\":{},\"appState\":{\"gridSize\":null,\"viewBackgroundColor\":\"#ffffff\"}}",
+                "align": "center",
+                "size": 100
+            }
         },
         {
             "type": "paragraph",

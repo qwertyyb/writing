@@ -6,7 +6,7 @@ import { dropCursor } from 'prosemirror-dropcursor'
 import { gapCursor } from 'prosemirror-gapcursor'
 import type { Schema } from 'prosemirror-model'
 import { buildKeymap } from './keymap'
-import { blockTool } from './block/block-tool'
+import { blockSelector } from './blockSelector'
 import { buildInputRules } from './inputrules'
 import { vueNodeViews } from './vueNodeViews'
 import ImageNodeView from '../nodeViews/ImageView.vue'
@@ -14,7 +14,7 @@ import { addBlockAfterImage } from '../nodes/image'
 import { addNewTodoAfterTodo, todoPlugin, toggleToParagraph } from '../nodes/todo'
 import { undoInputRule } from 'prosemirror-inputrules'
 import { codeViewPlugin } from '../nodeViews/CodeView'
-import { blocksTool } from './blocksTool'
+import { blockTool } from './blockTool'
 import { appendParagraph } from './appendParagraph'
 import DetailsView from '../nodeViews/DetailsView.vue'
 import CalloutView from '../nodeViews/CalloutView.vue'
@@ -59,10 +59,10 @@ export const createPlugins = (schema: Schema, props: {
     dropCursor({ color: '#f00' }),
     gapCursor(),
     toolbarPlugin(),
-    blockTool(),
+    blockSelector(),
     emojiPlugin(),
     appendParagraph(schema.nodes.paragraph),
-    blocksTool([
+    blockTool([
       schema.nodes.list_item,
       schema.nodes.image,
       schema.nodes.paragraph,

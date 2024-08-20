@@ -6,7 +6,7 @@ import { RouterView } from 'vue-router'
   <RouterView />
 </template>
 
-<style>
+<style lang="less">
 body {
   font-family: "LXGW WenKai";
 }

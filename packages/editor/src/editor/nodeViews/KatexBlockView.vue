@@ -1,13 +1,11 @@
 <template>
   <div class="katex-block-view" data-prosemirror-dom :data-katex-source="node.attrs.source" :class="{editable: editable}">
-    <el-popover width="auto" trigger="click" :disabled="!editable" transition="none" :hide-after="1">
-      <template #reference>
-        <div class="katex-container"
-          :class="{'is-empty': !node.attrs.source}"
-          ref="viewEl"
-        >{{ editable ? '点击填写公式' : '' }}</div>
-      </template>
-      <template #default>
+    <el-tooltip width="auto" trigger="click" :disabled="!editable" transition="none" :hide-after="1" :trigger-keys="[]">
+      <div class="katex-container"
+        :class="{'is-empty': !node.attrs.source}"
+        ref="viewEl"
+      >{{ editable ? '点击填写公式' : '' }}</div>
+      <template #content>
         <div class="katex-input-content">
           <h5 class="input-title">请输入公式</h5>
           <textarea name="katex" cols="30" rows="5"
@@ -25,13 +23,13 @@
           >查看文档</a>
       </div>
       </template>
-    </el-popover>
+    </el-tooltip>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
-import { ElPopover } from 'element-plus';
+import { ElTooltip } from 'element-plus';
 import { type VueNodeViewProps } from '../plugins/vueNodeViews';
 import { type Attrs } from 'prosemirror-model';
 
