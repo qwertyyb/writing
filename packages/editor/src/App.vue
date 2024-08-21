@@ -13,5 +13,9 @@ const value = shallowRef<NodeValue>(demo)
   </main>
 </template>
 
-<style scoped>
+<style>
+body {
+  margin: 0;
+  padding: 0;
+}
 </style>

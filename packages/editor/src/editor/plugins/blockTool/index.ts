@@ -16,7 +16,6 @@ const pointerMoveHandler = (
     pos: number
   }>
 ) => {
-
   return function(view: EditorView, event: PointerEvent) {
     if (vmProps.dragging) return
     if (!view.editable) return
@@ -78,6 +77,7 @@ export const blockTool = (draggableNodeTypes: NodeType[]) => {
   })
 
   const pluginKey = new PluginKey('blocksTool')
+  const pointerHandler = debounce(pointerMoveHandler(draggableNodeTypes, pluginKey, vmProps), 60)
   const plugin = new Plugin({
     key: pluginKey,
     state: {
@@ -94,7 +94,8 @@ export const blockTool = (draggableNodeTypes: NodeType[]) => {
     },
     props: {
       handleDOMEvents: {
-        pointermove: debounce(pointerMoveHandler(draggableNodeTypes, pluginKey, vmProps), 60),
+        pointermove: pointerHandler,
+        pointerdown: pointerHandler
       },
       decorations(state): DecorationSource | null | undefined {
         return plugin.getState(state)
