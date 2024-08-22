@@ -20,6 +20,12 @@ export interface Document {
   attributes: Attribute[]
 }
 
+export interface IFile {
+  name: string,
+  mimetype: string,
+  createdAt: string,
+}
+
 class ServiceError extends Error {
   constructor(public errCode: number, public errMsg: string, message?: string, options?: ErrorOptions) {
     super(message, options)
@@ -41,7 +47,7 @@ export interface ResponseData<D extends any = any> {
 export interface IDocumentService {
   findMany: () => Promise<ResponseData<{ total: number; list: Omit<Document, "content">[]; }>>
   find: (where: { id: number }) => Promise<ResponseData<Document>>
-  update: (data: Pick<Partial<Document>, "id" | "title" | "content">) => Promise<ResponseData<unknown>>
+  update: (data: Pick<Document, "id"> & Partial<Pick<Document, "title" | "content">>) => Promise<ResponseData<unknown>>
   updateMany: (data: {
     id: number;
     path: string;
