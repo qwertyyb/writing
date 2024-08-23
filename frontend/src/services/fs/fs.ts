@@ -1,7 +1,6 @@
-import Dexie, { type Table } from 'dexie'
+import Dexie from 'dexie'
 import { Low, type Adapter } from 'lowdb'
 import type { Document, Config, Attribute, IFile,  } from "../types"
-
 
 
 class FileSystemServer {
@@ -15,6 +14,7 @@ class FileSystemServer {
     this.db.version(1).stores({
       handle: '&name'
     })
+    // eslint-disable-next-line no-async-promise-executor
     this.ready = new Promise(async (resolve, reject) => {
       this.resolve = resolve
       this.reject = reject
@@ -27,10 +27,15 @@ class FileSystemServer {
         const permission: PermissionState = await handle.queryPermission({ mode: 'readwrite' })
         if (permission !== 'granted') return
         this.root = handle
-        console.log('aaaa')
         this.resolve(handle)
       }
     })
+  }
+
+  private createDirectory = async (path: string[]) => {
+    return path.reduce((acc, name) => {
+      return acc.then((prev) => prev.getDirectoryHandle(name, { create: true }))
+    }, Promise.resolve(this.root!))
   }
 
   requestRoot = async () => {
@@ -48,7 +53,10 @@ class FileSystemServer {
 
   writeFile = async (content: Blob | File, name: string) => {
     await this.ready
-    const fileHandle = await this.root?.getFileHandle(name, { create: true })
+    const path = name.split('/')
+    const fileName = path[path.length - 1]
+    const dirHandle = await this.createDirectory(path.slice(0, path.length - 1))
+    const fileHandle = await dirHandle.getFileHandle(fileName, { create: true })
     const writeStream = await fileHandle!.createWritable()
     writeStream.write(await content.arrayBuffer())
     await writeStream.close()
@@ -57,19 +65,19 @@ class FileSystemServer {
 
   readFile = async (name: string) => {
     await this.ready
-    const fileHandle = await this.root?.getFileHandle(name)
-    const file = await fileHandle!.getFile()
+    const path = name.split('/')
+    const fileName = path[path.length - 1]
+    const dirHandle = await this.createDirectory(path.slice(0, path.length - 1))
+    const fileHandle = await dirHandle.getFileHandle(fileName)
+    const file = await fileHandle.getFile()
     return file
   }
 
   readJSON = async (name: string) => {
     await this.ready
-    const fileHandle = await this.root?.getFileHandle(name)
-    const file = await fileHandle!.getFile()
-    const text = await file.text()
-    if (!text) return null
+    const file = await this.readFile(name)
     try {
-      return JSON.parse(text)
+      return JSON.parse(await file.text())
     } catch (err) {
       return null
     }
@@ -77,10 +85,8 @@ class FileSystemServer {
 
   writeJSON = async (json: any, name: string) => {
     await this.ready
-    const fileHandle = await this.root!.getFileHandle(name, { create: true })
-    const writeStream = await fileHandle.createWritable()
-    writeStream.write(JSON.stringify(json))
-    await writeStream.close()
+    const content = new Blob([JSON.stringify(json)], { type: 'application/json' })
+    await this.writeFile(content, name)
     return true
   }
 }

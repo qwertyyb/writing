@@ -1,12 +1,15 @@
 import type { Document, IDocumentService, ResponseData } from "../types";
 import { fsServer, low } from "./fs";
 
+const DOC_DIR_PATH = 'posts'
+
 class DocumentService implements IDocumentService {
   constructor() {
     this.insertRootIfNotExist()
   }
 
   private insertRootIfNotExist = async () => {
+    await low.read()
     const row = low.data.document.find(i => i.path === '')
     if (row) return
     const content = JSON.stringify({
@@ -26,7 +29,7 @@ class DocumentService implements IDocumentService {
         }
       ],
     })
-    await fsServer.writeFile(new Blob([content], { type: 'application/json' }), `1.json`)
+    await fsServer.writeFile(new Blob([content], { type: 'application/json' }), `${DOC_DIR_PATH}/1.json`)
     await low.update(meta => {
       meta.document.push({
         id: 1,
@@ -45,7 +48,7 @@ class DocumentService implements IDocumentService {
   async find(where: { id: number }) {
     await low.read()
     const document = low.data.document.find(item => item.id === where.id)
-    const file = await fsServer.readFile(`${where.id}.json`)
+    const file = await fsServer.readFile(`${DOC_DIR_PATH}/${where.id}.json`)
     return Promise.resolve({ errMsg: 'ok', errCode: 0, data: { ...document!, content: await file.text() } })
   }
   findMany = async () => {
@@ -62,7 +65,7 @@ class DocumentService implements IDocumentService {
       }
     })
     if (content) {
-      await fsServer.writeFile(new Blob([content], { type: 'application/json' }), `${id}.json`)
+      await fsServer.writeFile(new Blob([content], { type: 'application/json' }), `${DOC_DIR_PATH}/${id}.json`)
     }
     return { errCode: 0, errMsg: 'ok', data: {} }
   }
@@ -99,15 +102,17 @@ class DocumentService implements IDocumentService {
       meta.document.push(doc)
     })
     if (content) {
-      await fsServer.writeFile(new Blob([content], { type: 'application/json' }), `${doc!.id}.json`)
+      await fsServer.writeFile(new Blob([content], { type: 'application/json' }), `${DOC_DIR_PATH}/${doc!.id}.json`)
     }
     return { errCode: 0, errMsg: 'ok', data: doc! }
   };
   findByShareId = async (where: { id: string; }): Promise<ResponseData<{ key: string; value: string; doc: Document; }>> => {
+    await low.read()
     const doc = low.data.document.find(doc => {
       return doc.attributes.some(attr => attr.key === 'share' && attr.value === where.id)
     })
-    return Promise.resolve({ errCode: 0, errMsg: 'ok', data: { key: 'share', value: where.id, doc: doc! } })
+    const file = await fsServer.readFile(`${DOC_DIR_PATH}/${doc!.id}.json`)
+    return Promise.resolve({ errCode: 0, errMsg: 'ok', data: { key: 'share', value: where.id, doc: { ...doc!, content: await file.text() } } })
   }
 }
 
