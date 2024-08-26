@@ -39,7 +39,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { ref } from 'vue';
 import { browserSupportsWebAuthn, browserSupportsWebAuthnAutofill, startRegistration } from '@simplewebauthn/browser';
 import router from '@/router';
-import { authService } from '@/services';
+import { service } from '@/services';
 
 const authStore = useAuthStore()
 
@@ -55,16 +55,16 @@ const register = async () => {
   if (password !== password2) {
     return ElMessage.error('两次密码输入不一致')
   }
-  await authService.register({ password })
+  await service.authService.register({ password })
   ElMessage.success('注册成功，请输入密码登录')
   form.value.password = ''
   refreshCanRegister()
 }
 
 const webAuthnRegister = async (name: string) => {
-  const { data } = await authService.getRegisterOptions()
+  const { data } = await service.authService.getRegisterOptions()
   const result = await startRegistration(data)
-  await authService.verifyRegister({ name, body: result })
+  await service.authService.verifyRegister({ name, body: result })
 }
 
 const addAuthenticator = async () => {
@@ -94,7 +94,7 @@ const login = async () => {
 }
 
 const refreshCanRegister = async () => {
-  const { data } = await authService.getCanRegister()
+  const { data } = await service.authService.getCanRegister()
   canRegister.value = data.canRegister
 }
 
@@ -106,7 +106,7 @@ const webAuthnLogin = async () => {
 }
 
 const checkLogin = async () => {
-  const { data } = await authService.checkLogin()
+  const { data } = await service.authService.checkLogin()
   if (data.isLogin) {
     redirectAfterLogin()
   } else {

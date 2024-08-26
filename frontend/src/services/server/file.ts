@@ -1,7 +1,8 @@
 import type { IFileService } from "../types"
-import { apiFetch } from "./fetch"
+import type { createFetch } from "./fetch"
 
-class FileService implements IFileService {
+export class FileService implements IFileService {
+  constructor(private fetch: ReturnType<typeof createFetch>) { }
   upload = async (file: File | Blob, options?: Partial<{ name: string, mimetype: string }>) => {
     const formData = new FormData()
     formData.set('file', file)
@@ -10,7 +11,7 @@ class FileService implements IFileService {
         formData.set(name, value)
       })
     }
-    return apiFetch<{ url: string }>('/api/v1/upload', {
+    return this.fetch<{ url: string }>('/api/v1/upload', {
       method: 'POST',
       body: formData
     })
@@ -24,9 +25,9 @@ class FileService implements IFileService {
     query?.start && params.append('start', query.start.toISOString())
     query?.end && params.append('end', query.end.toISOString())
     query?.mimetype && params.append('mimetype', query.mimetype)
-    return apiFetch<{ name: string, mimetype: string, url: string, createdAt: string, documents: { id: number, title: string }[] }[]>('/api/v1/file/check?' + params.toString())
+    return this.fetch<{ name: string, mimetype: string, url: string, createdAt: string, documents: { id: number, title: string }[] }[]>('/api/v1/file/check?' + params.toString())
   }
-  remove = (names: string[]) => apiFetch<{ count: number }>('/api/v1/file/remove', {
+  remove = (names: string[]) => this.fetch<{ count: number }>('/api/v1/file/remove', {
     method: 'POST',
     body: JSON.stringify({ names }),
     headers: {
@@ -34,5 +35,3 @@ class FileService implements IFileService {
     }
   })
 }
-
-export const fileService = new FileService()

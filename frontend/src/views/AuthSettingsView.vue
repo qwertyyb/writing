@@ -37,9 +37,8 @@
 import { ref } from 'vue';
 import * as R from 'ramda'
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { authService } from '@/services';
+import { service } from '@/services';
 import { startRegistration, browserSupportsWebAuthn } from '@simplewebauthn/browser';
-import { configService } from '@/services/server/config';
 
 const settingValue = ref<Record<string, any>>({
   passwordDisabled: false,
@@ -51,7 +50,7 @@ const settingValue = ref<Record<string, any>>({
 const supportsWebAuthn = ref(browserSupportsWebAuthn())
 
 const getSettingValue = async () => {
-  const values = await configService.getValues(['PasswordDisabled', 'WebAuthnAuthenticators'])
+  const values = await service.configService.getValues(['PasswordDisabled', 'WebAuthnAuthenticators'])
   const obj = values.reduce<Record<string, any>>((acc, item) => {
     let value = item.value
     if (item.key === 'WebAuthnAuthenticators') {
@@ -70,7 +69,7 @@ const setPasswordDisabled = async (value: boolean) => {
   if (!settingValue.value.authenticators.length) {
     return ElMessage.error('需要先添加无密码登录设备才能禁用密码登录')
   }
-  await configService.setValue('PasswordDisabled', value ? 'true' : '')
+  await service.configService.setValue('PasswordDisabled', value ? 'true' : '')
   settingValue.value.passwordDisabled = value
 }
 
@@ -81,21 +80,21 @@ const setPassword = async () => {
   if (settingValue.value.password !== settingValue.value.passowrd2) {
     return ElMessage.error('两次密码输入不一致')
   }
-  await configService.setValue('Password', settingValue.value.password)
+  await service.configService.setValue('Password', settingValue.value.password)
   settingValue.value.password = ''
   settingValue.value.passowrd2 = ''
 }
 
 const removeAuthenticator = async (index: number) => {
   const value = R.remove(index, 1, settingValue.value.authenticators)
-  await configService.setValue('WebAuthnAuthenticators', JSON.stringify(value))
+  await service.configService.setValue('WebAuthnAuthenticators', JSON.stringify(value))
   settingValue.value.authenticators = value
 }
 
 const webAuthnRegister = async (name: string) => {
-  const { data } = await authService.getRegisterOptions()
+  const { data } = await service.authService.getRegisterOptions()
   const result = await startRegistration(data)
-  await authService.verifyRegister({ name, body: result })
+  await service.authService.verifyRegister({ name, body: result })
 }
 
 const addAuthenticator = async () => {

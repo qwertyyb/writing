@@ -1,34 +1,50 @@
 import Dexie from 'dexie'
-import { Low, type Adapter } from 'lowdb'
-import type { Document, Config, Attribute, IFile,  } from "../types"
+import { type Adapter } from 'lowdb'
+import type { IDocument, IConfig, IAttribute, IFile,  } from "../types"
 
+const createFileSystemHandleStorage = () => {
+  const db = new Dexie('filesystemHandle')
+  db.version(1).stores({
+    handle: '&name'
+  })
+  return {
+    get: (key: string): Promise<FileSystemDirectoryHandle | undefined | null> => {
+      // eslint-disable-next-line no-async-promise-executor
+      return new Promise(async (resolve) => {
+        // @ts-ignore
+        const row = await db.handle.get(key)
+        if (!row) return resolve(undefined)
+        const handle: FileSystemDirectoryHandle = row.handle
+        if ('queryPermission' in handle) {
+          // @ts-ignore
+          const permission: PermissionState = await handle.queryPermission({ mode: 'readwrite' })
+          if (permission !== 'granted') return resolve(null)
+          resolve(handle)
+        }
+        return resolve(null)
+      })
+    },
+    set: async (key: string, val: FileSystemDirectoryHandle) => {
+      // @ts-ignore
+      await db.handle.put({ name: key, handle: val }, key)
+    }
+  }
+}
 
-class FileSystemServer {
+const fsHandleStorage = createFileSystemHandleStorage()
+
+export class FileSystemServer {
   root: FileSystemDirectoryHandle | null = null
   resolve!: (value: unknown) => void
   reject!: (reason: any) => void
   ready: Promise<unknown>
-  db: Dexie
-  constructor() {
-    this.db = new Dexie('filesystemHandle')
-    this.db.version(1).stores({
-      handle: '&name'
-    })
-    // eslint-disable-next-line no-async-promise-executor
-    this.ready = new Promise(async (resolve, reject) => {
+  constructor(private config: { name: string }) {
+    this.ready = new Promise((resolve, reject) => {
       this.resolve = resolve
       this.reject = reject
-      // @ts-ignore
-      const row = await this.db.handle.get('root')
-      if (!row) return
-      const handle: FileSystemDirectoryHandle = row.handle
-      if ('queryPermission' in handle) {
-        // @ts-ignore
-        const permission: PermissionState = await handle.queryPermission({ mode: 'readwrite' })
-        if (permission !== 'granted') return
-        this.root = handle
-        this.resolve(handle)
-      }
+      return fsHandleStorage.get(this.config.name)
+    }).then(handle => {
+      if (handle) return this.resolve(handle)
     })
   }
 
@@ -40,9 +56,10 @@ class FileSystemServer {
 
   requestRoot = async () => {
     // @ts-ignore
-    this.root = await window.showDirectoryPicker({ mode: 'readwrite' })
-    // @ts-ignore
-    await this.db.handle.put({ name: 'root', handle: this.root }, 'root')
+    this.root = await window.showDirectoryPicker({ mode: 'readwrite', id: this.config.name })
+    if (this.root) {
+      await fsHandleStorage.set(this.config.name, this.root)
+    }
     this.resolve(this.root)
   }
 
@@ -91,30 +108,25 @@ class FileSystemServer {
   }
 }
 
-export const fsServer = new FileSystemServer()
-
-class FileSystemLowAdapter<T> implements Adapter<T> {
-  constructor(private fileName: string) {}
+export class FileSystemLowAdapter<T> implements Adapter<T> {
+  constructor(private fsServer: FileSystemServer, private fileName: string) {}
   read = () => {
-    return fsServer.readJSON(this.fileName)
+    return this.fsServer.readJSON(this.fileName)
   }
   write = async (data: T) => {
-    await fsServer.writeJSON(data, this.fileName)
+    await this.fsServer.writeJSON(data, this.fileName)
     return
   }
 }
 
-interface Database {
-  document: (Document & { attributes: Attribute[] })[]
-  config: Config[]
+export interface Database {
+  document: (IDocument & { attributes: IAttribute[] })[]
+  config: IConfig[]
   file: IFile[]
 }
 
-const defaultData: Database = {
+export const defaultData = (): Database => ({
   document: [],
   config: [],
   file: []
-}
-
-export const low = new Low<Database>(new FileSystemLowAdapter('meta.json'), defaultData)
-
+})

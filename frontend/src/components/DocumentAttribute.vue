@@ -13,17 +13,16 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { type Attribute } from '@/services/attribute'
 import { computed } from 'vue';
 import base62 from '@/utils/base62';
 
 const props = defineProps<{
   docId: number,
-  attributes: Attribute[],
+  attributes: {key: string, value: string}[],
 }>()
 
 const emits = defineEmits<{
-  change: [attributes: Attribute[]]
+  change: [attributes: {key: string, value: string}[]]
 }>()
 
 const shareId = computed(() => props.attributes.find(attr => attr.key === 'share')?.value)

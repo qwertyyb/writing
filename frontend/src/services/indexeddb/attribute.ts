@@ -1,8 +1,8 @@
-import type { Attribute, IAttributeService } from "../types"
+import type { IAttribute, IAttributeService } from "../types"
 import { db } from "./db"
 
 class AttributeService implements IAttributeService {
-  setAttributes = async (docId: number, attributes: Omit<Attribute, 'docId'>[]) => {
+  setAttributes = async (docId: number, attributes: Omit<IAttribute, 'docId'>[]) => {
     const items = attributes.map(item => ({ ...item, docId }))
     await db.attribute.bulkPut(items)
     return { errCode: 0, errMsg: 'ok', data: items }

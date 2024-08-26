@@ -1,4 +1,4 @@
-import { configService } from "@/services";
+import { service } from "@/services";
 import { debounce } from "lodash-es";
 import { defineStore } from "pinia";
 import * as R from 'ramda'
@@ -8,7 +8,7 @@ interface RuntimeSettings {
   recentDocumentId: number
 }
 
-const debounceSetValue = debounce(configService.setValue, 200)
+const debounceSetValue = debounce(service.configService.setValue, 200)
 
 const defaultSettings = () => ({
   layout: {
@@ -40,7 +40,7 @@ export const useRuntime = defineStore('runtime', {
       return debounceSetValue('settings', JSON.stringify(this.settings))
     },
     async refresh() {
-      const value = await configService.getValue('settings')
+      const value = await service.configService.getValue('settings')
       if (value) {
         this.settings = R.mergeDeepLeft<RuntimeSettings, RuntimeSettings>(this.settings, JSON.parse(value))
       }

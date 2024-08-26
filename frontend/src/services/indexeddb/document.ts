@@ -1,5 +1,5 @@
 import { createLogger } from "@/utils/logger"
-import type { Document, IDocumentService } from "../types"
+import type { IDocument, IDocumentService } from "../types"
 import { db } from "./db"
 import { attributeService } from "./attribute"
 
@@ -67,7 +67,7 @@ class DocumentService implements IDocumentService {
     }
     return { errCode: 0, errMsg: 'ok', data: document }
   }
-  update = (data: Pick<Partial<Document>, 'id' | 'title' | 'content'>) => {
+  update = (data: Pick<Partial<IDocument>, 'id' | 'title' | 'content'>) => {
     const { id, ...updateData } = data;
     return db.document.update(id as number, { ...updateData, updatedAt: new Date().toISOString() }).then(() => ({ errCode: 0, errMsg: 'ok', data: null }))
   }
@@ -83,7 +83,7 @@ class DocumentService implements IDocumentService {
     await db.document.where('path').startsWith(`${cur.path}/${cur.id}`).delete()
     return { errCode: 0, errMsg: 'ok', data: null }
   }
-  add = (data: Pick<Document, 'title' | 'content' | 'path'>) => {
+  add = (data: Pick<IDocument, 'title' | 'content' | 'path'>) => {
     const row = {
       ...data,
       createdAt: new Date().toISOString(),

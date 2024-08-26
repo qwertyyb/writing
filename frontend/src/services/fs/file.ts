@@ -1,13 +1,14 @@
 import { randomString } from "@/utils/utils"
-import type { IFileService, Document } from "../types"
-import { fsServer, low } from "./fs"
+import type { IFileService, IDocument } from "../types"
+import type { Database, FileSystemServer } from "./fs"
+import type { Low } from "lowdb"
 
 const FILE_BASE_PATH = '/api/v1/fs/fileNotExist'
 
 const FILE_DIR_PATH = 'resources'
 
-class FileService implements IFileService {
-  constructor() {
+export class FileService implements IFileService {
+  constructor(private fsServer: FileSystemServer, private low: Low<Database>) {
     document.body.addEventListener('error', async (event) => {
       const target = event.target as HTMLImageElement
       if (target.nodeName.toLocaleLowerCase() !== 'img') return
@@ -25,7 +26,7 @@ class FileService implements IFileService {
   private blobUrls = new Map<string, string>()
 
   private createBlobUrl = async (name: string) => {
-    const file = await fsServer.readFile(`resources/${name}`)
+    const file = await this.fsServer.readFile(`resources/${name}`)
     if (!file) return null
     const url = URL.createObjectURL(file)
     this.blobUrls.set(name, url)
@@ -40,9 +41,9 @@ class FileService implements IFileService {
     return `${FILE_BASE_PATH}?name=${name}`
   }
   private getDocumentsByFileNames = async (names: string[]) => {
-    const results: Record<string, Document[]> = names.reduce((acc, name) => ({ ...acc, [name]: [] }), {})
-    await low.data.document.forEach(async document => {
-      const file = await fsServer.readFile(`posts/${document.id}.json`)
+    const results: Record<string, IDocument[]> = names.reduce((acc, name) => ({ ...acc, [name]: [] }), {})
+    await this.low.data.document.forEach(async document => {
+      const file = await this.fsServer.readFile(`posts/${document.id}.json`)
       const content = await file.text()
       names.forEach(name => {
         const fileUrl = this.getFileUrl(name)
@@ -62,9 +63,8 @@ class FileService implements IFileService {
       createdAt: new Date().toUTCString(),
       ...options,
     }
-    console.log(fileMeta)
-    await fsServer.writeFile(file, `${FILE_DIR_PATH}/${fileMeta.name}`)
-    await low.update(meta => {
+    await this.fsServer.writeFile(file, `${FILE_DIR_PATH}/${fileMeta.name}`)
+    await this.low.update(meta => {
       meta.file.push(fileMeta)
     })
 
@@ -81,7 +81,7 @@ class FileService implements IFileService {
     query?.mimetype && params.append('mimetype', query.mimetype)
     const min = query?.start ? query.start.getTime() : 0
     const max = query?.end ? query.end.getTime() : Number.MAX_SAFE_INTEGER
-    const files = low.data.file.filter(f => {
+    const files = this.low.data.file.filter(f => {
       const createdAt = new Date(f.createdAt).getTime()
       return createdAt >= min && createdAt <= max && (!query?.mimetype || query.mimetype && query.mimetype === f.mimetype)
     })
@@ -96,10 +96,8 @@ class FileService implements IFileService {
   remove = async (names: string[]) => {
     await Promise.all(names.map(name => {
       this.removeBlobUrl(name)
-      return fsServer.removeFile(name)
+      return this.fsServer.removeFile(name)
     }))
     return { errCode: 0, errMsg: 'ok', data: { count: names.length } }
   }
 }
-
-export const fileService = new FileService()

@@ -23,26 +23,29 @@ const router = createRouter({
               component: DocumentViewVue,
               props: true,
             },
-            ...(
-              // 使用前端indexed模式时，不需要鉴权
-              import.meta.env.MODE !== 'indexeddb' ? [{
-                path: 'settings',
-                name: 'settings',
-                component: () => import('@/views/SettingsView.vue'),
-                children: [
-                  {
-                    path: 'auth',
-                    name: 'authSettings',
-                    component: () => import('@/views/AuthSettingsView.vue')
-                  },
-                  {
-                    path: 'file',
-                    name: 'fileSettings',
-                    component: () => import('@/views/FileSettingsView.vue')
-                  }
-                ]
-              }] : []
-            )
+            {
+              path: 'settings',
+              name: 'settings',
+              component: () => import('@/views/SettingsView.vue'),
+              redirect() { return { name: 'serverSettings' } },
+              children: [
+                {
+                  path: 'server',
+                  name: 'serverSettings',
+                  component: () => import('@/views/ServerSettingsView.vue')
+                },
+                {
+                  path: 'auth',
+                  name: 'authSettings',
+                  component: () => import('@/views/AuthSettingsView.vue')
+                },
+                {
+                  path: 'file',
+                  name: 'fileSettings',
+                  component: () => import('@/views/FileSettingsView.vue')
+                }
+              ]
+            }
           ]
         },
       ]

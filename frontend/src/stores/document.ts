@@ -1,5 +1,5 @@
-import { documentService, attributeService, configService } from "@/services";
-import { type Attribute, type Document } from '@/services/types';
+import { service } from "@/services";
+import { type IAttribute, type IDocument } from '@/services/types';
 import { createLogger } from "@/utils/logger";
 import type { NodeValue } from "@writing/editor";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -7,10 +7,10 @@ import { defineStore } from "pinia";
 
 const logger = createLogger('document-store')
 
-export type ListItem = Omit<Document, 'content'>
+export type ListItem = Omit<IDocument, 'content'>
 
-export interface DocumentItem extends ListItem {
-  children: DocumentItem[]
+export interface IDocumentItem extends ListItem {
+  children: IDocumentItem[]
 }
 
 export interface EditingDocument extends ListItem {
@@ -21,7 +21,7 @@ const getRoot = (list: ListItem[]): ListItem | undefined => {
   return list.find(item => item.path === '')
 }
 
-const buildTree = (list: ListItem[], path: string, id: number | null): DocumentItem[] => {
+const buildTree = (list: ListItem[], path: string, id: number | null): IDocumentItem[] => {
   const previousNode = list.find(item => item.path === path && item.nextId === id)
   if (!previousNode) return []
   return [
@@ -33,7 +33,7 @@ const buildTree = (list: ListItem[], path: string, id: number | null): DocumentI
   ]
 }
 
-const getTreeNode = (tree: DocumentItem, hoist: number): DocumentItem | undefined => {
+const getTreeNode = (tree: IDocumentItem, hoist: number): IDocumentItem | undefined => {
   if (tree.id === hoist) return tree;
   for(let i = 0; i < tree.children.length; i += 1) {
     const target = getTreeNode(tree.children[i], hoist)
@@ -69,7 +69,7 @@ export const useDocumentStore = defineStore('document', {
     expandedIdMap: {} as Record<number, boolean>
   }),
   getters: {
-    tree(): DocumentItem | null {
+    tree(): IDocumentItem | null {
       const root = getRoot(this.documents)
       if (!root) return null
       const wholeTree = {
@@ -87,20 +87,20 @@ export const useDocumentStore = defineStore('document', {
         { data: { list: documents } },
         hoistId
       ] = await Promise.all([
-        documentService.findMany(),
-        configService.getValue('hoist')
+        service.documentService.findMany(),
+        service.configService.getValue('hoist')
       ])
       this.documents = documents
       this.hoistId = hoistId ? Number(hoistId) : null
       this.expandAll()
     },
-    hoist(node: DocumentItem) {
+    hoist(node: IDocumentItem) {
       if (this.hoistId === node.id) {
         this.hoistId = null
       } else {
         this.hoistId = node.id
       }
-      configService.setValue('hoist', this.hoistId ? this.hoistId.toString() : null)
+      service.configService.setValue('hoist', this.hoistId ? this.hoistId.toString() : null)
     },
     moveToTarget(source: ListItem, target: ListItem, position: 'before' | 'after' | 'inside') {
       const updates: { id: number, path: string, nextId: number | null }[] = []
@@ -159,14 +159,14 @@ export const useDocumentStore = defineStore('document', {
 
       logger.i('move', updates)
       // 调用接口更新
-      await documentService.updateMany(updates)
+      await service.documentService.updateMany(updates)
     },
-    async add(current: DocumentItem, position: 'before' | 'after' | 'inside'): Promise<void> {
+    async add(current: IDocumentItem, position: 'before' | 'after' | 'inside'): Promise<void> {
       logger.i('add', {...current}, position)
       const newDoc = createEditingDocument(current.path)
       const cur = this.documents.find(item => item.id === current.id)
       if (!cur) return
-      const { data } = await documentService.add({
+      const { data } = await service.documentService.add({
         ...newDoc,
         content: JSON.stringify(newDoc.content)
       })
@@ -177,9 +177,9 @@ export const useDocumentStore = defineStore('document', {
       }
       const updates = this.moveToTarget(this.editing, cur, position)
       this.documents.push(this.editing)
-      updates.length && await documentService.updateMany(updates)
+      updates.length && await service.documentService.updateMany(updates)
     },
-    async remove(node: DocumentItem) {
+    async remove(node: IDocumentItem) {
       if (node.path === '') {
         ElMessage({ message: '根文档无法删除', type: 'error' })
         return
@@ -211,14 +211,14 @@ export const useDocumentStore = defineStore('document', {
         prev.nextId = node.nextId
       }
       const path = `${node.path}/${node.id}`
-      await documentService.remove({ id: node.id })
+      await service.documentService.remove({ id: node.id })
       this.documents = this.documents.filter(item => {
         // 移除当前节点或者其子孙节点
         return item.id !== node.id && !item.path.startsWith(path)
       })
     },
     async activeEditing(id: number): Promise<void> {
-      const { data: document } = await documentService.find({ id })
+      const { data: document } = await service.documentService.find({ id })
       this.editing = {
         ...document,
         content: JSON.parse(document.content)
@@ -228,17 +228,17 @@ export const useDocumentStore = defineStore('document', {
       if (!this.editing) {
         throw new Error('没有正在编辑的文档')
       }
-      await documentService.update({ id: this.editing.id, content: JSON.stringify(content) })
+      await service.documentService.update({ id: this.editing.id, content: JSON.stringify(content) })
     },
     async updateEditingTitle(title: string): Promise<void> {
       if (!this.editing) {
         throw new Error('没有正在编辑的文档')
       }
       this.editing.title = title
-      await documentService.update({ id: this.editing.id, title })
+      await service.documentService.update({ id: this.editing.id, title })
     },
-    async updateAttributes(id: number, attributes: Omit<Attribute, 'docId'>[]) {
-      const { data } = await attributeService.setAttributes(id, attributes)
+    async updateAttributes(id: number, attributes: Omit<IAttribute, 'docId'>[]) {
+      const { data } = await service.attributeService.setAttributes(id, attributes)
       const target = this.documents.find(item => item.id === id)
       if (!target) return
       const newAttributes = target.attributes.map(item => {

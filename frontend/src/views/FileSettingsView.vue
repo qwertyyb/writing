@@ -52,7 +52,7 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
 import * as R from 'ramda';
-import { fileService } from '@/services';
+import { service } from '@/services';
 import { ElMessage, ElMessageBox, ElTable } from 'element-plus';
 
 type RowData = { name: string, createdAt: string, documents: {id:number, title:string}[] }
@@ -66,7 +66,7 @@ const tableRef = ref<InstanceType<typeof ElTable>>()
 
 const refresh = async () => {
   const [start, end] = query.value.timeRange
-  const res = await fileService.check({ start, end, mimetype: query.value.mimetype })
+  const res = await service.fileService.check({ start, end, mimetype: query.value.mimetype })
   list.value = res.data
 }
 
@@ -83,14 +83,14 @@ const removeSelected = async () => {
   if (!selectedRows.length) return ElMessage.warning('未选中任何文件')
   if (selectedRows.some(item => item.documents.length)) return ElMessage.error('有文件正在文档中使用，无法删除');
   await ElMessageBox.confirm('确认删除？删除后，文档中将无法显示此内容', { cancelButtonText: '取消', confirmButtonText: '删除' })
-  const { data } = await fileService.remove(selectedRows.map(item => item.name))
+  const { data } = await service.fileService.remove(selectedRows.map(item => item.name))
   ElMessage.success('已删除' + data.count + '个文件')
   refresh()
 }
 
 const removeRow = async (row: RowData, index: number) => {
   await ElMessageBox.confirm('确认删除？删除后，文档历史中将无法恢复此文件', { cancelButtonText: '取消', confirmButtonText: '删除' })
-  const { data } = await fileService.remove([row.name])
+  const { data } = await service.fileService.remove([row.name])
   ElMessage.success('已删除' + data.count + '个文件')
   list.value = R.remove(index, 1, list.value)
 }

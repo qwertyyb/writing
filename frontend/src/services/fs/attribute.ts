@@ -1,10 +1,12 @@
-import type { Attribute, IAttributeService } from "../types"
-import { low } from "./fs"
+import type { Low } from "lowdb"
+import type { IAttribute, IAttributeService } from "../types"
+import type { Database } from "./fs"
 
-class AttributeService implements IAttributeService {
-  setAttributes = async (docId: number, attributes: Omit<Attribute, 'docId'>[]) => {
-    let attrs: Attribute[] = []
-    await low.update(meta => {
+export class AttributeService implements IAttributeService {
+  constructor(private low: Low<Database>) {}
+  setAttributes = async (docId: number, attributes: Omit<IAttribute, 'docId'>[]) => {
+    let attrs: IAttribute[] = []
+    await this.low.update(meta => {
       meta.document.forEach(item => {
         if (item.id !== docId) return;
         attributes.forEach(attr => {
@@ -21,5 +23,3 @@ class AttributeService implements IAttributeService {
     return { errCode: 0, errMsg: 'ok', data: attrs }
   }
 }
-
-export const attributeService = new AttributeService()

@@ -1,9 +1,10 @@
-import type { Attribute, IAttributeService } from "../types"
-import { apiFetch } from "./fetch"
+import type { IAttribute, IAttributeService } from "../types"
+import type { createFetch } from "./fetch"
 
-class AttributeService implements IAttributeService {
-  setAttributes = (docId: number, attributes: Omit<Attribute, 'docId'>[]) => {
-    return apiFetch<Attribute[]>('/api/v1/attribute/update', {
+export class AttributeService implements IAttributeService {
+  constructor(private fetch: ReturnType<typeof createFetch>) { }
+  setAttributes = (docId: number, attributes: Omit<IAttribute, 'docId'>[]) => {
+    return this.fetch<IAttribute[]>('/api/v1/attribute/update', {
       method: 'PATCH',
       headers: {
         'content-type': 'application/json'
@@ -12,5 +13,3 @@ class AttributeService implements IAttributeService {
     })
   }
 }
-
-export const attributeService = new AttributeService()

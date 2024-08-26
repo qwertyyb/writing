@@ -1,13 +1,38 @@
 
-import { documentService } from "./document";
-import { configService } from "./config";
-import { attributeService } from "./attribute";
-import { fileService } from "./file";
-import { authService } from './auth'
-import { fsServer } from "./fs";
+import { DocumentService } from "./document";
+import { ConfigService } from "./config";
+import { AttributeService } from "./attribute";
+import { FileService } from "./file";
+import { AuthService } from './auth'
+import { defaultData, FileSystemLowAdapter, FileSystemServer, type Database } from "./fs";
+import type { IAttributeService, IAuthService, IConfigService, IDocumentService, IFileService, IService } from "../types";
+import { Low } from "lowdb";
 
-const init = () => {
-  fsServer.requestRoot()
+export interface IFileSystemConfig {
+  server: 'fileSystem'
+  name: string
 }
 
-export { documentService, configService, attributeService, fileService, authService, init }
+export class FileSystemService implements IService {
+  private fsServer: FileSystemServer
+  private low: Low<Database>
+  documentService: IDocumentService
+  attributeService: IAttributeService
+  configService: IConfigService
+  fileService: IFileService
+  authService: IAuthService
+
+  constructor(private config: IFileSystemConfig) {
+    this.fsServer = new FileSystemServer(config)
+    this.low = new Low(new FileSystemLowAdapter(this.fsServer, 'meta.json'), defaultData())
+    this.documentService = new DocumentService(this.fsServer, this.low)
+    this.attributeService = new AttributeService(this.low)
+    this.configService = new ConfigService(this.low)
+    this.fileService = new FileService(this.fsServer, this.low)
+    this.authService = new AuthService()
+  }
+
+  authDirectory = () => {
+    return this.fsServer.requestRoot()
+  }
+}

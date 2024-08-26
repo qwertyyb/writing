@@ -1,15 +1,15 @@
-export interface Attribute {
+export interface IAttribute {
   docId: number
   key: string,
   value: string,
 }
 
-export interface Config {
+export interface IConfig {
   key: string
   value: string
 }
 
-export interface Document {
+export interface IDocument {
   id: number,
   title: string,
   content: string,
@@ -17,7 +17,7 @@ export interface Document {
   nextId: number | null,
   createdAt: string,
   updatedAt: string,
-  attributes: Attribute[]
+  attributes: IAttribute[]
 }
 
 export interface IFile {
@@ -45,25 +45,25 @@ export interface ResponseData<D extends any = any> {
 }
 
 export interface IDocumentService {
-  findMany: () => Promise<ResponseData<{ total: number; list: Omit<Document, "content">[]; }>>
-  find: (where: { id: number }) => Promise<ResponseData<Document>>
-  update: (data: Pick<Document, "id"> & Partial<Pick<Document, "title" | "content">>) => Promise<ResponseData<unknown>>
+  findMany: () => Promise<ResponseData<{ total: number; list: Omit<IDocument, "content">[]; }>>
+  find: (where: { id: number }) => Promise<ResponseData<IDocument>>
+  update: (data: Pick<IDocument, "id"> & Partial<Pick<IDocument, "title" | "content">>) => Promise<ResponseData<unknown>>
   updateMany: (data: {
     id: number;
     path: string;
     nextId: number | null;
   }[]) => Promise<ResponseData<{ success: boolean }>>
   remove: (where: { id: number }) => Promise<ResponseData<unknown>>
-  add: (data: Pick<Document, "title" | "content" | "path">) => Promise<ResponseData<Omit<Document, "content">>>
+  add: (data: Pick<IDocument, "title" | "content" | "path">) => Promise<ResponseData<Omit<IDocument, "content">>>
   findByShareId: (where: { id: string }) => Promise<ResponseData<{
     key: string;
     value: string;
-    doc: Document;
+    doc: IDocument;
   }>>
 }
 
 export interface IAttributeService {
-  setAttributes: (docId: number, attributes: Omit<Attribute, "docId">[]) => Promise<ResponseData<Attribute[]>>
+  setAttributes: (docId: number, attributes: Omit<IAttribute, "docId">[]) => Promise<ResponseData<IAttribute[]>>
 }
 
 export interface IConfigService {
@@ -89,4 +89,12 @@ export interface IFileService {
     }[];
   }[]>>
   remove: (names: string[]) => Promise<ResponseData<{ count: number }>>
+}
+
+export interface IService {
+  documentService: IDocumentService
+  configService: IConfigService
+  attributeService: IAttributeService
+  fileService: IFileService
+  authService: IAuthService
 }

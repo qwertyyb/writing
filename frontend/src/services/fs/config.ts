@@ -1,9 +1,11 @@
+import type { Low } from "lowdb";
 import type { IConfigService } from "../types";
-import { low } from "./fs";
+import type { Database } from "./fs";
 
-class ConfigService implements IConfigService {
+export class ConfigService implements IConfigService {
+  constructor(private low: Low<Database>) {}
   setValue = async (key: string, value: string | null) => {
-    await low.update((meta) => {
+    await this.low.update((meta) => {
       const config = meta.config.find(i => i.key === key)
       if (config) {
         config.value = value ?? ''
@@ -14,11 +16,9 @@ class ConfigService implements IConfigService {
     return { errCode: 0, errMsg: 'ok', data: { value: value ?? ''} }
   }
   getValue = async (key: string) => {
-    return low.data.config.find(i => i.key === key)?.value
+    return this.low.data.config.find(i => i.key === key)?.value
   }
   getValues = async (keys: string[]) => {
-    return low.data.config.filter(i => keys.includes(i.key))
+    return this.low.data.config.filter(i => keys.includes(i.key))
   }
 }
-
-export const configService = new ConfigService()

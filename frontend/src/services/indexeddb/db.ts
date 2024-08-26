@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie'
-import type { Attribute, Config, Document } from '../types'
+import type { IAttribute, IConfig, IDocument } from '../types'
 
 export interface BlobFile {
   name: string
@@ -9,9 +9,9 @@ export interface BlobFile {
 }
 
 export class WritingDexie extends Dexie {
-  config!: Table<Config, number>
-  document!: Table<Document, number>
-  attribute!: Table<Attribute, number>
+  config!: Table<IConfig, number>
+  document!: Table<IDocument, number>
+  attribute!: Table<IAttribute, number>
   file!: Table<BlobFile, string>
 
   constructor() {

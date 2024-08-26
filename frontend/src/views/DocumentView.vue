@@ -50,7 +50,7 @@ import DocumentAttribute from '@/components/DocumentAttribute.vue';
 import DocumentEditor from '@writing/editor';
 import { debounce } from 'lodash-es';
 import { createLogger } from '@/utils/logger';
-import { fileService } from '@/services';
+import { service } from '@/services';
 
 const logger = createLogger('DocumentView')
 
@@ -78,7 +78,7 @@ watch(
 )
 
 const uploadHandler = async (file: Blob | File) => {
-  const { data } = await fileService.upload(file)
+  const { data } = await service.fileService.upload(file)
   if (data.url) return data.url
   throw new Error('上传失败')
 }

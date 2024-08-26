@@ -1,5 +1,6 @@
-import type { IAuthService } from "../types"
+import type { IAuthService } from "../types";
 
-const supportAuth = () => false
-
-export const authService = { supportAuth } as IAuthService
+export class AuthService implements IAuthService {
+  [x: string]: Function;
+  supportAuth = () => false
+}

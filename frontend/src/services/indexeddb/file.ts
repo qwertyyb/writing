@@ -1,6 +1,6 @@
 import { randomString } from "@/utils/utils"
 import { db, type BlobFile } from "./db"
-import type { IFileService, Document } from "../types"
+import type { IFileService, IDocument } from "../types"
 
 const FILE_BASE_PATH = '/api/v1/indexeddb/fileNotExist'
 
@@ -35,7 +35,7 @@ class FileService implements IFileService {
     URL.revokeObjectURL(url)
   }
   private getDocumentsByFileNames = async (names: string[]) => {
-    const results: Record<string, Document[]> = names.reduce((acc, name) => ({ ...acc, [name]: [] }), {})
+    const results: Record<string, IDocument[]> = names.reduce((acc, name) => ({ ...acc, [name]: [] }), {})
     await db.document.each(document => {
       names.forEach(name => {
         const fileUrl = `${FILE_BASE_PATH}?name=${name}`

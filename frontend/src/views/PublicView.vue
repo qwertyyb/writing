@@ -11,7 +11,7 @@
 
 <script setup lang="ts">
 import DocumentEditor, { type NodeValue } from '@writing/editor';
-import { documentService } from '@/services';
+import { service } from '@/services';
 import { ref, watchEffect } from 'vue';
 import { useRoute } from 'vue-router';
 
@@ -22,7 +22,7 @@ const route = useRoute()
 watchEffect(async () => {
   const id = route.params.id as string
   if (!id) return
-  const { data } = await documentService.findByShareId({ id })
+  const { data } = await service.documentService.findByShareId({ id })
   
   document.value = {
     title: data.doc.title,
