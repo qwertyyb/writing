@@ -8,7 +8,7 @@ interface RuntimeSettings {
   recentDocumentId: number
 }
 
-const debounceSetValue = debounce(service.configService.setValue, 200)
+const debounceSetValue = debounce((...args: Parameters<typeof service.configService.setValue>) => service.configService.setValue(...args), 200)
 
 const defaultSettings = () => ({
   layout: {

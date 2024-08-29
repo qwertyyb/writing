@@ -1,5 +1,5 @@
-import type { Document } from "@/services/document";
+import type { IDocument } from "@/services/types";
 
-export interface TreeNodeModel extends Omit<Document, 'content' | 'attributes'> {
+export interface TreeNodeModel extends Omit<IDocument, 'content' | 'attributes'> {
   children: TreeNodeModel[]
 }

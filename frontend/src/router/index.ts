@@ -2,7 +2,9 @@ import { RouterView, createRouter, createWebHistory } from 'vue-router'
 import PublicView from '@/views/PublicView.vue'
 import LayoutViewVue from '@/views/LayoutView.vue'
 import DocumentViewVue from '@/views/DocumentView.vue'
+import GuideViewVue from '@/views/GuideView.vue'
 import { AuthError } from '@/services/types'
+import { service } from '@/services'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -12,6 +14,11 @@ const router = createRouter({
       component: RouterView,
       redirect: 'admin',
       children: [
+        {
+          path: 'guide',
+          name: 'guide',
+          component: GuideViewVue,
+        },
         {
           path: 'admin',
           name: 'admin',
@@ -27,13 +34,8 @@ const router = createRouter({
               path: 'settings',
               name: 'settings',
               component: () => import('@/views/SettingsView.vue'),
-              redirect() { return { name: 'serverSettings' } },
+              redirect() { return { name: 'fileSettings' } },
               children: [
-                {
-                  path: 'server',
-                  name: 'serverSettings',
-                  component: () => import('@/views/ServerSettingsView.vue')
-                },
                 {
                   path: 'auth',
                   name: 'authSettings',
@@ -77,6 +79,14 @@ window.addEventListener('error', (event) => {
       })
     }
   }
+})
+
+router.beforeEach((to, from, next) => {
+  if (!service && to.name !== 'guide') {
+    next('/guide')
+    return
+  }
+  return next()
 })
 
 export default router

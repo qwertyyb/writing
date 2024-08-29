@@ -35,17 +35,30 @@ const fsHandleStorage = createFileSystemHandleStorage()
 
 export class FileSystemServer {
   root: FileSystemDirectoryHandle | null = null
-  resolve!: (value: unknown) => void
+  resolve!: (value: FileSystemDirectoryHandle | PromiseLike<FileSystemDirectoryHandle>) => void
   reject!: (reason: any) => void
   ready: Promise<unknown>
   constructor(private config: { name: string }) {
-    this.ready = new Promise((resolve, reject) => {
+    this.ready = new Promise<FileSystemDirectoryHandle>((resolve, reject) => {
       this.resolve = resolve
       this.reject = reject
-      return fsHandleStorage.get(this.config.name)
-    }).then(handle => {
-      if (handle) return this.resolve(handle)
     })
+    this.getAuthorizedDirectoryHandle().then(handle => {
+      if (!handle) return
+      this.root = handle
+      this.resolve(handle)
+    })
+  }
+
+  getAuthorizedDirectoryHandle = async () => {
+    const handle = await fsHandleStorage.get(this.config.name)
+    if (!handle) return null
+    if ('queryPermission' in handle && typeof handle.queryPermission === 'function') {
+      const permission: PermissionState = await handle.queryPermission({ mode: 'readwrite' })
+      if (permission !== 'granted') return
+      return handle
+    }
+    return null
   }
 
   private createDirectory = async (path: string[]) => {
@@ -54,13 +67,18 @@ export class FileSystemServer {
     }, Promise.resolve(this.root!))
   }
 
-  requestRoot = async () => {
+  authDirectory = async () => {
     // @ts-ignore
     this.root = await window.showDirectoryPicker({ mode: 'readwrite', id: this.config.name })
     if (this.root) {
       await fsHandleStorage.set(this.config.name, this.root)
+      this.resolve(this.root)
     }
-    this.resolve(this.root)
+  }
+
+  directoryAuthorized = async () => {
+    const handle = await this.getAuthorizedDirectoryHandle()
+    return !!handle
   }
 
   removeFile = async (name: string) => {

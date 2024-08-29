@@ -61,9 +61,11 @@ import SearchByTitle from '@/components/SearchByTitle.vue';
 import { ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { ElMessageBox } from 'element-plus';
-import { service } from '@/services';
+import { initService, service } from '@/services';
 
 const logger = createLogger('LayoutView')
+
+initService()
 
 const treeVisible = ref(true)
 const hasAuth = ref(service.authService.supportAuth())

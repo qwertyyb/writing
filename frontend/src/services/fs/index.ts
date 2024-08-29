@@ -10,7 +10,7 @@ import { Low } from "lowdb";
 
 export interface IFileSystemConfig {
   server: 'fileSystem'
-  name: string
+  name?: string
 }
 
 export class FileSystemService implements IService {
@@ -23,7 +23,7 @@ export class FileSystemService implements IService {
   authService: IAuthService
 
   constructor(private config: IFileSystemConfig) {
-    this.fsServer = new FileSystemServer(config)
+    this.fsServer = new FileSystemServer({ name: config.name ?? 'default' })
     this.low = new Low(new FileSystemLowAdapter(this.fsServer, 'meta.json'), defaultData())
     this.documentService = new DocumentService(this.fsServer, this.low)
     this.attributeService = new AttributeService(this.low)
@@ -33,6 +33,10 @@ export class FileSystemService implements IService {
   }
 
   authDirectory = () => {
-    return this.fsServer.requestRoot()
+    return this.fsServer.authDirectory()
+  }
+
+  directoryAuthorized = () => {
+    return this.fsServer.directoryAuthorized()
   }
 }

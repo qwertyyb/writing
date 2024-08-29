@@ -5,10 +5,6 @@
         <el-menu class="settings-menu" router
           :default-active="$route.path"
           :collapse="size === ScreenSize.Small">
-          <el-menu-item index="/admin/settings/server">
-            <el-icon><Lock /></el-icon>
-            <template #title>服务</template>
-          </el-menu-item>
           <el-menu-item index="/admin/settings/auth" v-if="supportAuth">
             <el-icon><Lock /></el-icon>
             <template #title>鉴权</template>

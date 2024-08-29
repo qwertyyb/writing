@@ -1,18 +1,18 @@
-import { createService } from './service'
+import { createService, type ServerConfig } from './service'
+import type { IService } from './types'
 
-// let service = null
-// // if (import.meta.env.VITE_DATABASE === 'indexeddb') {
-// //   service = await import('./indexeddb')
-// // } else if (import.meta.env.VITE_DATABASE === 'filesystem') {
-//   service = await import('./fs')
-// // } else {
-// //   service = await import('./server/index')
-// // }
+// @ts-ignore
+export let service: IService = null
 
-// export const documentService = service.documentService as IDocumentService
-// export const configService = service.configService as IConfigService
-// export const attributeService = service.attributeService as IAttributeService
-// export const fileService = service.fileService as IFileService
-// export const authService = service.authService
+// export const service = createService([{ server: 'indexedDB' }])
+export const LocalStorageKey = 'serverConfig'
 
-export const service = createService([{ server: 'indexedDB' }])
+export const initService = () => {
+  const local = localStorage.getItem(LocalStorageKey)
+  if (!local) return null
+  const config: ServerConfig = JSON.parse(local)
+  service = createService(config)
+  return service
+}
+
+initService()

@@ -6,6 +6,10 @@ import { fileService } from "./file";
 import { authService } from './auth'
 import type { IAttributeService, IAuthService, IConfigService, IDocumentService, IFileService, IService } from "../types";
 
+export interface IIndexedDBConfig {
+  server: 'indexedDB'
+}
+
 export class IndexedDBService implements IService {
   documentService: IDocumentService = documentService
   configService: IConfigService = configService
