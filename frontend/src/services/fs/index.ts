@@ -4,17 +4,30 @@ import { ConfigService } from "./config";
 import { AttributeService } from "./attribute";
 import { FileService } from "./file";
 import { AuthService } from './auth'
-import { defaultData, FileSystemLowAdapter, FileSystemServer, type Database } from "./fs";
+import { FileSystemServer } from "./fs";
 import type { IAttributeService, IAuthService, IConfigService, IDocumentService, IFileService, IService } from "../types";
 import { Low } from "lowdb";
+import { defaultData, FileSystemLowAdapter, type Database, type IFileServer } from "./base";
+import { GithubServer } from "./github";
 
-export interface IFileSystemConfig {
-  server: 'fileSystem'
+interface ILocalFileSystemConfig {
+  server: 'fileSystem',
+  adapter?: 'local',
   name?: string
 }
 
+interface IGithubFileSystemConfig {
+  server: 'fileSystem',
+  adapter: 'github',
+  auth: string,
+  owner: string,
+  repo: string
+}
+
+export type IFileSystemConfig = ILocalFileSystemConfig | IGithubFileSystemConfig
+
 export class FileSystemService implements IService {
-  private fsServer: FileSystemServer
+  private fsServer: IFileServer
   private low: Low<Database>
   documentService: IDocumentService
   attributeService: IAttributeService
@@ -23,7 +36,11 @@ export class FileSystemService implements IService {
   authService: IAuthService
 
   constructor(private config: IFileSystemConfig) {
-    this.fsServer = new FileSystemServer({ name: config.name ?? 'default' })
+    if (config.adapter === 'github' && config.auth) {
+      this.fsServer = new GithubServer(config)
+    } else {
+      this.fsServer = new FileSystemServer({ name: (config as ILocalFileSystemConfig).name ?? 'default' })
+    }
     this.low = new Low(new FileSystemLowAdapter(this.fsServer, 'meta.json'), defaultData())
     this.documentService = new DocumentService(this.fsServer, this.low)
     this.attributeService = new AttributeService(this.low)
@@ -33,10 +50,15 @@ export class FileSystemService implements IService {
   }
 
   authDirectory = () => {
-    return this.fsServer.authDirectory()
+    if ('authDirectory' in this.fsServer) {
+      return (this.fsServer as FileSystemServer).authDirectory()
+    }
   }
 
   directoryAuthorized = () => {
-    return this.fsServer.directoryAuthorized()
+    if ('directoryAuthorized' in this.fsServer) {
+      return (this.fsServer as FileSystemServer).directoryAuthorized()
+    }
+    return true
   }
 }

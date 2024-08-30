@@ -1,11 +1,11 @@
 import type { Low } from "lowdb";
 import type { IDocument, IDocumentService, ResponseData } from "../types";
-import { FileSystemServer, type Database } from "./fs";
+import type { Database, IFileServer } from "./base";
 
 const DOC_DIR_PATH = 'posts'
 
 export class DocumentService implements IDocumentService {
-  constructor(private fsServer: FileSystemServer, private low: Low<Database>) {
+  constructor(private fsServer: IFileServer, private low: Low<Database>) {
     this.insertRootIfNotExist()
   }
 
@@ -50,7 +50,7 @@ export class DocumentService implements IDocumentService {
     await this.low.read()
     const document = this.low.data.document.find(item => item.id === where.id)
     const file = await this.fsServer.readFile(`${DOC_DIR_PATH}/${where.id}.json`)
-    return Promise.resolve({ errMsg: 'ok', errCode: 0, data: { ...document!, content: await file.text() } })
+    return Promise.resolve({ errMsg: 'ok', errCode: 0, data: { ...document!, content: (await file?.text()) ?? '' } })
   }
   findMany = async () => {
     await this.low.read()
@@ -113,6 +113,6 @@ export class DocumentService implements IDocumentService {
       return doc.attributes.some(attr => attr.key === 'share' && attr.value === where.id)
     })
     const file = await this.fsServer.readFile(`${DOC_DIR_PATH}/${doc!.id}.json`)
-    return Promise.resolve({ errCode: 0, errMsg: 'ok', data: { key: 'share', value: where.id, doc: { ...doc!, content: await file.text() } } })
+    return Promise.resolve({ errCode: 0, errMsg: 'ok', data: { key: 'share', value: where.id, doc: { ...doc!, content: (await file?.text() ?? '') } } })
   }
 }

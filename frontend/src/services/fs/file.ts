@@ -1,14 +1,14 @@
 import { randomString } from "@/utils/utils"
 import type { IFileService, IDocument } from "../types"
-import type { Database, FileSystemServer } from "./fs"
 import type { Low } from "lowdb"
+import type { Database, IFileServer } from "./base"
 
 const FILE_BASE_PATH = '/api/v1/fs/fileNotExist'
 
 const FILE_DIR_PATH = 'resources'
 
 export class FileService implements IFileService {
-  constructor(private fsServer: FileSystemServer, private low: Low<Database>) {
+  constructor(private fsServer: IFileServer, private low: Low<Database>) {
     document.body.addEventListener('error', async (event) => {
       const target = event.target as HTMLImageElement
       if (target.nodeName.toLocaleLowerCase() !== 'img') return
@@ -44,7 +44,7 @@ export class FileService implements IFileService {
     const results: Record<string, IDocument[]> = names.reduce((acc, name) => ({ ...acc, [name]: [] }), {})
     await this.low.data.document.forEach(async document => {
       const file = await this.fsServer.readFile(`posts/${document.id}.json`)
-      const content = await file.text()
+      const content = await file?.text() ?? ''
       names.forEach(name => {
         const fileUrl = this.getFileUrl(name)
         if (content.includes(fileUrl)) {

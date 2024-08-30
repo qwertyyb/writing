@@ -1,6 +1,6 @@
 import Dexie from 'dexie'
 import { type Adapter } from 'lowdb'
-import type { IDocument, IConfig, IAttribute, IFile,  } from "../types"
+import type { IFileServer } from './base'
 
 const createFileSystemHandleStorage = () => {
   const db = new Dexie('filesystemHandle')
@@ -33,7 +33,7 @@ const createFileSystemHandleStorage = () => {
 
 const fsHandleStorage = createFileSystemHandleStorage()
 
-export class FileSystemServer {
+export class FileSystemServer implements IFileServer {
   root: FileSystemDirectoryHandle | null = null
   resolve!: (value: FileSystemDirectoryHandle | PromiseLike<FileSystemDirectoryHandle>) => void
   reject!: (reason: any) => void
@@ -95,7 +95,6 @@ export class FileSystemServer {
     const writeStream = await fileHandle!.createWritable()
     writeStream.write(await content.arrayBuffer())
     await writeStream.close()
-    return true
   }
 
   readFile = async (name: string) => {
@@ -122,29 +121,5 @@ export class FileSystemServer {
     await this.ready
     const content = new Blob([JSON.stringify(json)], { type: 'application/json' })
     await this.writeFile(content, name)
-    return true
   }
 }
-
-export class FileSystemLowAdapter<T> implements Adapter<T> {
-  constructor(private fsServer: FileSystemServer, private fileName: string) {}
-  read = () => {
-    return this.fsServer.readJSON(this.fileName)
-  }
-  write = async (data: T) => {
-    await this.fsServer.writeJSON(data, this.fileName)
-    return
-  }
-}
-
-export interface Database {
-  document: (IDocument & { attributes: IAttribute[] })[]
-  config: IConfig[]
-  file: IFile[]
-}
-
-export const defaultData = (): Database => ({
-  document: [],
-  config: [],
-  file: []
-})

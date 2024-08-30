@@ -65,7 +65,9 @@ import { initService, service } from '@/services';
 
 const logger = createLogger('LayoutView')
 
-initService()
+if (!service) {
+  initService()
+}
 
 const treeVisible = ref(true)
 const hasAuth = ref(service.authService.supportAuth())

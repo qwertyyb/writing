@@ -16,10 +16,12 @@
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
+    "@octokit/rest": "^21.0.2",
     "@simplewebauthn/browser": "^9.0.1",
     "@types/lodash-es": "^4.17.12",
     "@writing/editor": "workspace:^",
     "animate.css": "^4.1.1",
+    "buffer": "^6.0.3",
     "dexie": "^4.0.8",
     "element-plus": "^2.5.3",
     "events": "^3.3.0",

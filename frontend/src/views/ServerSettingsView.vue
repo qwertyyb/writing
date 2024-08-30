@@ -11,9 +11,26 @@
       <el-form-item label="服务地址" v-model="form.baseURL" v-if="form.server === 'writingServer'">
         <el-input v-model="form.baseURL"></el-input>
       </el-form-item>
-      <el-form-item label="授权" v-if="form.server === 'fileSystem'">
-        <el-button @click="requestFileSystem">选择本地文件夹</el-button>
-      </el-form-item>
+      <template v-if="form.server === 'fileSystem'">
+        <el-form-item label="类型">
+          <el-select v-model="form.adapter">
+            <el-option value="local" label="本机文件夹"></el-option>
+            <el-option value="github" label="Github"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="授权" v-if="form.adapter === 'local'">
+          <el-button @click="requestFileSystem">选择本地文件夹</el-button>
+        </el-form-item>
+        <el-form-item label="token" v-if="form.adapter === 'github'">
+          <el-input v-model.trim="form.auth" placeholder="请填写 Github Token"></el-input>
+        </el-form-item>
+        <el-form-item label="仓库owner" v-if="form.adapter === 'github'">
+          <el-input v-model.trim="form.owner" placeholder="请填写 Github 仓库owner"></el-input>
+        </el-form-item>
+        <el-form-item label="仓库名repo" v-if="form.adapter === 'github'">
+          <el-input v-model.trim="form.repo" placeholder="请填写 Github 仓库repo"></el-input>
+        </el-form-item>
+      </template>
       <el-form-item>
         <el-button type="primary" style="margin-left:auto" @click="save">保存</el-button>
       </el-form-item>
@@ -29,9 +46,20 @@ import { createService } from '@/services/service';
 import { ElForm, ElFormItem, ElSelect, ElOption, ElInput, ElButton, ElMessage, ElMessageBox } from 'element-plus'
 import { ref } from 'vue';
 
-const form = ref({
+const form = ref<{
+  server: 'indexedDB' | 'fileSystem' | 'writingServer',
+  baseURL: string,
+  adapter: 'local' | 'github',
+  auth: string,
+  owner: string,
+  repo: string,
+}>({
   server: 'indexedDB',
   baseURL: '',
+  adapter: 'local', // local | github
+  auth: '',
+  owner: '',
+  repo: ''
 })
 
 const requestFileSystem = () => {

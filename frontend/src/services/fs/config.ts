@@ -1,6 +1,6 @@
 import type { Low } from "lowdb";
 import type { IConfigService } from "../types";
-import type { Database } from "./fs";
+import type { Database } from "./base";
 
 export class ConfigService implements IConfigService {
   constructor(private low: Low<Database>) {}

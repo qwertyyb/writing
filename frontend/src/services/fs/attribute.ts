@@ -1,6 +1,6 @@
 import type { Low } from "lowdb"
 import type { IAttribute, IAttributeService } from "../types"
-import type { Database } from "./fs"
+import type { Database } from "./base"
 
 export class AttributeService implements IAttributeService {
   constructor(private low: Low<Database>) {}
