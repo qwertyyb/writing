@@ -8,7 +8,7 @@ import { FileSystemServer } from "./fs";
 import type { IAttributeService, IAuthService, IConfigService, IDocumentService, IFileService, IService } from "../types";
 import { Low } from "lowdb";
 import { defaultData, FileSystemLowAdapter, type Database, type IFileServer } from "./base";
-import { GithubServer } from "./github";
+import { LRRWServer } from './LRRW';
 
 interface ILocalFileSystemConfig {
   server: 'fileSystem',
@@ -37,7 +37,7 @@ export class FileSystemService implements IService {
 
   constructor(private config: IFileSystemConfig) {
     if (config.adapter === 'github' && config.auth) {
-      this.fsServer = new GithubServer(config)
+      this.fsServer = new LRRWServer(config)
     } else {
       this.fsServer = new FileSystemServer({ name: (config as ILocalFileSystemConfig).name ?? 'default' })
     }

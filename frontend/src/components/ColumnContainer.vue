@@ -83,11 +83,11 @@ const pointerupHandler = (event: PointerEvent) => {
   .column-left {
     height: 100%;
     flex: 1;
+    background: rgb(247, 247, 245);
   }
   .column-divider {
     height: 100%;
     width: 4px;
-    background: rgba(220, 220, 220, .8);
     cursor: ew-resize;
     flex-shrink: 0;
   }

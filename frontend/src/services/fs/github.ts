@@ -39,6 +39,7 @@ const noMulti = <F extends (...args: any[]) => any>(fn: F, getKey: (...args: Par
 export class GithubServer implements IFileServer {
   github: Octokit
   writeDebounceMap = new Map<string, (content: Blob | File) => Promise<unknown>>()
+  sha: Record<string, string> = {}
   constructor(private options: { auth: string, owner: string, repo: string }) {
     this.github = new Octokit({
       auth: options.auth,
@@ -55,14 +56,27 @@ export class GithubServer implements IFileServer {
       }
     })
   }
-  private getSha = async (path: string) => {
+  private updateSha = async () => {
     const { data: treeData } = await this.github.rest.git.getTree({
       owner: this.options.owner,
       repo: this.options.repo,
       tree_sha: 'main',
       recursive: 'true'
     })
-    return treeData.tree.find(i => i.path === path)?.sha
+    this.sha = treeData.tree.reduce<Record<string, string>>((acc, item) => {
+      return { ...acc, [item.path!]: item.sha! }
+    }, {})
+  }
+  // 当返回409时，更新sha后重试
+  retryAfterUpdateSha = async <F extends () => Promise<any>>(fn: F) => {
+    try {
+      return await fn()
+    } catch (err: any) {
+      if ('status' in err && (err.status === 409 || err.status === 422)) {
+        await this.updateSha()
+      }
+      return fn()
+    }
   }
   readJSON = noMulti(async (path: string) => {
     try {
@@ -96,13 +110,16 @@ export class GithubServer implements IFileServer {
   writeFile = async (content: Blob | File, path: string) => {
     if (!this.writeDebounceMap.get(path)) {
       this.writeDebounceMap.set(path, debounce(async (content: Blob | File) => {
-        await this.github.repos.createOrUpdateFileContents({
-          owner: this.options.owner,
-          repo: this.options.repo,
-          path,
-          message: `update ${path}`,
-          sha: await this.getSha(path),
-          content: Buffer.from(await content.arrayBuffer()).toString('base64')
+        return this.retryAfterUpdateSha(async () => {
+          const res = await this.github.repos.createOrUpdateFileContents({
+            owner: this.options.owner,
+            repo: this.options.repo,
+            path,
+            message: `update ${path}`,
+            sha: this.sha[path],
+            content: Buffer.from(await content.arrayBuffer()).toString('base64')
+          })
+          this.sha[path] = res.data.content!.sha!
         })
       }, 300))
     }

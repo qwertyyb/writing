@@ -135,7 +135,7 @@ const setHeight = (el: Element) => {
     display: flex;
     align-items: center;
     cursor: pointer;
-    padding: 0 4px;
+    padding: 2px 4px;
     border-radius: 4px;
     transition: background .2s;
     box-sizing: border-box;

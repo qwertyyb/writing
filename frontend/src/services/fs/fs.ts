@@ -1,5 +1,4 @@
 import Dexie from 'dexie'
-import { type Adapter } from 'lowdb'
 import type { IFileServer } from './base'
 
 const createFileSystemHandleStorage = () => {

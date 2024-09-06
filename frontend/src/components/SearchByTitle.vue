@@ -82,6 +82,7 @@ const toResult = (result: ListItem) => {
 <style lang="less" scoped>
 .search-input:deep(.el-input__wrapper) {
   box-shadow: none;
+  background: transparent;
 }
 .search-results {
   padding: 0;
