@@ -1,12 +1,12 @@
 <template>
-  <el-popover trigger="click" width="auto" :visible="visible" ref="popover" :hide-after="0" transition="none" v-if="visible">
+  <el-popover trigger="click" width="auto" :visible="visible && emojiVisible" ref="popover" :hide-after="0" transition="none" v-if="visible && emojiVisible">
     <template #reference>
       <div class="emoji-selector-reference"
         :style="{left: position.left + 'px', top: position.top + 'px'}"
       ></div>
     </template>
     <div class="emoji-selector-panel">
-      <emoji-panel @change="insertEmoji" :query="props.query"></emoji-panel>
+      <emoji-panel @change="insertEmoji" :query="props.query" @close="emojiVisible = false"></emoji-panel>
     </div>
   </el-popover>
 </template>
@@ -27,8 +27,13 @@ const props = defineProps<{
 
 const popover = ref<InstanceType<typeof ElPopover>>()
 
+const emojiVisible = ref(true)
+
 watch(() => props.position, () => {
   popover.value?.popperRef?.popperInstanceRef?.update()
+})
+watch(() => props.visible, (newVal) => {
+  emojiVisible.value = newVal
 })
 
 const insertEmoji = (emoji: string) => {

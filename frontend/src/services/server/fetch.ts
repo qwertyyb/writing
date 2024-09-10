@@ -8,7 +8,8 @@ export interface ResponseData<D extends any = any> {
 }
 
 export const createFetch = (config: { baseURL: string }) => {
-  const baseURL = /^https?:\/\//.test(config.baseURL) ? config.baseURL : location.origin + config.baseURL
+  let baseURL = /^https?:\/\//.test(config.baseURL) ? config.baseURL : location.origin + config.baseURL
+  baseURL = baseURL.replace(/\/$/, '')
   return async <D extends any>(...args: Parameters<typeof fetch>) => {
     let response: Response | null = null
     try {

@@ -152,6 +152,8 @@ const selectImage = async () => {
   img.editor-image-node-image {
     width: 100%;
     vertical-align: top;
+    min-width: 100px;
+    min-height: 10px;
   }
   figcaption.editor-image-node-title {
     text-align: center;

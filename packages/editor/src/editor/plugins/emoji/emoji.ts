@@ -18,7 +18,7 @@ export const emojiPlugin = () => {
             if (inCode) return {
               visible: false,
               query: '',
-              position: { top: 0, left: 0 }
+              position: { top: 0, left: 0 },
             }
             const prevText = selection.$to.parent.textBetween(Math.max(0, selection.$to.parentOffset - MAX_QUERY_LENGTH), selection.$to.parentOffset)
             const lastIndex = prevText.lastIndexOf(EMOJI_TRIGGER)

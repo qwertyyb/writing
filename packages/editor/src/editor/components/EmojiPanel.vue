@@ -29,7 +29,7 @@ import { ElInput, ElButton } from 'element-plus'
 
 const props = defineProps<{ search?: boolean, query?: string }>()
 
-const emits = defineEmits<{ change: [string] }>()
+const emits = defineEmits<{ change: [string], close: [] }>()
 
 const keyword = ref('');
 const selectedIndex = ref(0)
@@ -92,6 +92,7 @@ const keydownHandler = (event: KeyboardEvent) => {
     emits('change', emojis.value[selectedIndex.value].emoji)
   } else if (event.key === 'Escape') {
     stop()
+    emits('close')
   }
 }
 
