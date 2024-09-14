@@ -21,6 +21,11 @@
             {{ node.title }}
           </slot>
         </div>
+        <div class="tree-node-state">
+          <span class="material-symbols-outlined share-icon" v-if="shared">
+          share
+          </span>
+        </div>
       </div>
       <div class="tree-action">
         <span class="material-symbols-outlined add-action action-item" title="添加" @click.stop="addChild">add</span>
@@ -74,6 +79,7 @@ const treeSelectedId = inject<ComputedRef<number | string>>('treeSelectedId')
 
 const selected = computed(() => treeSelectedId?.value === props.node.id)
 const expanded = computed(() => treeExpandedState?.value[props.node.id])
+const shared = computed(() => props.node.attributes.some(item => item.key === 'share' && item.value))
 
 const toggleExpand = () => {
   treeEmits?.('toggleExpand', props.node)
@@ -170,6 +176,8 @@ const setHeight = (el: Element) => {
       width: 0;
       position: relative;
       flex: 1;
+      display: flex;
+      align-items: center;
       &::before, &::after {
         content: " ";
         position: absolute;
@@ -184,6 +192,10 @@ const setHeight = (el: Element) => {
       }
       &::after {
         bottom: -1.5px;
+      }
+      .share-icon {
+        font-size: 18px;
+        margin-left: 0.5em;
       }
     }
     .tree-label {

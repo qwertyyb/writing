@@ -1,9 +1,5 @@
 {
   "compilerOptions": {
-    "esModuleInterop": true,
-    "typeRoots": [
-      "node_modules/@types",
-      "shared/types"
-    ]
+    "esModuleInterop": true
   }
 }

@@ -2,6 +2,8 @@ import KoaRouter from '@koa/router'
 import { needAuth } from '../middlewares/auth'
 import { createRes } from '../utils'
 import { prisma } from '../prisma'
+import { sendToEndpoints } from '../service/webhook'
+import { getPostWithAttrs } from './post'
 
 const router = new KoaRouter({ prefix: '/api/v1/attribute' })
 
@@ -20,6 +22,10 @@ router
       update: { value: attr.value }
     })))
     ctx.body = createRes(results)
+    sendToEndpoints({
+      type: 'updatePost',
+      payload: await getPostWithAttrs(docId)
+    })
   })
 
 export default router

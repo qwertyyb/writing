@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "@koa/router": "^12.0.1",
+    "@octokit/rest": "^21.0.2",
     "@prisma/client": "5.9.1",
     "@simplewebauthn/server": "^9.0.3",
     "@simplewebauthn/types": "^9.0.1",

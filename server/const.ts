@@ -15,6 +15,7 @@ export enum ConfigKey {
   PasswordDisabled = 'PasswordDisabled',
   WebAuthnChallenge = 'WebAuthnChallenge',
   WebauthnAuthenticators = 'WebAuthnAuthenticators',
+  GHPublishConfig = 'GHPublishConfig'
 }
 
 export const PORT = process.env.PORT || 4080;

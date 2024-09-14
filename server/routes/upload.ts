@@ -4,6 +4,7 @@ import { prisma } from '../prisma';
 import { needAuth } from '../middlewares/auth';
 import { createRes } from '../utils';
 import { fileService } from '../service/FileService';
+import { sendToEndpoints } from '../service/webhook';
 
 const router = new KoaRouter();
 
@@ -41,6 +42,10 @@ router.post('/api/v1/upload', needAuth, async (ctx) => {
       url: `/api/v1/file?name=${encodeURIComponent(data.name)}`,
     },
   };
+  sendToEndpoints({
+    type: 'addFile',
+    payload: await prisma.file.findFirst({ where: { name: data.name } })
+  })
 });
 
 
@@ -66,6 +71,10 @@ router.post('/api/v1/file/remove', async (ctx) => {
     }
   });
   ctx.body = createRes(result);
+  sendToEndpoints({
+    type: 'removeFile',
+    payload: { names }
+  })
 });
 
 router.get('/api/v1/file', async (ctx) => {

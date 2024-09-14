@@ -8,8 +8,10 @@ interface Post {
   deleted: boolean
   deletedAt: string
 
-  attributes: Record<string, any>
+  attributes: { key: string, value: any }[]
 }
+
+export type PostWithContent = Post & { content: string }
 
 interface PostAttachment {
   name: string
