@@ -1,6 +1,6 @@
 import type Koa from 'koa'
-import { JWT_SECRET } from '../config'
-import { createRes } from '../utils'
+import { JWT_SECRET } from '../config.ts'
+import { createRes } from '../utils/index.ts'
 import { base64url, jwtDecrypt } from 'jose'
 
 export const checkLogin = async (ctx: Koa.DefaultContext) => {

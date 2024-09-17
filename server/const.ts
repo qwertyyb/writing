@@ -28,13 +28,3 @@ export const rootPath = path.resolve(dirname, '../');
 export const schemaPath = path.join(rootPath, './prisma');
 
 export const dbPath = path.join(schemaPath, process.env.DATABASE_URL!.replace(/^file:/, ''));
-
-export const backupPath = path.join(rootPath, process.env.BACKUP_PATH!);
-
-export const ENDPOINT = process.env.ENDPOINT;
-
-export const SYNC_KEY = process.env.SYNC_KEY;
-
-export const SYNC_TEMP_FILE = path.join(rootPath, './data/sync.json');
-
-logger.i('path', { rootPath, dbPath, backupPath });

@@ -1,15 +1,15 @@
 import { type File } from '@prisma/client'
 import EventEmitter from "node:events";
-import type { Post } from "../../shared/types/index.d.ts"
+import type { PostWithContent } from "../../shared/types/index.d.ts"
 
 interface AddPostAction {
   type: 'addPost',
-  payload: Post
+  payload: PostWithContent
 }
 
 interface UpdatePostAction {
   type: 'updatePost',
-  payload: Post
+  payload: PostWithContent
 }
 
 interface RemovePostAction {
