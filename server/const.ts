@@ -1,7 +1,10 @@
 import path from 'path';
-import { createLogger } from './utils/logger';
+import { fileURLToPath } from 'node:url';
+
+import { createLogger } from './utils/logger.ts';
 
 const logger = createLogger('const');
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export const RP_NAME = 'writing webauthn';
 export const RP_ID = 'localhost';
@@ -20,13 +23,13 @@ export enum ConfigKey {
 
 export const PORT = process.env.PORT || 4080;
 
-export const rootPath = path.resolve(__dirname, '../');
+export const rootPath = path.resolve(dirname, '../');
 
 export const schemaPath = path.join(rootPath, './prisma');
 
-export const dbPath = path.join(schemaPath, process.env.DATABASE_URL.replace(/^file:/, ''));
+export const dbPath = path.join(schemaPath, process.env.DATABASE_URL!.replace(/^file:/, ''));
 
-export const backupPath = path.join(rootPath, process.env.BACKUP_PATH);
+export const backupPath = path.join(rootPath, process.env.BACKUP_PATH!);
 
 export const ENDPOINT = process.env.ENDPOINT;
 

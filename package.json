@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "type": "module",
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -15,18 +16,21 @@
     "@prisma/client": "5.9.1",
     "@simplewebauthn/server": "^9.0.3",
     "@simplewebauthn/types": "^9.0.1",
+    "@writing/editor": "workspace:^",
     "hexo": "^7.1.1",
     "jose": "^5.2.2",
     "koa": "^2.15.0",
     "koa-body": "^6.0.1",
     "koa-logger": "^3.2.1",
-    "koa-send": "^5.0.1"
+    "koa-send": "^5.0.1",
+    "tsx": "^4.19.1"
   },
   "devDependencies": {
     "@types/koa": "^2.14.0",
+    "@types/koa-logger": "^3.1.5",
+    "@types/koa-send": "^4.1.6",
     "@types/koa__router": "^12.0.4",
     "@types/node": "^20.11.7",
-    "prisma": "^5.9.1",
-    "ts-node": "^10.9.2"
+    "prisma": "^5.9.1"
   }
 }

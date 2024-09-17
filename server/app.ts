@@ -3,11 +3,11 @@ import Koa from 'koa';
 import { koaBody } from 'koa-body';
 import send from 'koa-send';
 import koaLogger from 'koa-logger';
-import { useRouter } from './routes';
-import { fallback } from './middlewares/404';
+import { useRouter } from './routes/index.ts';
+import { fallback } from './middlewares/404.ts';
 import path from 'path';
-import { PORT } from './const';
-import { createLogger } from './utils/logger';
+import { PORT } from './const.ts';
+import { createLogger } from './utils/logger.ts';
 
 const logger = createLogger('app');
 

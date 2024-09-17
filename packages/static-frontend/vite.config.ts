@@ -10,18 +10,9 @@ export default defineConfig({
     vue(),
     vueJsx(),
   ],
-  server: {
-    port: 3400
-  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
-    }
-  },
-  build: {
-    lib: {
-      entry: fileURLToPath(new URL('./src/index.ts', import.meta.url)),
-      name: 'WEditor',
     }
   }
 })

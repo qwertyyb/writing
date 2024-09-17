@@ -19,7 +19,7 @@ export const markdownSerializer = new MarkdownSerializer(
     callout: calloutMarkdownSerialize,
 
     katex_block: katexBlockMarkdownSerialize,
-    katex: katexMarkdownSerialize
+    katex: katexMarkdownSerialize,
   },
   defaultMarkdownSerializer.marks
 )

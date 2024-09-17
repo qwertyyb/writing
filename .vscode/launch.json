@@ -9,10 +9,7 @@
       "request": "launch",
       "name": "Launch Program",
       "runtimeVersion": "20",
-      "runtimeArgs": [
-          "-r",
-          "ts-node/register"
-      ],
+      "runtimeExecutable": "tsx",
       "env": {
         "TOKEN": "34dfercv",
         "DATABASE_URL": "file:../data/sqlite.db",
@@ -20,6 +17,22 @@
       },
       "args": [
           "${workspaceFolder}/server/app.ts"
+      ]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Run Current File",
+      "runtimeVersion": "20",
+      "runtimeExecutable": "tsx",
+      "env": {
+        "TS_NODE_DEBUG": "true",
+        "TOKEN": "34dfercv",
+        "DATABASE_URL": "file:../data/sqlite.db",
+        "BACKUP_PATH": "../data/backup"
+      },
+      "args": [
+          "${file}"
       ]
     }
   ]
