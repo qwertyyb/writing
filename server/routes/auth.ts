@@ -5,11 +5,11 @@ import {
   generateRegistrationOptions, verifyRegistrationResponse, generateAuthenticationOptions, verifyAuthenticationResponse,
   type VerifiedRegistrationResponse, type VerifiedAuthenticationResponse,
 } from '@simplewebauthn/server';
-import { createRes } from '../utils';
-import { JWT_SECRET } from '../config';
-import { prisma } from '../prisma';
-import { checkLogin } from '../middlewares/auth';
-import { ConfigKey, ORIGIN, RP_ID, RP_NAME, USER_ID, USER_NAME } from '../const';
+import { createRes } from '../utils/index.ts';
+import { JWT_SECRET } from '../config.ts';
+import { prisma } from '../prisma.ts';
+import { checkLogin } from '../middlewares/auth.ts';
+import { ConfigKey, ORIGIN, RP_ID, RP_NAME, USER_ID, USER_NAME } from '../const.ts';
 import { createHash } from 'node:crypto';
 
 const authRouter = new KoaRouter({ prefix: '/api/v1/auth' });

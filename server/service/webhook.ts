@@ -1,41 +1,6 @@
-import { Attribute, File } from "@prisma/client"
-import type { Post } from "../../shared/types/index.d.ts"
 import { createLogger } from "../utils/logger.ts"
 import { retryWhenError } from "../utils/index.ts"
-
-interface AddPostAction {
-  type: 'addPost',
-  payload: Post
-}
-
-interface UpdatePostAction {
-  type: 'updatePost',
-  payload: Post
-}
-
-interface RemovePostAction {
-  type: 'removePost',
-  payload: { id: number }
-}
-
-interface MovePostAction {
-  type: 'movePost',
-  payload: {
-    data: { id: number, path: string, nextId: number | null }[]
-  }
-}
-
-interface AddFileAction {
-  type: 'addFile',
-  payload: File
-}
-
-interface RemoveFileAction {
-  type: 'removeFile',
-  payload: { names: string[] }
-}
-
-type Action = AddPostAction | UpdatePostAction | RemovePostAction | MovePostAction | AddFileAction | RemoveFileAction
+import { type Action, ACTION_EVENT_NAME, event } from "./ActionEvent.ts"
 
 interface WebhookEndpoint {
   label: string
@@ -65,11 +30,17 @@ const createWebhookSender = (endpoint: WebhookEndpoint) => {
   })
 }
 
-export const sendToEndpoints = (action: Action) => {
-  console.log('sendToEndpoint', action)
-  const endpoints = getEndpoints()
-  endpoints.forEach(endpoint => {
-    const sender = createWebhookSender(endpoint)
-    sender(action)
+const sendToEndpoints = (action: Action) => {
+  setImmediate(() => {
+    logger.i('sendToEndpoint', action)
+    const endpoints = getEndpoints()
+    endpoints.forEach(endpoint => {
+      const sender = createWebhookSender(endpoint)
+      sender(action)
+    })
   })
+}
+
+export const startWebhook = () => {
+  event.on(ACTION_EVENT_NAME, sendToEndpoints)
 }

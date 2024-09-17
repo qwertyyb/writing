@@ -1,10 +1,10 @@
 import KoaRouter from '@koa/router';
 import { readFileSync } from 'node:fs';
-import { prisma } from '../prisma';
-import { needAuth } from '../middlewares/auth';
-import { createRes } from '../utils';
-import { fileService } from '../service/FileService';
-import { sendToEndpoints } from '../service/webhook';
+import { prisma } from '../prisma.ts';
+import { needAuth } from '../middlewares/auth.ts';
+import { createRes } from '../utils/index.ts';
+import { fileService } from '../service/FileService.ts';
+import { ACTION_EVENT_NAME, event } from '../service/ActionEvent.ts';
 
 const router = new KoaRouter();
 
@@ -42,9 +42,11 @@ router.post('/api/v1/upload', needAuth, async (ctx) => {
       url: `/api/v1/file?name=${encodeURIComponent(data.name)}`,
     },
   };
-  sendToEndpoints({
-    type: 'addFile',
-    payload: await prisma.file.findFirst({ where: { name: data.name } })
+  setImmediate(async () => {
+    event.emit(ACTION_EVENT_NAME, {
+      type: 'addFile',
+      payload: await prisma.file.findFirst({ where: { name: data.name } })
+    })
   })
 });
 
@@ -71,9 +73,11 @@ router.post('/api/v1/file/remove', async (ctx) => {
     }
   });
   ctx.body = createRes(result);
-  sendToEndpoints({
-    type: 'removeFile',
-    payload: { names }
+  setImmediate(() => {
+    event.emit(ACTION_EVENT_NAME, {
+      type: 'removeFile',
+      payload: { names }
+    })
   })
 });
 
@@ -91,6 +95,10 @@ router.get('/api/v1/file', async (ctx) => {
       name,
     },
   });
+  if (!record) {
+    ctx.body = createRes(null, 404, '未发现文件' + name)
+    return
+  }
   ctx.set('content-type', record.mimetype);
   ctx.body = record.content;
 });

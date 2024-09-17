@@ -1,23 +1,13 @@
 import KoaRouter from '@koa/router';
-import { prisma } from '../prisma';
-import { createRes } from '../utils';
-import { needAuth } from '../middlewares/auth';
-import { sendToEndpoints } from '../service/webhook';
-import { PostWithContent } from '../../shared/types';
+import { getPostWithAttrs, prisma } from '../prisma.ts';
+import { createRes } from '../utils/index.ts';
+import { needAuth } from '../middlewares/auth.ts';
+import type { PostWithContent } from '../../shared/types/index.d.ts';
+import { ACTION_EVENT_NAME, event } from '../service/ActionEvent.ts';
 
 const router = new KoaRouter({ prefix: '/api/v1/post' });
 
 router.use(needAuth);
-
-export const getPostWithAttrs = async (id: number) => {
-  const post = await prisma.document.findFirst({ where: { id }, include: { attributes: true } })
-  return {
-    ...post,
-    createdAt: post.createdAt.toUTCString(),
-    updatedAt: post.updatedAt.toUTCString(),
-    deletedAt: post.deletedAt.toUTCString(),
-  }
-}
 
 router
   .get('/list', async (ctx) => {
@@ -70,9 +60,11 @@ router
       },
     });
     ctx.body = createRes(data);
-    sendToEndpoints({
-      type: 'updatePost',
-      payload: await getPostWithAttrs(data.id)
+    setImmediate(async () => {
+      event.emit(ACTION_EVENT_NAME, {
+        type: 'updatePost',
+        payload: await getPostWithAttrs(data.id)
+      })
     })
   })
   .patch('/move', async (ctx) => {
@@ -84,11 +76,13 @@ router
     const resetList = updates.map((item) => ({ ...item, nextId: null }));
     const result = await prisma.$transaction([...resetList, ...updates].map((item) => prisma.document.update({ where: { id: item.id }, data: { path: item.path, nextId: item.nextId } })));
     ctx.body = createRes(result);
-    sendToEndpoints({
+    setImmediate(async () => {
+      event.emit(ACTION_EVENT_NAME, {
       type: 'movePost',
-      payload: {
-        data: updates
-      }
+        payload: {
+          data: updates
+        }
+      })
     })
   })
   .del('/remove', async (ctx) => {
@@ -99,6 +93,10 @@ router
     }
     // 删除需要把子文档也删除
     const node = await prisma.document.findUnique({ where: { id } });
+    if (!node) {
+      ctx.body = createRes(null)
+      return
+    }
     const path = `${node.path}/${node.id}`;
 
     const result = await prisma.$transaction([
@@ -112,9 +110,11 @@ router
       }),
     ]);
     ctx.body = createRes(result);
-    sendToEndpoints({
-      type: 'removePost',
-      payload: await getPostWithAttrs(id)
+    setImmediate(async () => {
+      event.emit(ACTION_EVENT_NAME, {
+        type: 'removePost',
+        payload: await getPostWithAttrs(id)
+      })
     })
   })
   .post('/add', async (ctx) => {
@@ -128,9 +128,11 @@ router
       },
     });
     ctx.body = createRes(record);
-    sendToEndpoints({
-      type: 'addPost',
-      payload: await getPostWithAttrs(record.id)
+    setImmediate(async () => {
+      event.emit(ACTION_EVENT_NAME, {
+        type: 'addPost',
+        payload: await getPostWithAttrs(record.id)
+      })
     })
   })
   .patch('/publish', async (ctx) => {

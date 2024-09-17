@@ -1,9 +1,8 @@
 import KoaRouter from '@koa/router'
-import { needAuth } from '../middlewares/auth'
-import { createRes } from '../utils'
-import { prisma } from '../prisma'
-import { sendToEndpoints } from '../service/webhook'
-import { getPostWithAttrs } from './post'
+import { needAuth } from '../middlewares/auth.ts'
+import { createRes } from '../utils/index.ts'
+import { getPostWithAttrs, prisma } from '../prisma.ts'
+import { ACTION_EVENT_NAME, event } from '../service/ActionEvent.ts'
 
 const router = new KoaRouter({ prefix: '/api/v1/attribute' })
 
@@ -22,9 +21,11 @@ router
       update: { value: attr.value }
     })))
     ctx.body = createRes(results)
-    sendToEndpoints({
-      type: 'updatePost',
-      payload: await getPostWithAttrs(docId)
+    setImmediate(async () => {
+      event.emit(ACTION_EVENT_NAME, {
+        type: 'updatePost',
+        payload: await getPostWithAttrs(docId)
+      })
     })
   })
 

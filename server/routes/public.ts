@@ -1,6 +1,6 @@
 import KoaRouter from '@koa/router';
-import { createRes } from '../utils';
-import { prisma } from '../prisma';
+import { createRes } from '../utils/index.ts';
+import { prisma } from '../prisma.ts';
 
 const router = new KoaRouter({ prefix: '/api/v1/public' });
 

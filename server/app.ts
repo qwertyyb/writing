@@ -8,6 +8,8 @@ import { fallback } from './middlewares/404.ts';
 import path from 'path';
 import { PORT } from './const.ts';
 import { createLogger } from './utils/logger.ts';
+import { startWebhook } from './service/webhook.ts';
+import { startGithubPublisher } from './service/GithubPublisher.ts';
 
 const logger = createLogger('app');
 
@@ -46,4 +48,6 @@ const httpServer = createServer(app.callback());
 
 httpServer.listen(PORT, () => {
   logger.i('server start on port: ', PORT);
+  startWebhook()
+  startGithubPublisher()
 });
