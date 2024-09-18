@@ -123,7 +123,9 @@ export const nodes: Record<string, NodeSpec> = {
 
   todo: todo({ group: 'todo_block', content: 'block+' }),
 
-  image: imageSchema({ content: 'plain_text', group: 'block' }),
+  image: imageSchema({ content: 'plain_text', group: 'block', inline: false }),
+
+  inline_image: imageSchema({ content: '', group: 'inline', inline: true }),
 
   ...detailsSchema({ summaryContent: 'inline*', detailsContent: 'block*', detailsGroup: 'block' }),
 

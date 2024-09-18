@@ -20,9 +20,10 @@ export const useAuthStore = defineStore('auth', {
     async webAuthnLogin(browserAutofill = false) {
       const { data } = await service.authService.getAuthOptions()
       if (!data.allowCredentials?.length) {
-        return ElMessage.error({
+        ElMessage.error({
           message: '尚未注册无密码登录'
         })
+        throw new Error('尚未注册无密码登录')
       }
       const result = await startAuthentication(data, browserAutofill)
       const { data: loginResult } = await service.authService.verifyAuth(result)

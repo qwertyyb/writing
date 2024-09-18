@@ -41,6 +41,9 @@ export const createFetch = (config: { baseURL: string }) => {
     }
 
     if (json?.errCode === 403) {
+      ElMessage.error('登录失效，请重新登录')
+      localStorage.removeItem('token')
+      window.dispatchEvent(new CustomEvent('autherror'))
       throw new AuthError(json.errCode, json.errMsg, 'need auth')
     }
 

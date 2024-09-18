@@ -33,6 +33,7 @@ export const createPlugins = (schema: Schema, props: {
   detailsPlugin(schema.nodes.details),
   vueNodeViews(schema, props, {
     image: ImageNodeView,
+    inline_image: ImageNodeView,
     details: DetailsView,
     callout: CalloutView,
     katex_block: KatexBlockView,

@@ -68,16 +68,14 @@ const router = createRouter({
   ]
 })
 
-window.addEventListener('error', (event) => {
-  if (event.error instanceof AuthError) {
-    if (router.currentRoute.value.name !== 'auth') {
-      router.replace({
-        name: 'auth',
-        query: {
-          ru: router.currentRoute.value.fullPath || ''
-        }
-      })
-    }
+window.addEventListener('autherror', () => {
+  if (router.currentRoute.value.name !== 'auth') {
+    router.replace({
+      name: 'auth',
+      query: {
+        ru: router.currentRoute.value.fullPath || ''
+      }
+    })
   }
 })
 

@@ -29,7 +29,8 @@ const parseImageViewRule = () => ({
   contentElement: 'figcaption.editor-image-node-title'
 })
 
-export const imageSchema = (options: { content: string, group: string }): NodeSpec => ({
+export const imageSchema = (options: { content: string, group: string, inline: boolean }): NodeSpec => ({
+  inline: options.inline,
   attrs: {
     src: {},
     ratio: { default: null },
@@ -46,9 +47,14 @@ export const imageSchema = (options: { content: string, group: string }): NodeSp
       tag: 'img[src]',
       getAttrs(dom) {
         if (typeof dom === 'string') return false
+        const isInP = !!dom.closest('p')
+        if (isInP && !options.inline) return false
         return {
           src: dom.getAttribute('src'),
-          title: dom.getAttribute('title') || dom.getAttribute('alt')
+          ratio: null,
+          size: null,
+          href: null,
+          align: 'center'
         }
       }
     },

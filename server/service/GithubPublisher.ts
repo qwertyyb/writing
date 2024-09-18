@@ -3,6 +3,9 @@ import { Octokit } from "@octokit/rest";
 import { type Action, ACTION_EVENT_NAME, event } from './ActionEvent.ts';
 import type { PostWithContent } from '../../shared/types/index.d.ts';
 import { GITHUB_PUBLISHER_AUTH, GITHUB_PUBLISHER_OWNER, GITHUB_PUBLISHER_REPO } from '../config.ts';
+import { createLogger } from '../utils/logger.ts';
+
+const logger = createLogger('GithubPublisher')
 
 const debounce = <F extends (...args: any[]) => Promise<any>>(fn: F, duration = 300) => {
   let timeout: ReturnType<typeof setTimeout>
@@ -236,10 +239,14 @@ const handleAction = (gs: GithubServer) => {
 }
 
 export const startGithubPublisher = () => {
-  const githubServer = new GithubServer({
-    auth: GITHUB_PUBLISHER_AUTH,
-    owner: GITHUB_PUBLISHER_OWNER,
-    repo: GITHUB_PUBLISHER_REPO,
-  })
-  event.on(ACTION_EVENT_NAME, handleAction(githubServer))
+  if (GITHUB_PUBLISHER_AUTH && GITHUB_PUBLISHER_OWNER && GITHUB_PUBLISHER_REPO) {
+    const githubServer = new GithubServer({
+      auth: GITHUB_PUBLISHER_AUTH,
+      owner: GITHUB_PUBLISHER_OWNER,
+      repo: GITHUB_PUBLISHER_REPO,
+    })
+    event.on(ACTION_EVENT_NAME, handleAction(githubServer))
+  } else {
+    logger.w('auth、owner、repo not found')
+  }
 }
