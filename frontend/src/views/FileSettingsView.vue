@@ -102,8 +102,6 @@ refresh()
 <style lang="less" scoped>
 .file-view {
   padding: 20px;
-  height: calc(60vh - 40px);
-  overflow: auto;
 }
 .file-preview.image-preview {
   width: 60px;

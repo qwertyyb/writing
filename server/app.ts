@@ -30,19 +30,19 @@ app.use(koaBody({
 useRouter(app);
 
 // 静态文件
-app.use(async (ctx) => {
-  let sent = false;
-  try {
-    sent = !!(await send(ctx, ctx.path, { root: path.join(__dirname, '../frontend/dist') }));
-  } catch (err) {
-    if (err.status !== 404) {
-      throw err;
-    }
-  }
-  if (!sent) {
-    await send(ctx, 'index.html', { root: path.join(__dirname, '../frontend/dist') });
-  }
-});
+// app.use(async (ctx) => {
+//   let sent = false;
+//   try {
+//     sent = !!(await send(ctx, ctx.path, { root: path.join(__dirname, '../frontend/dist') }));
+//   } catch (err) {
+//     if (err.status !== 404) {
+//       throw err;
+//     }
+//   }
+//   if (!sent) {
+//     await send(ctx, 'index.html', { root: path.join(__dirname, '../frontend/dist') });
+//   }
+// });
 
 const httpServer = createServer(app.callback());
 

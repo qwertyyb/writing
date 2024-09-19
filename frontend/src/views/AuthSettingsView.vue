@@ -18,7 +18,7 @@
   </el-form>
   <h4>无密码登录管理</h4>
   <el-table :data="settingValue.authenticators" class="authenticator-table">
-    <el-table-column prop="name" label="名字" width="100"></el-table-column>
+    <el-table-column prop="name" label="名字"></el-table-column>
     <el-table-column prop="createdAt" label="创建时间" :formatter="formatRowTime" width="120"></el-table-column>
     <el-table-column label="操作" width="80">
       <template #default="scope">

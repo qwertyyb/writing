@@ -9,23 +9,27 @@ export default class GithubPublisher implements IWritingPlugin {
         app.notification.success('已成功发布')
       },
     })
+    app.fetch('https://www.baidu.com').then(async response => {
+      console.log(response)
+      console.log(await response.text())
+    })
   }
 
   settings = [
     {
-      text: 'Personal Token',
+      text: 'Auth',
       name: 'auth',
       extra: 'Github Personal Token'
     },
     {
       text: 'owner',
       name: 'owner',
-      extra: 'Github Owner'
+      extra: 'Github 用户'
     },
     {
       text: 'repo',
       name: 'repo',
-      extra: 'Github Repo'
+      extra: 'Github 仓库名'
     }
   ]
 }

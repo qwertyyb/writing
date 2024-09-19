@@ -1,10 +1,11 @@
 import type Koa from 'koa';
-import postRouter from './post';
-import uploadRouter from './upload';
-import publicRouter from './public';
-import attributeRouter from './attributes';
-import authRouter from './auth';
-import configRouter from './config';
+import postRouter from './post.ts';
+import uploadRouter from './upload.ts';
+import publicRouter from './public.ts';
+import attributeRouter from './attributes.ts';
+import authRouter from './auth.ts';
+import configRouter from './config.ts';
+import pluginRouter from './plugin.ts';
 
 export const useRouter = (app: Koa) => {
   app.use(authRouter.routes());
@@ -13,4 +14,5 @@ export const useRouter = (app: Koa) => {
   app.use(publicRouter.routes());
   app.use(attributeRouter.routes());
   app.use(configRouter.routes());
+  app.use(pluginRouter.routes());
 };

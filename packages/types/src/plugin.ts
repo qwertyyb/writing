@@ -2,6 +2,7 @@ import { ElNotification } from 'element-plus'
 import { INoteAction, IWritingNote } from './article'
 
 export interface IWritingApp {
+  fetch: typeof fetch,
   addNoteAction: (action: INoteAction) => void,
   getSettingsValue: () => any,
   currentNote: () => IWritingNote | null,

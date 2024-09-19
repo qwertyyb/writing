@@ -16,7 +16,7 @@ interface IPluginRuntimeData {
   settingsValue?: any
 }
 
-const pluginsRuntime: Record<string, IPluginRuntimeData | undefined> = reactive({})
+export const pluginsRuntime: Record<string, IPluginRuntimeData | undefined> = reactive({})
 export const plugins: Record<string, { instance: IWritingPlugin, meta: IPluginMeta }> = reactive({})
 const pluginsMeta: Record<string, IPluginMeta> = reactive({})
 
@@ -33,6 +33,18 @@ export class WritingApp implements IWritingApp {
       status: pluginsRuntime[meta.name]?.status ? pluginsRuntime[meta.name]!.status : 'enabled',
       noteActions: [],
     }
+  }
+
+  fetch = (...args: Parameters<typeof fetch>) => {
+    return window.fetch('/api/v1/plugin/fetch', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        args
+      })
+    })
   }
 
   addNoteAction = (action: INoteAction) => {
