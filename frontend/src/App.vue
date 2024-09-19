@@ -1,5 +1,9 @@
 <script setup lang="ts">
+import { addPlugin } from '@/plugin';
 import { RouterView } from 'vue-router'
+import GithubPublisher from '../../packages/github-publisher';
+
+addPlugin({ name: 'github-publisher', title: 'Github Publisher' }, GithubPublisher)
 </script>
 
 <template>

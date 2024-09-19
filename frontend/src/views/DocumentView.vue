@@ -6,6 +6,7 @@
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item command="export.markdown">导出为 Markdown</el-dropdown-item>
+            <el-dropdown-item v-for="(noteAction, index) in noteActions" :key="index" @click="pluginActionHandler(noteAction)">{{ noteAction.title }}</el-dropdown-item>
             <el-dropdown-item divided command="settings">设置</el-dropdown-item>
           </el-dropdown-menu>
         </template>
@@ -51,6 +52,8 @@ import DocumentEditor from '@writing/editor';
 import { debounce } from 'lodash-es';
 import { createLogger } from '@/utils/logger';
 import { service } from '@/services';
+import { noteActions } from '@/plugin';
+import type { INoteAction } from '@writing/types';
 
 const logger = createLogger('DocumentView')
 
@@ -101,6 +104,16 @@ const commandHandler = (command: string) => {
     const blob = new Blob([markdown], { type: 'text/plain;charset=utf-8' })
     saveAs(blob, documentStore.editing!.title + '.md')
   }
+}
+
+const pluginActionHandler = (noteAction: INoteAction) => {
+  if (!documentStore.editing) return;
+  noteAction.action?.({
+    current: {
+      ...documentStore.editing,
+      content: JSON.stringify(documentStore.editing.content)
+    }
+  })
 }
 
 </script>

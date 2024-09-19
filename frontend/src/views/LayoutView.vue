@@ -29,7 +29,7 @@
           <div class="side-actions">
             <span class="material-symbols-outlined action-item"
               title="设置"
-              @click="$router.push({ name: 'settings' })">settings</span>
+              @click="settingsVisible = true">settings</span>
             <span class="material-symbols-outlined action-item" title="折叠" @click="unExpandAll">unfold_less</span>
             <span class="material-symbols-outlined action-item location-opened" title="定位打开的文档" @click="locateEditing">my_location</span>
             <span class="material-symbols-outlined action-item logout-action"
@@ -44,6 +44,9 @@
         </template>
       </div>
     </template>
+    <el-dialog title="设置" v-model="settingsVisible" destroy-on-close>
+      <settings-view></settings-view>
+    </el-dialog>
     <router-view></router-view>
   </column-container>
 </template>
@@ -62,6 +65,7 @@ import { ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { ElMessageBox } from 'element-plus';
 import { initService, service } from '@/services';
+import SettingsView from '@/views/SettingsView.vue';
 
 const logger = createLogger('LayoutView')
 
@@ -70,6 +74,7 @@ if (!service) {
 }
 
 const treeVisible = ref(true)
+const settingsVisible = ref(false)
 const hasAuth = ref(service.authService.supportAuth())
 
 const runtimeStore = useRuntime()
