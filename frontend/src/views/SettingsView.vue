@@ -13,17 +13,17 @@
         >文件</dd>
         <dt class="settings-section-header">插件</dt>
         <dd class="settings-item"
-          v-for="plugin in plugins"
+          v-for="plugin in pluginsRuntime"
           :key="plugin.meta.name"
-          :class="{selected: activeTab === `plugin.${plugin.meta.name}`}"
-          @click="activeTab = `plugin.${plugin.meta.name}`"
+          :class="{selected: activeTab === `Plugin.${plugin.meta.name}`}"
+          @click="activeTab = `Plugin.${plugin.meta.name}`"
         >{{ plugin.meta.title }}</dd>
       </dl>
     </div>
     <section class="settings-item-view">
       <auth-settings-view v-if="activeTab === 'auth'"></auth-settings-view>
       <file-settings-view v-else-if="activeTab === 'file'"></file-settings-view>
-      <plugins-settings-view v-else-if="activeTab.startsWith('plugin.')" :name="activeTab.replace(/^plugin\./, '')"></plugins-settings-view>
+      <plugins-settings-view v-else-if="activeTab.startsWith('Plugin.')" :name="activeTab.replace(/^Plugin\./, '')"></plugins-settings-view>
     </section>
   </div>
 </template>
@@ -34,10 +34,12 @@ import AuthSettingsView from '@/views/AuthSettingsView.vue';
 import FileSettingsView from '@/views/FileSettingsView.vue';
 import PluginsSettingsView from '@/views/PluginsSettingsView.vue';
 import { ref } from 'vue';
-import { plugins } from '@/plugin';
+import { pluginsRuntime } from '@/plugin';
+
+const props = defineProps<{ defaultTab: string }>()
 
 const supportAuth = service.authService.supportAuth()
-const activeTab = ref(supportAuth ? 'auth' : 'file')
+const activeTab = ref(props.defaultTab || (supportAuth ? 'auth' : 'file'))
 
 </script>
 
@@ -71,8 +73,12 @@ const activeTab = ref(supportAuth ? 'auth' : 'file')
       padding-left: 1.5em;
       color: #000;
       border-radius: 2px;
+      transition: background .2s, color .1s;
+      &:hover {
+        background: var(--theme-hover-color);
+      }
       &.selected {
-        background: #00712D;
+        background: var(--theme-main-color);
         color: #fff;
       }
     }

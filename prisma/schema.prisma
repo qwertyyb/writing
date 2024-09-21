@@ -39,6 +39,7 @@ model Attribute {
   docId Int
   key   String
   value String
+  options String?
 
   @@id([docId, key])
 }

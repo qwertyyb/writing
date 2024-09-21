@@ -17,4 +17,9 @@ body {
 html, body, #app {
   height: 100%;
 }
+#app {
+  --theme-main-color: rgba(0, 113, 45, 1);
+  --theme-hover-color: rgba(0, 113, 45, .1);
+  --theme-main-selected-text-color: #ffffff;
+}
 </style>

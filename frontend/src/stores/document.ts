@@ -2,6 +2,7 @@ import { service } from "@/services";
 import { type IAttribute, type IDocument } from '@/services/types';
 import { createLogger } from "@/utils/logger";
 import type { NodeValue } from "@writing/editor";
+import type { IWritingAttribute } from "@writing/types";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { defineStore } from "pinia";
 
@@ -237,12 +238,12 @@ export const useDocumentStore = defineStore('document', {
       this.editing.title = title
       await service.documentService.update({ id: this.editing.id, title })
     },
-    async updateAttributes(id: number, attributes: Omit<IAttribute, 'docId'>[]) {
+    async updateAttributes(id: number, attributes: IWritingAttribute[]) {
       const { data } = await service.attributeService.setAttributes(id, attributes)
       const target = this.documents.find(item => item.id === id)
       if (!target) return
       const newAttributes = target.attributes.map(item => {
-        const row = data.find(item => item.key === item.key)
+        const row = data.find(i => i.key === item.key)
         return row ?? item
       })
       data.forEach(row => {
@@ -254,6 +255,16 @@ export const useDocumentStore = defineStore('document', {
       const isEditing = this.editing && (this.editing.id === id)
       if (isEditing) {
         this.editing!.attributes = newAttributes
+      }
+    },
+    async removeAttributes(id: number, keys: string[]) {
+      await service.attributeService.removeAttributes(id, keys)
+      const target = this.documents.find(note => note.id === id)
+      if (!target) return
+      target.attributes = target.attributes.filter(attr => !keys.includes(attr.key))
+      const isEditing = this.editing && (this.editing.id === id)
+      if (isEditing) {
+        this.editing!.attributes = target.attributes
       }
     },
     expandAll(expanded = true) {

@@ -1,7 +1,8 @@
+import { service } from '@/services'
 import { useDocumentStore } from '@/stores/document'
-import type { INoteAction, IWritingApp, IWritingPlugin, IWritingPluginConstructor } from '@writing/types'
-import { ElNotification } from 'element-plus'
-import { computed, markRaw, reactive } from 'vue'
+import type { IAttributeOptions, INoteAction, IWritingApp, IWritingPlugin, IWritingPluginConstructor } from '@writing/types'
+import { ElMessage, ElMessageBox, ElNotification } from 'element-plus'
+import { computed, markRaw, reactive, shallowReactive, type ShallowReactive } from 'vue'
 
 export interface IPluginMeta {
   name: string
@@ -11,27 +12,34 @@ export interface IPluginMeta {
 }
 
 interface IPluginRuntimeData {
+  // 要存
   status: 'enabled' | 'disabled' | 'removed'
+  meta: IPluginMeta,
+  PluginClass: IWritingPluginConstructor,
   noteActions: INoteAction[]
+  // 要存
   settingsValue?: any
 }
 
-export const pluginsRuntime: Record<string, IPluginRuntimeData | undefined> = reactive({})
-export const plugins: Record<string, { instance: IWritingPlugin, meta: IPluginMeta }> = reactive({})
-const pluginsMeta: Record<string, IPluginMeta> = reactive({})
+export const pluginsRuntime: Record<string, IPluginRuntimeData> = reactive({})
+
+export const pluginInstances: ShallowReactive<Record<string, IWritingPlugin>> = shallowReactive({})
 
 export const noteActions = computed<INoteAction[]>(() => {
-  return Object.values(pluginsRuntime).map(item => item?.noteActions || []).flat()
+  console.log(pluginsRuntime)
+  return Object.values(pluginsRuntime).map(item => item.status === 'enabled' ? item?.noteActions || [] : []).flat()
 })
 
 export class WritingApp implements IWritingApp {
   notification = ElNotification
+  messageBox = ElMessageBox
+  message = ElMessage
 
-  constructor(private meta: IPluginMeta) {
-    pluginsMeta[meta.name] = markRaw(meta)
+  constructor(private meta: IPluginMeta, config?: Pick<IPluginRuntimeData, 'status' | 'settingsValue'>) {
     pluginsRuntime[meta.name] = {
-      status: pluginsRuntime[meta.name]?.status ? pluginsRuntime[meta.name]!.status : 'enabled',
+      ...pluginsRuntime[meta.name],
       noteActions: [],
+      settingsValue: config?.settingsValue ?? null
     }
   }
 
@@ -48,6 +56,7 @@ export class WritingApp implements IWritingApp {
   }
 
   addNoteAction = (action: INoteAction) => {
+    console.assert(!!pluginsRuntime[this.meta.name], `未找到插件${this.meta.name}`)
     const existsIndex = pluginsRuntime[this.meta.name]!.noteActions.findIndex(item => item.id === action.id)
     if (existsIndex > -1) {
       pluginsRuntime[this.meta.name]!.noteActions[existsIndex] = markRaw(action)
@@ -56,29 +65,70 @@ export class WritingApp implements IWritingApp {
     }
   }
 
+  setAttribute = async (noteId: number, key: string, value: string, options?: IAttributeOptions) => {
+    const pluginKey = `Plugin.${this.meta.name}.${key}`
+    await useDocumentStore().updateAttributes(noteId, [{ key: pluginKey, value, options }])
+  }
+  setAttributes = async (noteId: number, attributes: { key: string, value: string, options?: IAttributeOptions }[]) => {
+    const pluginAttrs = attributes.map(attr => ({ ...attr, key: `Plugin.${this.meta.name}.${attr.key}` }))
+    await useDocumentStore().updateAttributes(noteId, pluginAttrs)
+  }
+  removeAttributes = async (noteId: number, keys: string[]) => {
+    const pluginKeys = keys.map(key => `Plugin.${this.meta.name}.${key}`)
+    await useDocumentStore().removeAttributes(noteId, pluginKeys)
+  }
+
   getSettingsValue = () => {
     return pluginsRuntime[this.meta.name]!.settingsValue
   }
 
   currentNote = () => {
     const current = useDocumentStore().editing
-    return current ? { ...current, content: JSON.stringify(current.content) } : null
+    return Promise.resolve(current ? { ...current, content: JSON.stringify(current.content) } : null)
+  }
+
+  openSettings = () => {
+    document.dispatchEvent(new CustomEvent('openSettings', { detail: { tab: `Plugin.${this.meta.name}`} }))
   }
 }
 
-export const addPlugin = (meta: IPluginMeta, WritingPlugin: IWritingPluginConstructor) => {
-  const app = new WritingApp(meta)
-  plugins[meta.name] = markRaw({
+export const addPlugin = async (meta: IPluginMeta, WritingPlugin: IWritingPluginConstructor) => {
+  const configJson = await service.configService.getValue(`Plugin.${meta.name}`)
+  const config = configJson ? JSON.parse(configJson) : null
+  pluginsRuntime[meta.name] = {
     meta,
-    instance: new WritingPlugin(app)
-  })
+    status: config?.status ?? 'enabled',
+    PluginClass: WritingPlugin,
+    noteActions: []
+  }
+  const app = new WritingApp(meta, config)
+  if (!config?.status || config?.status === 'enabled') {
+    pluginInstances[meta.name] = new WritingPlugin(app)
+  }
 }
 
 export const removePlugin = (name: string, options = { clearData: false }) => {
-  plugins[name]?.instance?.destroy?.()
-  delete plugins[name]
+  pluginInstances[name]?.destroy?.()
+  delete pluginInstances[name]
   pluginsRuntime[name]!.status = 'removed'
   if (options.clearData) {
     delete pluginsRuntime[name]
+  }
+}
+
+export const togglePlugin = async (name: string, status?: 'enabled' | 'disabled') => {
+  if (pluginsRuntime[name].status === status) return
+  await service.configService.setValue(`Plugin.${name}`, JSON.stringify({
+    status,
+    settingsValue: pluginsRuntime[name].settingsValue
+  }))
+  if (status === 'enabled') {
+    pluginsRuntime[name].status = 'enabled'
+    const PluginClass = pluginsRuntime[name].PluginClass
+    addPlugin(pluginsRuntime[name].meta, PluginClass)
+  } else {
+    pluginsRuntime[name].status = 'disabled'
+    pluginInstances[name]?.destroy?.()
+    delete pluginInstances[name]
   }
 }

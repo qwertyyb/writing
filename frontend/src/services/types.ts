@@ -1,3 +1,5 @@
+import type { IWritingAttribute } from "@writing/types"
+
 export interface IAttribute {
   docId: number
   key: string,
@@ -17,7 +19,7 @@ export interface IDocument {
   nextId: number | null,
   createdAt: string,
   updatedAt: string,
-  attributes: IAttribute[]
+  attributes: IWritingAttribute[]
 }
 
 export interface IFile {
@@ -63,7 +65,8 @@ export interface IDocumentService {
 }
 
 export interface IAttributeService {
-  setAttributes: (docId: number, attributes: Omit<IAttribute, "docId">[]) => Promise<ResponseData<IAttribute[]>>
+  setAttributes: (docId: number, attributes: IWritingAttribute[]) => Promise<ResponseData<IAttribute[]>>
+  removeAttributes: (docId: number, keys: string[]) => Promise<ResponseData<null>>
 }
 
 export interface IConfigService {

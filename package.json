@@ -17,6 +17,7 @@
     "@simplewebauthn/server": "^9.0.3",
     "@simplewebauthn/types": "^9.0.1",
     "@writing/editor": "workspace:^",
+    "@writing/types": "workspace:^",
     "hexo": "^7.1.1",
     "jose": "^5.2.2",
     "koa": "^2.15.0",

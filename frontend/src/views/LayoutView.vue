@@ -45,7 +45,7 @@
       </div>
     </template>
     <el-dialog title="设置" v-model="settingsVisible" destroy-on-close>
-      <settings-view></settings-view>
+      <settings-view :default-tab="settingsTab"></settings-view>
     </el-dialog>
     <router-view></router-view>
   </column-container>
@@ -61,7 +61,7 @@ import router from '@/router';
 import { useRuntime } from '@/stores/runtime';
 import ColumnContainer from '@/components/ColumnContainer.vue';
 import SearchByTitle from '@/components/SearchByTitle.vue';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { ElMessageBox } from 'element-plus';
 import { initService, service } from '@/services';
@@ -75,6 +75,7 @@ if (!service) {
 
 const treeVisible = ref(true)
 const settingsVisible = ref(false)
+const settingsTab = ref('')
 const hasAuth = ref(service.authService.supportAuth())
 
 const runtimeStore = useRuntime()
@@ -124,6 +125,19 @@ const logout = async () => {
   useAuthStore().logout()
   router.push({ name: 'auth' })
 }
+
+declare global {
+  interface DocumentEventMap {
+    openSettings: CustomEvent<{ tab?: 'string' }>
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('openSettings', (event: CustomEvent<{ tab?: 'string' }>) => {
+    settingsVisible.value = true
+    settingsTab.value = event.detail.tab ?? ''
+  })
+})
 
 </script>
 

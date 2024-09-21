@@ -1,5 +1,12 @@
 export interface IAttributeOptions {
+  label?: string,
+  formatValue?: 'raw' | 'date' | 'link'
+}
 
+export interface IWritingAttribute {
+  key: string,
+  value: string,
+  options?: IAttributeOptions
 }
 
 export interface IWritingNote {
@@ -9,7 +16,7 @@ export interface IWritingNote {
   createdAt: string
   updatedAt: string
 
-  attributes: { key: string, value: string, options?: IAttributeOptions }[]
+  attributes: IWritingAttribute[]
 
   content: string
 }

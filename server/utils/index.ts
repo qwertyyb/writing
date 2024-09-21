@@ -1,4 +1,6 @@
-import { createLogger } from "./logger"
+import { Attribute } from "@prisma/client"
+import { createLogger } from "./logger.ts"
+import { IWritingAttribute } from "@writing/types"
 
 const logger = createLogger('utils')
 
@@ -29,4 +31,8 @@ export const retryWhenError = <F extends (...args: any[]) => Promise<any>>(
     }
     logger.i(`retry failed for ${JSON.stringify(args)}`)
   }
+}
+
+export const parseAttr = (attr: Attribute): IWritingAttribute => {
+  return { ...attr, options: attr.options ? JSON.parse(attr.options) : attr.options }
 }

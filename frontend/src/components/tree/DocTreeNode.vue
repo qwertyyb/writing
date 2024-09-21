@@ -142,18 +142,18 @@ const setHeight = (el: Element) => {
     align-items: center;
     cursor: pointer;
     padding: 2px 4px;
-    border-radius: 4px;
     transition: background .2s;
     box-sizing: border-box;
     position: relative;
     &:hover {
-      background: rgba(220, 220, 220, .5);
+      background: var(--theme-hover-color);
       .tree-action {
         opacity: 1;
       }
     }
     &.selected {
-      background: rgba(220, 220, 220, .8);
+      background: var(--theme-main-color);
+      color: var(--theme-main-selected-text-color);
       .tree-action {
         opacity: 1;
       }
@@ -223,12 +223,10 @@ const setHeight = (el: Element) => {
     .tree-action {
       margin-left: auto;
       height: 24px;
-      color: #333;
       opacity: 0;
       transition: opacity .2s;
       .action-item {
         cursor: pointer;
-        border-radius: 4px;
         transition: background .2s;
         &:hover {
           background: #bbb;

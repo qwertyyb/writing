@@ -21,7 +21,14 @@ router
         },
       }),
     ]);
-    ctx.body = createRes({ total, list });
+    const notes = list.map(item => ({
+      ...item,
+      attributes: item.attributes.map(attr => ({
+        ...attr,
+        options: attr.options ? JSON.parse(attr.options) : attr.options
+      }))
+    }))
+    ctx.body = createRes({ total, list: notes });
   })
   .get('/query', async (ctx) => {
     const id = Number(ctx.query.id);
@@ -36,7 +43,10 @@ router
       where: { id },
       include: { attributes: true },
     });
-    ctx.body = createRes(document);
+    ctx.body = createRes({
+      ...document,
+      attributes: document?.attributes.map(attr => ({ ...attr, options: attr.options ? JSON.parse(attr.options) : attr.options })) || []
+    });
   })
   .patch('/update', async (ctx) => {
     const body = ctx.request.body as Pick<PostWithContent, 'id' | 'title' | 'content'>;

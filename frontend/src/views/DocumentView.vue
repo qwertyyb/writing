@@ -11,7 +11,11 @@
           </el-dropdown-menu>
         </template>
       </el-dropdown>
+      <div class="info-icon action-icon" @click="infoDialogVisible = true"><el-icon :size="20"><InfoFilled /></el-icon></div>
     </div>
+    <el-dialog title="信息" v-model="infoDialogVisible">
+      <note-info :note="documentStore.editing"></note-info>
+    </el-dialog>
     <el-dialog
       title="设置"
       v-model="settingDialogVisible">
@@ -45,7 +49,7 @@
 <script lang="ts" setup>
 import { saveAs } from 'file-saver';
 import { useDocumentStore } from '@/stores/document';
-import { MoreFilled } from '@element-plus/icons-vue';
+import { MoreFilled, InfoFilled } from '@element-plus/icons-vue';
 import { ref, watch } from 'vue';
 import DocumentAttribute from '@/components/DocumentAttribute.vue';
 import DocumentEditor from '@writing/editor';
@@ -54,6 +58,7 @@ import { createLogger } from '@/utils/logger';
 import { service } from '@/services';
 import { noteActions } from '@/plugin';
 import type { INoteAction } from '@writing/types';
+import NoteInfo from '@/components/NoteInfo.vue';
 
 const logger = createLogger('DocumentView')
 
@@ -71,6 +76,7 @@ const updateHandler = debounce(async (content: any) => {
 const updateTitle = debounce(() => documentStore.updateEditingTitle(documentStore.editing!.title))
 
 const settingDialogVisible = ref(false)
+const infoDialogVisible = ref(false)
 
 watch(
   () => props.id,
@@ -139,6 +145,9 @@ const pluginActionHandler = (noteAction: INoteAction) => {
   .setting-icon {
     cursor: pointer;
     outline: none;
+  }
+  .info-icon {
+    margin-left: 8px;
   }
   .fullscreen-icon {
     font-size: 20px;
