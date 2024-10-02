@@ -30,27 +30,27 @@ export class DocumentService implements IDocumentService {
         }
       ],
     })
-    await this.fsServer.writeFile(new Blob([content], { type: 'application/json' }), `${DOC_DIR_PATH}/1.json`)
+    const doc = {
+      id: 1,
+      title: 'root',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      nextId: null,
+      attributes: [],
+      content: '',
+      path: '',
+    }
+    await this.fsServer.writeJSON({ ...doc, content }, `${DOC_DIR_PATH}/1.json`)
     await this.low.update(meta => {
-      meta.document.push({
-        id: 1,
-        title: 'root',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        nextId: null,
-        attributes: [],
-        content: '',
-        path: '',
-      })
+      meta.document.push(doc)
     })
   }
 
 
   async find(where: { id: number }) {
     await this.low.read()
-    const document = this.low.data.document.find(item => item.id === where.id)
-    const file = await this.fsServer.readFile(`${DOC_DIR_PATH}/${where.id}.json`)
-    return Promise.resolve({ errMsg: 'ok', errCode: 0, data: { ...document!, content: (await file?.text()) ?? '' } })
+    const document = await this.fsServer.readJSON(`${DOC_DIR_PATH}/${where.id}.json`)
+    return Promise.resolve({ errMsg: 'ok', errCode: 0, data: document })
   }
   findMany = async () => {
     await this.low.read()
@@ -59,14 +59,16 @@ export class DocumentService implements IDocumentService {
   }
   update = async (data: Pick<IDocument, "id"> & Partial<Pick<IDocument, "title" | "content">>) => {
     const { id, content, ...rest } = data
+    let target: IDocument | null = null
     await this.low.update(({ document }) => {
       const index = document.findIndex(item => item.id === id)
       if (index >= 0) {
         document[index] = { ...document[index], ...rest }
+        target = document[index]
       }
     })
-    if (content) {
-      await this.fsServer.writeFile(new Blob([content], { type: 'application/json' }), `${DOC_DIR_PATH}/${id}.json`)
+    if (target) {
+      await this.fsServer.writeJSON({ ...(target as IDocument), content }, `${DOC_DIR_PATH}/${id}.json`)
     }
     return { errCode: 0, errMsg: 'ok', data: {} }
   }
@@ -96,14 +98,14 @@ export class DocumentService implements IDocumentService {
       const maxId = Math.max(...meta.document.map(item => item.id)) || 0
       const nextId = maxId + 1
       doc = {
-        id: nextId, ...rest, content: '', createdAt: new Date().toUTCString(), updatedAt: new Date().toUTCString(),
+        id: nextId, ...rest, content: '', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
         nextId: null,
         attributes: []
       }
       meta.document.push(doc)
     })
-    if (content) {
-      await this.fsServer.writeFile(new Blob([content], { type: 'application/json' }), `${DOC_DIR_PATH}/${doc!.id}.json`)
+    if (doc) {
+      await this.fsServer.writeJSON({ ...(doc as IDocument), content }, `${DOC_DIR_PATH}/${doc!.id}.json`)
     }
     return { errCode: 0, errMsg: 'ok', data: doc! }
   };

@@ -44,7 +44,7 @@
         </template>
       </div>
     </template>
-    <el-dialog title="设置" v-model="settingsVisible" destroy-on-close>
+    <el-dialog title="设置" v-model="settingsVisible" destroy-on-close width="80vw">
       <settings-view :default-tab="settingsTab"></settings-view>
     </el-dialog>
     <router-view></router-view>

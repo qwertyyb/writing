@@ -37,7 +37,7 @@ export class FileSystemServer implements IFileServer {
   resolve!: (value: FileSystemDirectoryHandle | PromiseLike<FileSystemDirectoryHandle>) => void
   reject!: (reason: any) => void
   ready: Promise<unknown>
-  constructor(private config: { name: string }) {
+  constructor(private config: { name?: string } = {}) {
     this.ready = new Promise<FileSystemDirectoryHandle>((resolve, reject) => {
       this.resolve = resolve
       this.reject = reject
@@ -50,6 +50,7 @@ export class FileSystemServer implements IFileServer {
   }
 
   getAuthorizedDirectoryHandle = async () => {
+    if (!this.config.name) return null
     const handle = await fsHandleStorage.get(this.config.name)
     if (!handle) return null
     if ('queryPermission' in handle && typeof handle.queryPermission === 'function') {
@@ -70,7 +71,7 @@ export class FileSystemServer implements IFileServer {
     // @ts-ignore
     this.root = await window.showDirectoryPicker({ mode: 'readwrite', id: this.config.name })
     if (this.root) {
-      await fsHandleStorage.set(this.config.name, this.root)
+      this.config.name && await fsHandleStorage.set(this.config.name, this.root)
       this.resolve(this.root)
     }
   }
@@ -82,7 +83,9 @@ export class FileSystemServer implements IFileServer {
 
   removeFile = async (name: string) => {
     await this.ready
-    await this.root?.removeEntry(name)
+    const path = name.split('/')
+    const dirHandle = await this.createDirectory(path.slice(0, path.length - 1))
+    await dirHandle.removeEntry(path[path.length - 1])
   }
 
   writeFile = async (content: Blob | File, name: string) => {

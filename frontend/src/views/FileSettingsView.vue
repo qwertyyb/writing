@@ -29,7 +29,7 @@
       <el-table-column label="文件名" align="center" prop="name"></el-table-column>
       <el-table-column label="文件类型" align="center" prop="mimetype" width="120"></el-table-column>
       <el-table-column label="创建时间" align="center" prop="createdAt"></el-table-column>
-      <el-table-column label="关联活动" align="center">
+      <el-table-column label="关联文章" align="center">
         <template #default="scope">
           <template v-if="!scope.row.documents.length">-</template>
           <el-link type="primary" :href="`/admin/document/${item.id}`"
@@ -42,7 +42,7 @@
         <template #default="scope">
           <el-button type="danger" size="small"
             :disabled="!!scope.row.documents.length"
-            @click="removeRow(scope.row, scope.index)">删除</el-button>
+            @click="removeRow(scope.row, scope.$index)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>

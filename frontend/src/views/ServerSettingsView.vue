@@ -19,6 +19,11 @@
           </el-select>
         </el-form-item>
         <el-form-item label="授权" v-if="form.adapter === 'local'">
+          <el-alert type="success"
+            :closable="false"
+            v-if="runtimeValue.authorizedDirectoryName !== null"
+          >已授权文件夹：{{ runtimeValue.authorizedDirectoryName || '未知文件夹' }}</el-alert>
+          <br><br>
           <el-button @click="requestFileSystem">选择本地文件夹</el-button>
         </el-form-item>
         <el-form-item label="token" v-if="form.adapter === 'github'">
@@ -41,10 +46,13 @@
 <script lang="ts" setup>
 import router from '@/router';
 import { initService, LocalStorageKey, service } from '@/services';
-import type { FileSystemService } from '@/services/fs';
+import { FileSystemService } from '@/services/fs';
 import { createService } from '@/services/service';
-import { ElForm, ElFormItem, ElSelect, ElOption, ElInput, ElButton, ElMessage, ElMessageBox } from 'element-plus'
+import { logger } from '@/utils/logger';
+import { ElForm, ElFormItem, ElSelect, ElOption, ElInput, ElButton, ElMessage, ElMessageBox, ElAlert } from 'element-plus'
 import { ref } from 'vue';
+
+const props = withDefaults(defineProps<{ redirect: boolean }>(), { redirect: true })
 
 const form = ref<{
   server: 'indexedDB' | 'fileSystem' | 'writingServer',
@@ -62,31 +70,64 @@ const form = ref<{
   repo: ''
 })
 
-const requestFileSystem = () => {
+const runtimeValue = ref<{
+  authorizedDirectoryName: string | null
+}>({
+  authorizedDirectoryName: null,
+})
+
+const initFormValue = () => {
+  try {
+    const local = localStorage.getItem(LocalStorageKey)
+    if (!local) return
+    form.value = JSON.parse(local)
+    if (service && service instanceof FileSystemService) {
+      runtimeValue.value.authorizedDirectoryName = service.authorizedDirectoryName()
+    }
+  } catch (err) {
+    logger.e(err)
+    return
+  }
+}
+
+initFormValue()
+
+const requestFileSystem = async () => {
   const service = createService(form.value as any) as FileSystemService
-  service.authDirectory()
+  await service.authDirectory()
+  runtimeValue.value.authorizedDirectoryName = service.authorizedDirectoryName()
 }
 
 const save = async () => {
-  let service: ReturnType<typeof createService> | null = null
+  let tempService: ReturnType<typeof createService> | null = null
   try {
-    service = createService(form.value as any)
+    tempService = createService(form.value as any)
   } catch (err) {
     ElMessage.error((err as any as Error).message || (err as any).toString())
     throw err
   }
-  if (!service) return
+  if (!tempService) return
   if (form.value.server === 'fileSystem') {
     // 检查文件夹是否已授权，未授权则提示
-    const authorized = await (service as FileSystemService).directoryAuthorized()
+    const authorized = await (tempService as FileSystemService).directoryAuthorized()
     if (!authorized) {
       ElMessageBox.alert('请授权本机文件夹')
       return
     }
   }
+  if (service) {
+    // 更新配置，保存后刷新下页面
+    await ElMessageBox.confirm('保存后页面将刷新，确认保存吗？')
+  }
   localStorage.setItem(LocalStorageKey, JSON.stringify(form.value))
-  initService()
-  router.replace({ name: 'admin'})
+  if (service) {
+    // 已有，刷新页面
+    location.reload()
+  } else {
+    // 未有，可直接跳走
+    initService()
+    router.replace({ name: 'admin'})
+  }
 }
 
 const checkAndRedirect = async () => {
@@ -100,7 +141,9 @@ const checkAndRedirect = async () => {
   router.replace({ name: 'admin'})
 }
 
-checkAndRedirect()
+if (props.redirect) {
+  checkAndRedirect()
+}
 
 </script>
 

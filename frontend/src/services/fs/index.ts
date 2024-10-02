@@ -61,4 +61,11 @@ export class FileSystemService implements IService {
     }
     return true
   }
+
+  authorizedDirectoryName = () => {
+    if ('root' in this.fsServer) {
+      return (this.fsServer as FileSystemServer).root?.name ?? null
+    }
+    return null
+  }
 }

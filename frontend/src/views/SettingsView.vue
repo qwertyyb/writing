@@ -4,6 +4,10 @@
       <dl class="settings-list">
         <dt class="settings-section-header">基础</dt>
         <dd class="settings-item"
+          :class="{selected: activeTab === 'server'}"
+          @click="activeTab = 'server'"
+        >服务</dd>
+        <dd class="settings-item"
           :class="{selected: activeTab === 'auth'}"
           @click="activeTab = 'auth'"
         >鉴权</dd>
@@ -11,6 +15,10 @@
           :class="{selected: activeTab === 'file'}"
           @click="activeTab = 'file'"
         >文件</dd>
+        <dd class="settings-item"
+          :class="{selected: activeTab === 'export'}"
+          @click="activeTab = 'export'"
+        >导出</dd>
         <dt class="settings-section-header">插件</dt>
         <dd class="settings-item"
           v-for="plugin in pluginsRuntime"
@@ -21,8 +29,10 @@
       </dl>
     </div>
     <section class="settings-item-view">
-      <auth-settings-view v-if="activeTab === 'auth'"></auth-settings-view>
+      <server-settings-view v-if="activeTab === 'server'" :redirect="false"></server-settings-view>
+      <auth-settings-view v-else-if="activeTab === 'auth'"></auth-settings-view>
       <file-settings-view v-else-if="activeTab === 'file'"></file-settings-view>
+      <export-data-view v-else-if="activeTab === 'export'"></export-data-view>
       <plugins-settings-view v-else-if="activeTab.startsWith('Plugin.')" :name="activeTab.replace(/^Plugin\./, '')"></plugins-settings-view>
     </section>
   </div>
@@ -33,6 +43,8 @@ import { service } from '@/services';
 import AuthSettingsView from '@/views/AuthSettingsView.vue';
 import FileSettingsView from '@/views/FileSettingsView.vue';
 import PluginsSettingsView from '@/views/PluginsSettingsView.vue';
+import ExportDataView from '@/views/ExportDataView.vue';
+import ServerSettingsView from '@/views/ServerSettingsView.vue';
 import { ref } from 'vue';
 import { pluginsRuntime } from '@/plugin';
 
