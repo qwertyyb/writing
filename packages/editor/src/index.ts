@@ -1,3 +1,5 @@
+
+import 'material-symbols';
 import DocumentEditor from './editor/DocumentEditor.vue'
 import type { NodeValue } from './editor/types'
 export * from './utils'

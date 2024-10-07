@@ -1,12 +1,12 @@
-const POST_API_PATH = './server/posts/:id.json'
-const LIST_API_PATH = './server/posts/list.json'
+const POST_API_PATH = './data/articles/:id/index.json'
+const LIST_API_PATH = './data/articles/list.json'
 
 export class RequestError extends Error {
   status?: number
 }
 
-export const getPost = async (id: string) => {
-  const postPATH = POST_API_PATH.replace(/:id/g, id)
+export const getPost = async (id: number | string) => {
+  const postPATH = POST_API_PATH.replace(/:id/g, id.toString())
   const response = await fetch(postPATH, {
     cache: 'no-cache'
   })

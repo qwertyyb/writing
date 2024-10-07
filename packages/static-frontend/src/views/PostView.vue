@@ -2,6 +2,13 @@
   <main class="post-view">
     <div class="loader" v-if="status === 'loading'"></div>
     <template v-else-if="status === 'completed' && document">
+      <div class="action-btns">
+        <router-link :to="{name: 'home' }" class="back-btn">主页</router-link>
+        <router-link :to="{name: 'edit', params: { id: $route.params.id } }"
+          v-if="hasConfig"
+          class="edit-btn"
+        >编辑</router-link>
+      </div>
       <h1 class="document-title">{{ document.title }}</h1>
       <document-editor
         class="document-editor"
@@ -18,10 +25,12 @@ import DocumentEditor, { type NodeValue } from '@writing/editor';
 import { getPost } from '../services';
 import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { useAdminConfig } from '@/hooks/admin';
 
 const status = ref<'loading' | 'error' | 'completed'>('loading')
 const errorMsg = ref('')
 const document = ref<{ title: string, content: NodeValue }>()
+const { hasConfig } = useAdminConfig()
 
 const route = useRoute()
 
@@ -55,15 +64,14 @@ watch(() => route.params.id, () => { refresh() }, { immediate: true })
 
 <style lang="less" scoped>
 .post-view {
-  width: 80vw;
+  max-width: 960px;
   margin: 20px auto 60px auto;
-  max-width: 1200px;
   .document-title {
     width: calc(100% - 40px);
     font-size: 36px;
     border: none;
     outline: none;
-    text-align: center;
+    margin: 0.5em auto;
   }
 }
 /* HTML: <div class="loader"></div> */
@@ -90,6 +98,15 @@ watch(() => route.params.id, () => { refresh() }, { immediate: true })
   text-align: center;
   font-size: 32px;
   margin-top: 120px;
+}
+.action-btns {
+  display: flex;
+  box-sizing: border-box;
+  padding: 0 20px;
+}
+.edit-btn {
+  margin-left: auto;
+  text-align: right;
 }
 
 @media screen and (max-width: 540px) {

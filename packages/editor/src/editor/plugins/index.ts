@@ -26,7 +26,7 @@ import TocView from '../nodeViews/TocView.vue'
 import ExcalidrawView from '../nodeViews/ExcalidrawView.vue'
 
 export const createPlugins = (schema: Schema, props: {
-  [uploadSymbol]?: ((file: Blob | File) => Promise<string>);
+  [uploadSymbol]?: ((file: File) => Promise<string>);
   editable?: boolean
 }) => [
   todoPlugin(schema.nodes.todo),

@@ -18,7 +18,7 @@ import { uploadSymbol } from "./const"
 const model = defineModel<NodeValue>()
 
 const props = defineProps<{
-  upload?: (file: Blob | File) => Promise<string>,
+  upload?: (file: File) => Promise<string>,
   editable?: boolean,
 }>()
 
