@@ -1,7 +1,7 @@
 <template>
   <div class="link-input">
     <div class="form-item">
-      <el-input v-model="formValue.href" placeholder="链接" clearable style="width:200px"></el-input>
+      <el-input v-model="formValue.href" placeholder="链接" clearable class="form-item-input"></el-input>
     </div>
     <div class="form-item btns">
       <el-button @click="clearHandler" size="small">取消链接</el-button>
@@ -38,6 +38,10 @@ const clearHandler = () => {
 .form-item {
   padding: 4px 0;
   display: flex;
+  .form-item-input {
+    width: 320px;
+    max-width: 80vw;
+  }
   &.btns {
     justify-content: flex-end;
   }

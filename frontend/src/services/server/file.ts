@@ -3,7 +3,7 @@ import type { createFetch } from "./fetch"
 
 export class FileService implements IFileService {
   constructor(private fetch: ReturnType<typeof createFetch>) { }
-  upload = async (file: File | Blob, options?: Partial<{ name: string, mimetype: string }>) => {
+  upload = async (file: File, options?: { previous?: string }) => {
     const formData = new FormData()
     formData.set('file', file)
     if (options) {

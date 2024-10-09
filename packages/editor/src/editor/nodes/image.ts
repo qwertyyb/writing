@@ -34,7 +34,7 @@ export const imageSchema = (options: { content: string, group: string, inline: b
   attrs: {
     src: {},
     ratio: { default: null },
-    size: { default: null },
+    width: { default: null },
     align: { default: 'center' }, // left | center | right
     href: { default: null }
   },

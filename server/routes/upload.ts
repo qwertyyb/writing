@@ -17,29 +17,57 @@ router.post('/api/v1/upload', needAuth, async (ctx) => {
     };
     return;
   }
-  const { name, mimetype } = ctx.request.body
+  const { previous } = ctx.request.body
   const options = {
-    name: name || file.newFilename,
-    mimetype: mimetype || file.mimetype || 'unknown'
+    name: file.newFilename,
+    mimetype: file.mimetype || 'unknown'
   }
-  const data = await prisma.file.create({
-    data: {
+  let data
+  if (previous) {
+    const updatedData = {
       ...options,
       content: readFileSync(file.filepath),
-      createdAt: new Date(),
-    },
-    select: {
-      name: true,
-      mimetype: true,
-      createdAt: true,
-    },
-  });
+    }
+    const name = new URLSearchParams(previous.split('?')[1]).get('name')!
+    data = await prisma.file.upsert({
+      create: {
+        ...updatedData,
+        createdAt: new Date(),
+      },
+      where: {
+        name
+      },
+      update: {
+        ...updatedData,
+        name,
+        updatedAt: new Date(),
+      },
+      select: {
+        name: true,
+        mimetype: true,
+        createdAt: true,
+      },
+    });
+  } else {
+    data = await prisma.file.create({
+      data: {
+        ...options,
+        content: readFileSync(file.filepath),
+        createdAt: new Date(),
+      },
+      select: {
+        name: true,
+        mimetype: true,
+        createdAt: true,
+      },
+    });
+  }
   ctx.body = {
     errCode: 0,
     errMsg: 'ok',
     data: {
       ...data,
-      url: `/api/v1/file?name=${encodeURIComponent(data.name)}`,
+      url: `/api/v1/file?name=${encodeURIComponent(data.name)}&v=${Date.now()}`,
     },
   };
   setImmediate(async () => {

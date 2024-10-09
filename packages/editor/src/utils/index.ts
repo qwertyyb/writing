@@ -1,4 +1,4 @@
-import { markdownSerializer } from "../editor/markdown"
+import { markdownSerializer } from "../editor/markdown/index"
 import { schema } from "../editor/schema"
 import { DOMSerializer, Node } from "prosemirror-model"
 

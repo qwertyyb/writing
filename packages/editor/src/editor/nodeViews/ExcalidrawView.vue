@@ -1,175 +1,152 @@
 <template>
-  <div class="excalidraw-view">
-    <el-tooltip
-      placement="top"
-      width="fit-content"
-      :disabled="!editable"
-      :trigger-keys="[]"
-    >
-      <div class="excalidraw-view-wrapper"
-        :class="{fullsize}"
-        :style="{
-          width: node.attrs.size + '%',
-          marginLeft: node.attrs.align === 'left' ? '0' : 'auto',
-          marginRight: node.attrs.align === 'right' ? '0' : 'auto'
-        }"
-        ref="el"
-      ></div>
-      <template #content>
-        <ul class="action-list">
-          <li class="action-item remove-action material-symbols-outlined"
-            @click="remove"
-            title="删除"
-          >delete</li>
-          <li class="action-item align-action material-symbols-outlined"
-            :class="{selected: node.attrs.align === 'left'}"
-            @click="$emit('updateAttrs', { align: 'left' })"
-            title="左对齐"
-          >align_horizontal_left</li>
-          <li class="action-item align-action material-symbols-outlined"
-            :class="{selected: node.attrs.align === 'center'}"
-            @click="$emit('updateAttrs', { align: 'center' })"
-            title="居中对齐"
-          >align_horizontal_center</li>
-          <li class="action-item align-action material-symbols-outlined"
-            :class="{selected: node.attrs.align === 'right'}"
-            @click="$emit('updateAttrs', { align: 'right' })"
-            title="右对齐"
-          >align_horizontal_right</li>
-          <li class="action-item size-action" title="调整大小">
-            <ElSlider
-              :model-value="node.attrs.size"
-              :min="10" :max="100"
-              @update:model-value="$emit('updateAttrs', { size: $event })"
-            ></ElSlider>
-          </li>
-        </ul>
+  <div class="excalidraw-view" data-prosemirror-dom>
+    <base-image v-bind="props" @update-attrs="updateAttrs">
+      <template #menu v-if="props.view?.editable">
+        <li class="action-item material-symbols-outlined"
+          title="编辑"
+          @click="launchEditor"
+        >
+          edit
+        </li>
+        <li class="action-item material-symbols-outlined"
+          title="删除"
+          @click="remove"
+        >
+          delete
+        </li>
       </template>
-    </el-tooltip>
+    </base-image>
+    <el-dialog title="编辑" class="excalidraw-editor-dialog" v-model="editorVisible" destroy-on-close fullscreen :z-index="900" append-to-body>
+      <excalidraw-editor :initial-data="editorInitialData"
+        @change="changeHandler"></excalidraw-editor>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { inject, markRaw, onMounted, ref, shallowRef } from 'vue';
 import type { VueNodeViewProps } from '../plugins/vueNodeViews';
-import type { AppState, BinaryFiles } from '@excalidraw/excalidraw/types/types';
+import BaseImage from './components/BaseImage.vue'
+import type { exportToSvg, exportToBlob, loadFromBlob, serializeAsJSON } from '@excalidraw/excalidraw/types/packages/utils'
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/types/element/types';
-import { debounce, isEqual, pick } from 'lodash-es';
-import { ElTooltip, ElSlider } from 'element-plus';
+import { ElDialog, ElMessageBox } from 'element-plus';
+import { uploadSymbol } from '../const';
+import type { Attrs } from 'prosemirror-model';
+import ExcalidrawEditor from './components/ExcalidrawEditor.vue';
+import type { RestoredDataState } from '@excalidraw/excalidraw/types/data/restore';
+// import defaultExcalidrawPath from './components/default.excalidraw.svg?url'
+import defaultExcalidrawPath from './components/default.excalidraw.png?url'
 
 const props = defineProps<VueNodeViewProps>()
+
+const updateAttrs = (attrs: Partial<Attrs>) => {
+  const tr = props.view!.state.tr
+  
+  tr.setMeta('addToHistory', false)
+  const pos = props.getPos!()
+  Object.entries(attrs).forEach(([key, value]) => {
+    tr.setNodeAttribute(pos, key, value)
+  })
+  props.view?.dispatch(tr)
+}
+
+const editorVisible = ref(false)
+const editorInitialData = shallowRef<RestoredDataState>()
+
+const launchEditor = async () => {
+  const response = await fetch(props.node.attrs.src, { cache: 'no-store' })
+  const blob = await response.blob()
+  const initialData = markRaw(await window.ExcalidrawLib.loadFromBlob(blob, null, null))
+  editorInitialData.value = initialData
+  editorVisible.value = true
+  console.log(initialData)
+}
+
+onMounted(async () => {
+  if (props.node.attrs.src || !props.view?.editable || !upload) return
+  const blob = await (await fetch(defaultExcalidrawPath)).blob()
+  // const defaultData: any = {"type":"excalidraw","version":2,"source":"https://excalidraw.com","elements":[{"id":"OlaFIYDX0RCnPSwH-o_Cq","type":"rectangle","x":693.880126953125,"y":267.1289978027344,"width":368.6529541015625,"height":245.14700317382,"angle":0,"strokeColor":"#2f9e44","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"index":"aL","roundness":{"type":3},"seed":565917905,"version":79,"versionNonce":246096721,"isDeleted":false,"boundElements":[{"type":"text","id":"fs3jUDQyzn97Evdmnvezz"}],"updated":1728379797386,"link":null,"locked":false},{"id":"fs3jUDQyzn97Evdmnvezz","type":"text","x":785.5066390633583,"y":367.20249938964844,"width":185.3999298810959,"height":45,"angle":0,"strokeColor":"#2f9e44","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"index":"aM","roundness":null,"seed":791269919,"version":12,"versionNonce":2066774943,"isDeleted":false,"boundElements":null,"updated":1728379800186,"link":null,"locked":false,"text":"Excalidraw","fontSize":36,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","containerId":"OlaFIYDX0RCnPSwH-o_Cq","originalText":"Excalidraw","autoResize":true,"lineHeight":1.25}],"appState":{"gridSize":20,"gridStep":5,"gridModeEnabled":false,"viewBackgroundColor":"#ffffff"},"files":{}}
+  // const svg = await window.ExcalidrawLib.exportToSvg({
+  //   elements: defaultData.elements,
+  //   appState: { ...defaultData.appState, exportEmbedScene: true },
+  //   files: defaultData.files
+  // })
+  const file = new File([await blob.arrayBuffer()], 'exportToCanvas.excalidraw.png', {type: 'image/png'})
+  // const file = new File([await blob.arrayBuffer()],  'exportToCanvas.excalidraw.svg', {type: blob.type})
+  const src = await upload(file)
+  updateAttrs({ src })
+})
 
 declare global {
   interface Window {
     React: any
     ReactDOM: any
-    ExcalidrawLib: any
+    ExcalidrawLib: {
+      Excalidraw: ExcalidrawElement,
+      exportToSvg: typeof exportToSvg,
+      exportToBlob: typeof exportToBlob,
+      loadFromBlob: typeof loadFromBlob,
+      serializeAsJSON: typeof serializeAsJSON,
+    }
   }
 }
 
-const el = ref<HTMLDivElement>();
+const upload = inject<(file: File, options?: { previous?: string }) => Promise<string>>(uploadSymbol)
 
-const editable = computed(() => props.view?.editable !== false)
-const fullsize = ref(false)
-
-const remove = () => {
+const remove = async () => {
   if (!props.view || !props.getPos) return
+  await ElMessageBox.confirm('确认删除？')
   const from = props.getPos()
   props.view.dispatch(props.view.state.tr.delete(from, from + 1))
 }
 
-const getExportedState = (state: {
-  elements: ExcalidrawElement[], appState: AppState, files: BinaryFiles
-}) => {
-  const { elements, files, appState } = state
-  return {
-    elements,
-    files,
-    appState: pick(appState, ['gridSize', 'gridStep', 'gridModeEnabled', 'viewBackgroundColor'])
-  }
-}
-
-const changeHandler = debounce((elements: ExcalidrawElement[], appState: AppState, files: BinaryFiles) => {
+const changeHandler = async (data: RestoredDataState) => {
   if (!props.view) return
-  const data = getExportedState({ elements, appState, files })
-  if (isEqual(data, JSON.parse(props.node.attrs.content))) {
-    return
-  }
-  let tr = props.view.state.tr
-  tr = tr.setMeta('addToHistory', false)
-  tr.setNodeAttribute(props.getPos!(), 'content', JSON.stringify(data) )
-  props.view.dispatch(tr)
-}, 200)
+  const blob = await window.ExcalidrawLib.exportToBlob({
+    elements: data.elements,
+    appState: { ...data.appState, exportEmbedScene: true },
+    files: data.files,
+    mimeType: 'image/png',
+    getDimensions(width, height) {
+      const scale = 3
+      return { width: width * scale, height: height * scale, scale }
+    },
+  })
+  const file = new File([await blob.arrayBuffer()],  'exportToCanvas.excalidraw.png', {type: blob.type})
 
-let reactRoot: any = null
-const renderExcalidraw = () => {
-  const { content } = props.node.attrs
-  let initialData = null
-  if (content) {
-    try {
-      initialData = JSON.parse(content)
-    } catch (err) {
-      console.error(err)
-    }
+  // const svg = await window.ExcalidrawLib.exportToSvg({
+  //   elements: data.elements,
+  //   appState: { ...data.appState, exportEmbedScene: true },
+  //   files: data.files
+  // })
+  // const file = new File([svg.outerHTML], 'exportToCanvas.excalidraw.svg', {type: 'image/svg+xml'})
+  if (upload) {
+    const src = await upload(file, { previous: props.node.attrs.src })
+    updateAttrs({ src })
   }
-  const App = () => {
-    return window.React.createElement(
-      window.React.Fragment,
-      null,
-      window.React.createElement(
-        window.ExcalidrawLib.Excalidraw,
-        {
-          initialData: {
-            ...initialData,
-            scrollToContent: true,
-          },
-          renderTopRightUI: () => {
-            return window.React.createElement(
-              'button',
-              {
-                className: 'material-symbols-outlined',
-                style: { border: 'none', borderRadius: '6px', width: '36px', height: '36px', fontSize: '14px' },
-                onClick: () => {
-                  fullsize.value = !fullsize.value
-                }
-              },
-              fullsize.value ? 'fullscreen_exit' : 'fullscreen'
-            );
-          },
-          onChange: changeHandler,
-          langCode: 'zh-CN',
-          viewModeEnabled: !editable.value,
-        }
-      ),
-    );
-  };
-
-  reactRoot = window.ReactDOM.createRoot(el.value!);
-  reactRoot.render(window.React.createElement(App));
 }
-
-onMounted(() => {
-  renderExcalidraw()
-});
-
-onBeforeUnmount(() => {
-  reactRoot?.unmount();
-});
 
 defineExpose({
   stopEvent() {
     return true
   },
   selectNode() {
-    el.value?.querySelector<HTMLElement>('.excalidraw-container')?.focus()
-
+    console.log('select')
   },
   deselectNode() {
-    el.value?.querySelector<HTMLElement>('.excalidraw-container')?.focus()
+
   }
 })
 
 </script>
+
+<style lang="less">
+.excalidraw-editor-dialog {
+  .el-dialog__body {
+    height: calc(100% - 40px);
+  }
+}
+</style>
 
 <style lang="less" scoped>
 // 中文手写体
@@ -178,6 +155,7 @@ defineExpose({
   src: url("../../assets/Muyao-Softbrush-2.ttf");
 }
 .excalidraw-view {
+  user-select: none;
   .excalidraw-view-wrapper {
     width: 100%;
     height: 100%;

@@ -3,7 +3,7 @@ import { Node, type NodeSpec } from "prosemirror-model"
 
 export const codeBlockSchema = (options: { content: string, group: string }): NodeSpec => ({
   attrs: {
-    language: {}
+    language: { default: '' }
   },
   content: options.content,
   marks: '',

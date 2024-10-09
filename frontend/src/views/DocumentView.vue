@@ -5,6 +5,7 @@
         <el-icon :size="20" class="setting-icon action-icon"><MoreFilled /></el-icon>
         <template #dropdown>
           <el-dropdown-menu>
+            <el-dropdown-item command="import.markdown">从 Markdown 导入</el-dropdown-item>
             <el-dropdown-item command="export.markdown">导出为 Markdown</el-dropdown-item>
             <el-dropdown-item v-for="(noteAction, index) in noteActions" :key="index" @click="pluginActionHandler(noteAction)">{{ noteAction.title }}</el-dropdown-item>
             <el-dropdown-item divided command="settings">设置</el-dropdown-item>
@@ -86,8 +87,8 @@ watch(
   { immediate: true }
 )
 
-const uploadHandler = async (file: Blob | File) => {
-  const { data } = await service.fileService.upload(file)
+const uploadHandler = async (file: File, options?: { previous?: string }) => {
+  const { data } = await service.fileService.upload(file, options)
   if (data.url) return data.url
   throw new Error('上传失败')
 }
@@ -99,7 +100,7 @@ const enterKeydownHandler = (event: KeyboardEvent) => {
   document.querySelector<HTMLElement>('.document-editor-wrapper [contenteditable]')?.focus()
 }
 
-const commandHandler = (command: string) => {
+const commandHandler = async (command: string) => {
   if (command === 'settings') {
     settingDialogVisible.value = true
     return
@@ -107,8 +108,12 @@ const commandHandler = (command: string) => {
     const markdown = editor.value?.export('markdown')
     if (!markdown) return null
     logger.i('markdown content', markdown)
-    const blob = new Blob([markdown], { type: 'text/plain;charset=utf-8' })
-    saveAs(blob, documentStore.editing!.title + '.md')
+    // const blob = new Blob([markdown], { type: 'text/plain;charset=utf-8' })
+    // saveAs(blob, documentStore.editing!.title + '.md')
+  } else if (command === 'import.markdown') {
+    const [fileHandle] = await window.showOpenFilePicker({ types: [{ accept: { 'text/plain': '.md' } }] })
+    const text = await (await fileHandle.getFile()).text()
+    editor.value?.import(text, 'markdown')
   }
 }
 

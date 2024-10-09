@@ -36,4 +36,5 @@ export const calloutMarkdownSerialize = (state: MarkdownSerializerState, node: N
   state.renderContent(node)
   state.ensureNewLine()
   state.write('</aside>')
+  state.ensureNewLine()
 }

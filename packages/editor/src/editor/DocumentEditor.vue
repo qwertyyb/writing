@@ -7,23 +7,26 @@
 <script lang="ts" setup>
 import {EditorState} from "prosemirror-state"
 import { EditorView } from "prosemirror-view"
-import { markdownSerializer } from './markdown'
+import { markdownParser, markdownSerializer } from './markdown/'
 import {schema} from "./schema"
 import { onBeforeMount, onMounted, ref } from "vue"
 import { createPlugins } from './plugins'
 import { isEqual } from "lodash-es"
 import { type NodeValue } from "./types"
 import { uploadSymbol } from "./const"
+import { createLogger } from '@writing/utils/logger'
 
 const model = defineModel<NodeValue>()
 
 const props = defineProps<{
-  upload?: (file: File) => Promise<string>,
+  upload?: (file: File, options?: { previous?: string }) => Promise<string>,
   editable?: boolean,
 }>()
 
 const el = ref<HTMLElement>()
 let editor: EditorView | null = null
+
+const logger = createLogger('Editor')
 
 onMounted(() => {
   const view = new EditorView(el.value!, {
@@ -41,7 +44,7 @@ onMounted(() => {
       view.updateState(view.state.apply(tr));
       const value = view.state.doc.toJSON()
       if (isEqual(value, model.value)) return
-      console.log('change', value, view.state.selection.from)
+      logger.d('change', value)
       view.dom.dispatchEvent(new CustomEvent('datachange', { detail: { view } }))
       model.value = value
     }
@@ -60,6 +63,24 @@ defineExpose({
     if (fileType === 'markdown') {
       return markdownSerializer.serialize(editor.state.doc)
     }
+  },
+  import(content: string, fileType: 'markdown', ) {
+    if (!editor) return
+    logger.d(`import ${fileType}: `, content)
+    const result = markdownParser.parse(content)
+    logger.d('import result: ', result)
+    // 插入到当前光标下方
+    const pos = editor.state.selection.$to.after(1)
+    const tr = editor.state.tr
+    tr.replaceWith(pos, pos, result.content)
+    // result.content.forEach((child, offset, index) => {
+    //   console.log(index)
+    //   tr.insert(pos, child)
+    // })
+    // if (!tr.steps.length) {
+    //   return
+    // }
+    editor.dispatch(tr)
   }
 })
 
