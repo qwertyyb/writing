@@ -141,5 +141,7 @@ export const vueNodeViews = (schema: Schema, provideData: any, nodeViewsSpec: Re
 }
 
 export const toDOMRender = (node: Node, Component: Component) => {
-  return new VueNodeView(Component, {}, node) as { dom: HTMLElement, contentDOM: HTMLElement | undefined }
+  const nodeView = new VueNodeView(Component, {}, node) as { dom: HTMLElement, contentDOM: HTMLElement | undefined }
+  nodeView.dom.dataset.attrs = JSON.stringify(node.attrs)
+  return nodeView
 }

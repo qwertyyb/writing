@@ -1,5 +1,10 @@
 import type { MarkdownSerializerState } from "prosemirror-markdown";
 import type { NodeSpec, Node } from "prosemirror-model";
+import { toDOMRender } from "../plugins/vueNodeViews";
+import ExcalidrawView from "../nodeViews/ExcalidrawView.vue";
+import { createLogger } from "@writing/utils/logger";
+
+const logger = createLogger('excalidraw')
 
 export const excalidrawSchema = (options: Partial<NodeSpec>): NodeSpec => ({
   attrs: {
@@ -13,15 +18,21 @@ export const excalidrawSchema = (options: Partial<NodeSpec>): NodeSpec => ({
   selectable: true,
   content: 'plain_text',
   toDOM(node) {
-    return ['div', { class: 'excalidraw-view' }, 0]
+    return toDOMRender(node, ExcalidrawView)
   },
   parseDOM: [
     {
       tag: 'div.excalidraw-view',
       getAttrs(node) {
-        if (typeof node === 'string') return false
-        return { content: null }
+        if (!node || typeof node === 'string') return false
+        try {
+          return JSON.parse(node.dataset.attrs!)
+        } catch (err) {
+          logger.e('parse err', err)
+          return false
+        }
       },
+      contentElement: 'figcaption.editor-base-image-title'
     }
   ],
   ...options

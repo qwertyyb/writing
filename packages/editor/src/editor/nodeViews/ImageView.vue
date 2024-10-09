@@ -1,5 +1,5 @@
 <template>
-  <base-image class="editor-image-node"
+  <base-image class="image-view"
     data-prosemirror-dom
     v-bind="props"
     @update-attrs="$emit('updateAttrs', $event)"

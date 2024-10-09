@@ -10,9 +10,20 @@ export const codeBlockSchema = (options: { content: string, group: string }): No
   group: options.group,
   code: true,
   defining: true,
-  parseDOM: [{ tag: 'pre', preserveWhitespace: 'full' }],
-  toDOM() {
-    return ['pre', ['code', 0]]
+  parseDOM: [
+    {
+      tag: 'pre',
+      preserveWhitespace: 'full',
+      getAttrs(node) {
+        if (typeof node === 'string') return false
+        return {
+          language: node.dataset.language || ''
+        }
+      },
+    }
+  ],
+  toDOM(node) {
+    return ['pre', { 'data-language': node.attrs.language }, ['code', 0]]
   }
 })
 

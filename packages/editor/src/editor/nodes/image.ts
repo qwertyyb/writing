@@ -4,6 +4,9 @@ import ImageView from "../nodeViews/ImageView.vue";
 import { TextSelection, type Command } from "prosemirror-state";
 import { defaultBlockAt } from "../utils/editor";
 import type { MarkdownSerializerState } from "prosemirror-markdown";
+import { createLogger } from "@writing/utils/logger";
+
+const logger = createLogger('image')
 
 const parseImageViewRule = () => ({
   tag: 'figure.editor-image-node',
@@ -58,7 +61,19 @@ export const imageSchema = (options: { content: string, group: string, inline: b
         }
       }
     },
-    parseImageViewRule()
+    {
+      tag: 'figure.image-view',
+      getAttrs(node) {
+        if (typeof node === 'string') return false
+        try {
+          return JSON.parse(node.dataset.attrs!)
+        } catch (err) {
+          logger.e('parse failed', err)
+          return false
+        }
+      },
+      contentElement: 'figcaption.editor-base-image-title'
+    }
   ],
   toDOM: node => toDOMRender(node, ImageView)
 })
