@@ -15,8 +15,17 @@
           v-if="hasConfig"
           class="edit-btn"
         >编辑</router-link>
+        <a href="javascript:void(0)"
+          v-if="hasConfig"
+          class="del-btn"
+          @click="deleteAction(post, index)"
+          v-loading="deleting === post.id"
+        >删除</a>
       </li>
-      <li class="post-item placeholder-item" v-if="!list.length">
+      <li class="post-item placeholder-item" v-if="loading">
+        <p class="empty-message">加载中...</p>
+      </li>
+      <li class="post-item placeholder-item" v-else-if="!list.length">
         <p class="empty-message">你来到了没有知识的荒野</p>
       </li>
     </ul>
@@ -27,13 +36,20 @@
 import { RouterLink } from 'vue-router';
 import { getList } from '@/services';
 import { ref } from 'vue';
-import { useAdminConfig } from '@/hooks/admin';
+import { deleteArticle, useAdminConfig } from '@/hooks/admin';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import 'element-plus/es/components/message/style/css'
+import 'element-plus/es/components/message-box/style/css'
+import { tryRunForTuple } from 'try-run-js';
 
 const list = ref<{ id: string | number, title: string, createdAt: string, updatedAt: string }[]>([])
+const loading = ref(false)
+const deleting = ref<number | string>()
 
 const { hasConfig } = useAdminConfig()
 
 const refresh = async () => {
+  loading.value = true
   const data = await getList()
   list.value = data.map((item: any) => {
     return {
@@ -42,8 +58,22 @@ const refresh = async () => {
       updatedAt: new Date(item.updatedAt).toLocaleDateString(),
     }
   })
+  loading.value = false
 }
 refresh()
+
+const deleteAction = async (article: { id: string | number, title: string, createdAt: string, updatedAt: string }, index: number) => {
+  await ElMessageBox.confirm(`确认删除 ${JSON.stringify(article.title)}?`)
+  deleting.value = article.id
+  const [error] = await tryRunForTuple(deleteArticle(article.id))
+  if (error) {
+    ElMessage.error(error.message || '删除失败')
+  } else {
+    ElMessage.success('已删除')
+  }
+  list.value.splice(index, 1)
+}
+
 </script>
 
 <style scoped>
@@ -66,7 +96,13 @@ refresh()
 .post-list .post-item {
   padding: 12px 0;
   display: flex;
-  justify-content: space-between;
+}
+.post-list .post-item .edit-btn {
+  margin-left: auto;
+  margin-right: 1em;
+}
+.post-list .post-item .del-btn {
+  color: red;
 }
 .post-list .post-item a {
   display: flex;
@@ -84,6 +120,9 @@ refresh()
 .post-list .post-created-time {
   color: rgba(0, 0, 0, 0.65);
   font-size: 14px;
+}
+.post-list .post-item.placeholder-item {
+  justify-content: center;
 }
 .empty-message {
   text-align: center;

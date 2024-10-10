@@ -1,6 +1,6 @@
 import { Buffer } from 'buffer'
 import { Octokit } from "@octokit/rest";
-import { computed, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import localforage from 'localforage'
 import { getPost } from '@/services';
 
@@ -20,9 +20,16 @@ interface IAdminConfig {
 const ARTICLE_DIR = 'data/articles'
 const STORAGE_KEY = 'adminConfig'
 
-const getArticleContentPath = (id: number | string) => `${ARTICLE_DIR}/${id}/index.json`
+export const getArticlePath = (id: number | string) => `${ARTICLE_DIR}/${id}/`
+export const getArticleContentPath = (id: number | string) => `${ARTICLE_DIR}/${id}/index.json`
 const getArticleFilePath = (id: number | string, name: string) => `${ARTICLE_DIR}/${id}/files/${name}`
-
+const parseArticleFileName = (path: string, id: number | string) => {
+  const prefix = `${ARTICLE_DIR}/${id}/files/`
+  if (path.startsWith(prefix)) {
+    return path.substring(prefix.length)
+  }
+  return ''
+}
 
 const adminConfig = ref({
   token: '', owner: '', repo: ''
@@ -90,6 +97,7 @@ const getGitArticle = async (id: number | string) => {
       'Content-Type': 'application/vnd.github.raw+json'
     }
   })
+  // octokit.rest.repos.get({ owner, repo })
   if ('content' in response.data && 'encoding' in response.data) {
     const buffer = new Buffer(response.data.content, response.data.encoding)
     const text = buffer.toString('utf-8')
@@ -142,6 +150,24 @@ export const useArticleStatus = () => {
   }
 }
 
+type TreeItem = {
+  type: "blob" | "tree" | "commit",
+  sha?: string | null,
+  content?: string,
+  path: string,
+  mode?: "100644" | "100755" | "040000" | "160000" | "120000"
+}
+
+export const deleteArticle = async (id: number | string) => {
+  const data = await getGitArticle(id)
+  if (!data) {
+    throw new Error(`文章${id}不存在`)
+  }
+  const github = createGithubClient()
+  const { owner, repo } = adminConfig.value
+  github.rest.repos.deleteFile({ owner, repo, path: getArticleContentPath(id), message: `删除 ${id}`, sha: data.sha })
+}
+
 export const useEdit = (articleId?: number | string) => {
   const state = ref<{
     server: IArticle | null,
@@ -188,36 +214,82 @@ export const useEdit = (articleId?: number | string) => {
     const { owner, repo } = adminConfig.value
     const github = createGithubClient()
     let targetId = id
-    if (id === 'new') {
+    const isNew = id === 'new'
+    if (isNew) {
       // 新的文章，获取一个id
       // 用时间取一个id
       // targetId = new Date().toISOString().substring(0, 19).replace(/[^\d]/g, '')
       targetId = newArticleId
     }
-    await github.rest.repos.createOrUpdateFileContents({
-      owner, repo, path: getArticleContentPath(targetId),
-      message: `update ${targetId}`,
-      content: new Buffer(JSON.stringify(state.value.local)).toString('base64'),
-      sha: state.value.git?.sha // 更新需要sha
-    })
+    // 新建的文章，把临时路径替换成目标路径
+    const article = JSON.stringify(state.value.local).replaceAll(getArticleFilePath('new', ''), getArticleFilePath(targetId, ''))
     // 文件也需要发布
     const keys = await localdb.keys()
-    await Promise.all(keys.filter(key => key.startsWith('file:')).map(async key => {
-      const name = key.replace(/^file:/, '')
-      const content: Blob = (await localdb.getItem(key))!
-      try {
-        github.rest.repos.createOrUpdateFileContents({
-          owner, repo, path: getArticleFilePath(targetId, name),
-          message: `update file ${name}`,
-          content: Buffer.from(await content.arrayBuffer()).toString('base64')
-        })
-      } catch (err) {
-        throw new Error(`文件${name}上传失败: ${(err as any).message}`, { cause: err })
-      }
-    }))
+    const files = keys.filter(key => key.startsWith('file:'))
+    if (!files.length) {
+      // 没有文件需要提交，只提交文章本身即可
+      await github.rest.repos.createOrUpdateFileContents({
+        owner, repo, path: getArticleContentPath(targetId),
+        message: `update ${targetId}`,
+        content: new Buffer(article).toString('base64'),
+        sha: state.value.git?.sha // 更新需要sha
+      })
+    } else {
+      // 1. 上传文件
+      const tree: {
+        type: "blob" | "tree" | "commit",
+        sha?: string,
+        content?: string,
+        path: string,
+        mode?: "100644" | "100755" | "040000" | "160000" | "120000"
+      }[] = await Promise.all(files.map(async key => {
+        const name = key.replace(/^file:/, '')
+        const content: Blob = (await localdb.getItem(key))!
+        try {
+          const filePath = getArticleFilePath(targetId, name)
+          const { data: { sha } } = await github.rest.git.createBlob({
+            owner, repo, content: Buffer.from(await content.arrayBuffer()).toString('base64'),
+            encoding: 'base64'
+          })
+          return { type: 'blob', sha, path: filePath, mode: '100644' }
+        } catch (err) {
+          throw new Error(`文件${name}上传失败: ${(err as any).message}`, { cause: err })
+        }
+      }))
+
+      // 2. 获取 baseTree
+      const { data: { sha: baseTreeSha } } = await github.rest.git.getTree({ owner, repo, tree_sha: 'main' })
+
+      // 3. 创建 tree
+      tree.push({ type: 'blob', content: article, path: getArticleContentPath(targetId), mode: '100644' })
+      const { data: { sha: newTreeSha } } = await github.rest.git.createTree({ owner, repo, tree, base_tree: baseTreeSha })
+
+      // 4. 获取 base commit
+      const { data: { object: { sha: baseCommitSha } } } = await github.rest.git.getRef({ owner, repo, ref: 'heads/main' })
+
+      // 4. 创建 commit
+      const { data: { sha: newCommitSha } } = await github.rest.git.createCommit({ owner, repo, message: `${id === 'new' ? '新增' : '更新'} ${targetId}`, tree: newTreeSha, parents: [ baseCommitSha ] })
+
+      // 5. 更新 ref
+      await github.rest.git.updateRef({ owner, repo, ref: 'heads/main', sha: newCommitSha })
+    }
 
     // 发布后清空本地
     await localdb.clear()
+  }
+
+  const imageHandler = async (event: ErrorEvent) => {
+    const target = event.target as HTMLImageElement
+    if (target.nodeName.toLocaleLowerCase() !== 'img') return
+    const src = target.getAttribute('src')
+    if (!src || target.dataset.blobUrl === src) return
+    const name = parseArticleFileName(src, id)
+    if (!name) return
+    const blob: Blob | null = await localdb.getItem(`file:${name}`)
+    if (!blob) return
+    const blobUrl = URL.createObjectURL(blob)
+    target.dataset.blobUrl = blobUrl
+    target.src = blobUrl
   }
 
   const startEditArticle = async () => {
@@ -279,6 +351,14 @@ export const useEdit = (articleId?: number | string) => {
     await localdb.setItem(`file:${name}`, file)
     return getArticleFilePath(id, name)
   }
+
+  onMounted(() => {
+    document.body.addEventListener('error', imageHandler, true)
+  })
+
+  onUnmounted(() => {
+    document.body.removeEventListener('error', imageHandler, true)
+  })
 
   return {
     startEditArticle,

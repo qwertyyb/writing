@@ -27,6 +27,7 @@ import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import 'element-plus/es/components/message/style/css'
 import 'element-plus/es/components/loading/style/css'
 import 'element-plus/es/components/message-box/style/css'
+import router from '@/router';
 
 const route = useRoute()
 
@@ -85,6 +86,7 @@ const publish = async () => {
   } else {
     ElMessage.success('已发布，该文章将在几分钟内部署到现网')
   }
+  router.replace({ name: 'home' })
 }
 
 

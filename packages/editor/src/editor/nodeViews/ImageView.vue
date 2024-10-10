@@ -10,6 +10,7 @@
       </li>
       <li class="action-item material-symbols-outlined"
         @click="selectImage"
+        v-if="editable"
         title="替换图片"
       >image</li>
     </template>
