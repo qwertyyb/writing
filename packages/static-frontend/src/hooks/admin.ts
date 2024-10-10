@@ -346,8 +346,9 @@ export const useEdit = (articleId?: number | string) => {
     localdb.setItem('article', JSON.parse(JSON.stringify(state.value.local)))
   }
 
-  const uploadFile = async (file: File) => {
-    const name = `${Date.now()}-${file.name}`
+  const uploadFile = async (file: File, options?: { previous?: string }) => {
+    let name = options?.previous ? parseArticleFileName(options.previous, id) : `${Date.now()}-${file.name}`
+    name = name || `${Date.now()}-${file.name}`
     await localdb.setItem(`file:${name}`, file)
     return getArticleFilePath(id, name)
   }

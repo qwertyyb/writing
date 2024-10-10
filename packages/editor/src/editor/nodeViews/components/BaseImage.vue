@@ -17,7 +17,6 @@
         class="editor-base-image-image"
         :src="node.attrs.src || 'https://fakeimg.pl/200'"
         alt=""
-        v-if="node.attrs.src"
       >
       <div class="width-resizer left-resizer"
         @pointerdown.capture.prevent.stop="pointerdownHandler('left', $event)"
@@ -154,6 +153,7 @@ const pointerupHandler = (drt: 'left' | 'right', event: PointerEvent) => {
     width: 100%;
     vertical-align: top;
     min-height: 60px;
+    min-width: 60px;
   }
   figcaption.editor-base-image-title {
     text-align: center;
@@ -201,6 +201,9 @@ const pointerupHandler = (drt: 'left' | 'right', event: PointerEvent) => {
   border-radius: 2px;
   &:empty {
     display: none;
+  }
+  &:deep( > *) {
+    cursor: pointer;
   }
   &:deep(*::selection) {
     background: none;

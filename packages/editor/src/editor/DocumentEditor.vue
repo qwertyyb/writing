@@ -73,13 +73,6 @@ defineExpose({
     const pos = editor.state.selection.$to.after(1)
     const tr = editor.state.tr
     tr.replaceWith(pos, pos, result.content)
-    // result.content.forEach((child, offset, index) => {
-    //   console.log(index)
-    //   tr.insert(pos, child)
-    // })
-    // if (!tr.steps.length) {
-    //   return
-    // }
     editor.dispatch(tr)
   }
 })

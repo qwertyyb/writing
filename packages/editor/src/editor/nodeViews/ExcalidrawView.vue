@@ -97,7 +97,9 @@ const remove = async () => {
   if (!props.view || !props.getPos) return
   await ElMessageBox.confirm('确认删除？')
   const from = props.getPos()
-  props.view.dispatch(props.view.state.tr.delete(from, from + 1))
+  const tr = props.view.state.tr
+  const $pos = props.view.state.doc.resolve(from + 1)
+  props.view.dispatch(tr.deleteRange($pos.before(), $pos.after()))
 }
 
 const changeHandler = async (data: RestoredDataState) => {

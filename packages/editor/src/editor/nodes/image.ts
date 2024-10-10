@@ -8,30 +8,6 @@ import { createLogger } from "@writing/utils/logger";
 
 const logger = createLogger('image')
 
-const parseImageViewRule = () => ({
-  tag: 'figure.editor-image-node',
-  getAttrs(node: string | HTMLElement) {
-    if (typeof node === 'string') return false
-    const img = node.querySelector<HTMLImageElement>('img.editor-image-node-image')
-    const src = img?.src
-    if (!src) return false
-    const size = parseInt(node.style.width) > 100 ? null : parseInt(node.style.width)
-    const ratio = node.style.aspectRatio ?? null
-    const align = node.style.marginLeft === 'auto' && node.style.marginRight === 'auto'
-      ? 'center'
-      : node.style.marginLeft === 'auto' ? 'right' : 'left'
-    const link = node.querySelector<HTMLLinkElement>('a.editor-image-node-link')
-    return {
-      src,
-      size,
-      align,
-      ratio,
-      href: link?.href ?? null
-    }
-  },
-  contentElement: 'figcaption.editor-image-node-title'
-})
-
 export const imageSchema = (options: { content: string, group: string, inline: boolean }): NodeSpec => ({
   inline: options.inline,
   attrs: {

@@ -19,11 +19,12 @@ import { appendParagraph } from './appendParagraph'
 import DetailsView from '../nodeViews/DetailsView.vue'
 import CalloutView from '../nodeViews/CalloutView.vue'
 import { addBlockAfterDetails, detailsPlugin } from '../nodes/details'
-import type { uploadSymbol } from '../const'
+import { uploadSymbol } from '../const'
 import { emojiPlugin } from './emoji/emoji'
 import KatexBlockView from '../nodeViews/KatexBlockView.vue'
 import TocView from '../nodeViews/TocView.vue'
 import ExcalidrawView from '../nodeViews/ExcalidrawView.vue'
+import { pastePlugin } from './paste'
 
 export const createPlugins = (schema: Schema, props: {
   [uploadSymbol]?: ((file: File, options?: { previous?: string }) => Promise<string>);
@@ -76,5 +77,6 @@ export const createPlugins = (schema: Schema, props: {
       schema.nodes.callout,
       schema.nodes.toc
     ]),
+    pastePlugin({ imageNode: schema.nodes.image, upload: props[uploadSymbol] })
   ] : []),
 ]
