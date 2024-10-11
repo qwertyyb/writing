@@ -7,7 +7,7 @@ import {
   ellipsis,
   InputRule
 } from 'prosemirror-inputrules'
-import { MarkType, NodeType, Schema } from 'prosemirror-model'
+import { MarkType, Node, NodeType, Schema } from 'prosemirror-model'
 import { TextSelection } from 'prosemirror-state'
 import { languages } from '@codemirror/language-data'
 import { LanguageDescription } from '@codemirror/language'
@@ -91,29 +91,31 @@ export function todoRule(nodeType: NodeType) {
   )
 }
 
-const boldMarkTypeInputRule = (markType: MarkType) => {
+const boldMarkTypeInputRule = (markType: MarkType, codeMark: MarkType) => {
   const regexp = /\*\*([^*]+)\*\*$/
   return new InputRule(regexp, (state, match, start, end) => {
+    if (codeMark && state.doc.rangeHasMark(start, end, codeMark)) return null
     const tr = state.tr
-    console.log(state.doc.textContent)
     return tr.addMark(start, end, markType.create())
       .delete(start, start + 2)
       .delete(tr.mapping.map(end - 1), tr.mapping.map(end))
   })
 }
 
-const italicMarkTypeInputRule = (markType: MarkType) => {
+const italicMarkTypeInputRule = (markType: MarkType, codeMark?: MarkType) => {
   const regexp = /(?<!\*)\*([^*]+)\*$/
   return new InputRule(regexp, (state, match, start, end) => {
+    if (codeMark && state.doc.rangeHasMark(start, end, codeMark)) return null
     const tr = state.tr
     return tr.addMark(start, end, markType.create())
       .delete(start, start + 1)
   })
 }
 
-const delMarkTypeInputRule = (markType: MarkType) => {
+const delMarkTypeInputRule = (markType: MarkType, codeMark?: MarkType) => {
   const regexp = /~~([^~]+)~~$/
   return new InputRule(regexp, (state, match, start, end) => {
+    if (codeMark && state.doc.rangeHasMark(start, end, codeMark)) return null
     const tr = state.tr
     return tr.addMark(start, end, markType.create())
       .delete(start, start + 2)
@@ -130,9 +132,10 @@ const codeMarkTypeInputRule = (markType: MarkType) => {
   })
 }
 
-const linkMarkTypeInputRule = (markType: MarkType) => {
+const linkMarkTypeInputRule = (markType: MarkType, codeMark?: MarkType) => {
   const regexp = /(?<!!)\[(?<title>[^[\]]*)\]\((?<href>[^()]+)\)$/
   return new InputRule(regexp, (state, match, start, end) => {
+    if (codeMark && state.doc.rangeHasMark(start, end, codeMark)) return null
     const { title, href } = match.groups ?? {}
     if (!title && !href) return null
     const tr = state.tr
@@ -158,11 +161,11 @@ export function buildInputRules(schema: Schema) {
   if ((type = schema.nodes.katex_block)) rules.push(katexBlockRule(type))
   if ((type = schema.nodes.katex)) rules.push(katexRule(type))
 
-  if (schema.marks.strong) rules.push(boldMarkTypeInputRule(schema.marks.strong))
-  if (schema.marks.em) rules.push(italicMarkTypeInputRule(schema.marks.em))
+  if (schema.marks.strong) rules.push(boldMarkTypeInputRule(schema.marks.strong, schema.marks.code))
+  if (schema.marks.em) rules.push(italicMarkTypeInputRule(schema.marks.em, schema.marks.code))
   if (schema.marks.code) rules.push(codeMarkTypeInputRule(schema.marks.code))
-  if (schema.marks.del) rules.push(delMarkTypeInputRule(schema.marks.del))
-  if (schema.marks.link) rules.push(linkMarkTypeInputRule(schema.marks.link))
+  if (schema.marks.del) rules.push(delMarkTypeInputRule(schema.marks.del, schema.marks.code))
+  if (schema.marks.link) rules.push(linkMarkTypeInputRule(schema.marks.link, schema.marks.code))
 
   return inputRules({ rules })
 }
