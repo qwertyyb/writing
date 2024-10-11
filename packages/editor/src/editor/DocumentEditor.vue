@@ -43,6 +43,7 @@ onMounted(() => {
     dispatchTransaction(tr) {
       view.updateState(view.state.apply(tr));
       const value = view.state.doc.toJSON()
+      logger.d('selection', view.state.selection.from)
       if (isEqual(value, model.value)) return
       logger.d('change', value)
       view.dom.dispatchEvent(new CustomEvent('datachange', { detail: { view } }))
@@ -141,8 +142,14 @@ defineExpose({
     border-left: 4px solid #ddd;
     padding: 1px 0 1px 16px;
   }
-  .ProseMirror > p:last-child {
-    min-height: 40vh;
+  // ul, ol {
+  //   list-style-position: inside;
+  //   & > li > *:first-child{
+  //     display: inline;
+  //   }
+  // }
+  .ProseMirror {
+    padding-bottom: 40vh;
   }
 }
 </style>

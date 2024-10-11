@@ -75,7 +75,8 @@ export const createPlugins = (schema: Schema, props: {
       schema.nodes.code_block,
       schema.nodes.katex_block,
       schema.nodes.callout,
-      schema.nodes.toc
+      schema.nodes.toc,
+      schema.nodes.excalidraw
     ]),
     pastePlugin({ imageNode: schema.nodes.image, upload: props[uploadSymbol] })
   ] : []),

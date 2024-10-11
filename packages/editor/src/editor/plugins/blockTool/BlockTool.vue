@@ -3,22 +3,19 @@
     v-if="position.top || position.left"
     :style="{top: position.top + 'px', left: position.left + 'px'}"
   >
-    <el-popover width="auto" :popper-style="{padding: 0}">
+    <!-- <el-popover width="auto" :popper-style="{padding: 0}">
       <template #reference>
         <div class="block-tool-item material-symbols-outlined">add</div>
       </template>
       <ul class="menu-list">
-        <li class="menu-item">
-          <span class="menu-item-icon material-symbols-outlined">arrow_outward</span>
-          <span class="menu-item-label">在前面添加</span>
-        </li>
-        <li class="menu-item">
-          <span class="menu-item-icon material-symbols-outlined">south_east</span>
-          <span class="menu-item-label">在后面添加</span>
-        </li>
       </ul>
-    </el-popover>
-    <el-popover trigger="click" width="auto" :popper-style="{padding: 0}">
+    </el-popover> -->
+    <el-popover trigger="click" width="auto"
+      :popper-style="{padding: 0}"
+      @show="$emit('panelShow')"
+      @hide="$emit('panelHide')"
+      v-model:visible="popoverVisible"
+    >
       <template #reference>
         <div class="block-tool-item material-symbols-outlined"
           draggable="true"
@@ -27,6 +24,14 @@
         >drag_indicator</div>
       </template>
       <ul class="menu-list">
+        <li class="menu-item" @click="action('addBefore')">
+          <span class="menu-item-icon material-symbols-outlined">arrow_outward</span>
+          <span class="menu-item-label">在前面添加</span>
+        </li>
+        <li class="menu-item" @click="action('addAfter')">
+          <span class="menu-item-icon material-symbols-outlined">south_east</span>
+          <span class="menu-item-label">在后面添加</span>
+        </li>
         <li class="menu-item">
           <span class="menu-item-icon material-symbols-outlined">format_align_left</span>
           <span class="menu-item-label">对齐</span>
@@ -40,7 +45,7 @@
           <span class="menu-item-label">字体颜色</span>
         </li>
         <li class="menu-item divider"></li>
-        <li class="menu-item">
+        <li class="menu-item" @click="action('remove')">
           <span class="menu-item-icon material-symbols-outlined">delete</span>
           <span class="menu-item-label">删除</span>
         </li>
@@ -50,11 +55,15 @@
 </template>
 
 <script lang="ts" setup>
-import { ElPopover } from 'element-plus';
-import { NodeSelection } from 'prosemirror-state';
+import { createLogger } from '@writing/utils/logger';
+import { ElMessage, ElPopover } from 'element-plus';
+import { NodeSelection, TextSelection } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 // @ts-ignore
 import { __serializeForClipboard as serializeForClipboard } from 'prosemirror-view'
+import { ref } from 'vue';
+
+const logger = createLogger('block-tool')
 
 const props = defineProps<{
   position: { top: number, left: number },
@@ -65,8 +74,12 @@ const props = defineProps<{
 
 const emits = defineEmits<{
   dragStart: [],
-  dragEnd: []
+  dragEnd: [],
+  panelShow: [],
+  panelHide: [],
 }>()
+
+const popoverVisible = ref(false)
 
 const dragstartHandler = (event: DragEvent) => {
   if (!event.dataTransfer) return
@@ -90,6 +103,32 @@ const dragstartHandler = (event: DragEvent) => {
   props.view.dragging = { slice, move: true }
 }
 
+const action = (name: string) => {
+  if (name === 'remove') {
+    const $pos = props.view.state.doc.resolve(props.pos + 1)
+    props.view.dispatch(props.view.state.tr.deleteRange($pos.before(), $pos.after()))
+    popoverVisible.value = false
+  } else if (name === 'addBefore' || name === 'addAfter') {
+    const $pos = props.view.state.doc.resolve(props.pos)
+    const index = name === 'addBefore' ? $pos.index() : $pos.index() + 1
+    const targetPos = name === 'addBefore' ? props.pos : props.pos + $pos.nodeAfter!.nodeSize
+    const selectionPos = name === 'addBefore' ? props.pos : props.pos + $pos.nodeAfter!.nodeSize
+    const newNode = $pos.parent.contentMatchAt(index).defaultType?.createAndFill()
+    logger.d(newNode?.type, $pos.parent)
+    if (!newNode) {
+      return ElMessage.error('无法新增')
+    }
+    logger.d('insert at', targetPos)
+    const tr = props.view.state.tr
+      .insert(targetPos, newNode)
+    tr.setSelection(TextSelection.create(tr.doc, selectionPos))
+    tr.scrollIntoView()
+    props.view.dispatch(tr)
+    popoverVisible.value = false
+    props.view.focus()
+  }
+}
+
 </script>
 
 <style lang="less">
@@ -107,16 +146,27 @@ const dragstartHandler = (event: DragEvent) => {
   position: absolute;
   transform: translate(-100%, -50%);
   display: flex;
-  padding: 0;
+  padding: 3px;
   margin: 0;
+  margin-left: -0.5em;
+  &::after {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0;
+    right: -2em;
+    width: 2em;
+    height: 100%;
+  }
   .block-tool-item {
-    border-radius: 4px;
     transition: background .1s;
     cursor: pointer;
     color: rgba(0, 0, 0, 0.6);
     font-size: 20px;
+    background: #fff;
+    filter: drop-shadow(0 0 10px rgb(169, 169, 169));
     &:hover {
-      background: rgba(0, 0, 0, .1);
+      background: rgb(240, 240, 240);
     }
   }
 }

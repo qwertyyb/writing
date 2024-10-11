@@ -13,22 +13,22 @@ export const setLevel = (l: LogLevel) => {
 
 export const createLogger = (prefix: string = '') => ({
   i: (...args: Parameters<typeof console.info>) => {
-    if (level >= LogLevel.Info) {
+    if (level <= LogLevel.Info) {
       return console.info(`[${prefix}]`, ...args)
     }
   },
   w: (...args: Parameters<typeof console.info>) => {
-    if (level >= LogLevel.Warning) {
+    if (level <= LogLevel.Warning) {
       return console.warn(`[${prefix}]`, ...args)
     }
   },
   e: (...args: Parameters<typeof console.info>) => {
-    if (level >= LogLevel.Error) {
+    if (level <= LogLevel.Error) {
       return console.error(`[${prefix}]`, ...args)
     }
   },
   d: (...args: Parameters<typeof console.debug>) => {
-    if (level >= LogLevel.Debug) {
+    if (level <= LogLevel.Debug) {
       return console.debug(`[${prefix}]`, ...args)
     }
   }

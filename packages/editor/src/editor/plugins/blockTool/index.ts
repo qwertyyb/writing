@@ -5,6 +5,9 @@ import { debounce } from 'lodash-es'
 import { findParentNodeWithTypes } from '../../utils/editor'
 import BlockTool from './BlockTool.vue'
 import { createApp, h, markRaw, reactive, type Reactive } from 'vue'
+import { createLogger } from '@writing/utils/logger'
+
+const logger = createLogger('block-tool')
 
 const pointerMoveHandler = (
   nodeTypes: NodeType[],
@@ -13,11 +16,12 @@ const pointerMoveHandler = (
     position: { left: number, top: number },
     visible: boolean,
     dragging: boolean,
+    panelVisible: boolean,
     pos: number
   }>
 ) => {
   return function(view: EditorView, event: PointerEvent) {
-    if (vmProps.dragging) return
+    if (vmProps.dragging || vmProps.panelVisible) return
     if (!view.editable) return
     const plugin = pluginKey.get(view.state)
     if (!plugin) return;
@@ -47,6 +51,7 @@ const pointerMoveHandler = (
       top: rect.top - pRect.top + rect.height / 2,
       left: rect.left - pRect.left
     }
+    logger.d('block pos update', from, nodeDOM)
   }
 }
 
@@ -56,15 +61,25 @@ export const blockTool = (draggableNodeTypes: NodeType[]) => {
     visible: boolean,
     dragging: boolean,
     view: EditorView | null,
+    panelVisible: boolean,
     pos: number,
+    onPanelShow: () => void,
+    onPanelHide: () => void,
     onDragStart: () => void,
     onDragEnd: () => void,
   }>({
     position: { top: 0, left: 0 },
     visible: false,
     dragging: false,
+    panelVisible: false,
     view: null,
     pos: 0,
+    onPanelShow() {
+      vmProps.panelVisible = true
+    },
+    onPanelHide() {
+      vmProps.panelVisible = false
+    },
     onDragStart() {
       vmProps.dragging = true
     },
@@ -77,7 +92,7 @@ export const blockTool = (draggableNodeTypes: NodeType[]) => {
   })
 
   const pluginKey = new PluginKey('blocksTool')
-  const pointerHandler = debounce(pointerMoveHandler(draggableNodeTypes, pluginKey, vmProps), 60)
+  const pointerHandler = pointerMoveHandler(draggableNodeTypes, pluginKey, vmProps)
   const plugin = new Plugin({
     key: pluginKey,
     state: {

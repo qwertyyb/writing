@@ -195,7 +195,7 @@ const pointerupHandler = (drt: 'left' | 'right', event: PointerEvent) => {
   margin: 0;
   padding: 2px 4px;
   list-style: none;
-  gap: 10px;
+  gap: 6px;
   background: rgba(0, 0, 0, 0.5);
   color: #fff;
   border-radius: 2px;
@@ -210,7 +210,7 @@ const pointerupHandler = (drt: 'left' | 'right', event: PointerEvent) => {
   }
   .action-item {
     font-size: 18px;
-    width: 22px;
+    width: 20px;
     cursor: pointer;
     text-align: center;
     transition: background .2s;

@@ -54,6 +54,7 @@ const exportMarkdown = async () => {
       editable
       :upload="upload"
       ref="editor"
+      class="editor"
     ></DocumentEditor>
   </main>
 </template>
@@ -66,6 +67,10 @@ body {
 </style>
 
 <style lang="less" scoped>
+.editor {
+  max-width: calc(100vw - 10em);
+  margin: 0 auto;
+}
 .actions-btn {
   margin-block: 20px;
   display: flex;
