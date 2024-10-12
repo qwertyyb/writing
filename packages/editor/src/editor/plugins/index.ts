@@ -13,11 +13,12 @@ import ImageNodeView from '../nodeViews/ImageView.vue'
 import { addBlockAfterImage } from '../nodes/image'
 import { addNewTodoAfterTodo, todoPlugin, toggleToParagraph } from '../nodes/todo'
 import { undoInputRule } from 'prosemirror-inputrules'
-import { codeViewPlugin } from '../nodeViews/CodeView'
+// import { CodeBlockView, codeViewPlugin } from '../nodeViews/CodeView'
 import { blockTool } from './blockTool'
 import { appendParagraph } from './appendParagraph'
 import DetailsView from '../nodeViews/DetailsView.vue'
 import CalloutView from '../nodeViews/CalloutView.vue'
+import CodeBlockView from '../nodeViews/CodeBlockView.vue'
 import { addBlockAfterDetails, detailsPlugin } from '../nodes/details'
 import { uploadSymbol } from '../const'
 import { emojiPlugin } from './emoji/emoji'
@@ -41,8 +42,9 @@ export const createPlugins = (schema: Schema, props: {
     katex_block: KatexBlockView,
     toc: TocView,
     excalidraw: ExcalidrawView,
+    code_block: CodeBlockView,
   }),
-  codeViewPlugin(),
+  // codeViewPlugin(),
   ...(props.editable ? [
     keymap({
       'Space': removeStoredMarks(),

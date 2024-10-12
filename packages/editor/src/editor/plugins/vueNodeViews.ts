@@ -40,6 +40,15 @@ class VueNodeView<N extends Node = Node> implements NodeView {
   get selectNode() {
     return this.vm.value?.selectNode
   }
+  get deselectNode() {
+    return this.vm.value?.deselectNode
+  }
+  get stopEvent() {
+    return this.vm.value?.stopEvent
+  }
+  get setSelection() {
+    return this.vm.value?.setSelection
+  }
 
   constructor(
     Component: Component,
@@ -86,15 +95,14 @@ class VueNodeView<N extends Node = Node> implements NodeView {
       return false
     }
     if (this.vmProps) {
+      const result = this.vm.value?.update?.(node, decorations, innerDecorations)
       this.vmProps.node = markRaw(node as N)
       this.vmProps.decorations = markRaw(decorations)
       this.vmProps.innerDecorations = markRaw(innerDecorations)
-      return true
+      
+      return result ?? true
     }
     return false
-  }
-  get stopEvent() {
-    return this.vm.value?.stopEvent
   }
   ignoreMutation = (mutation: MutationRecord | { type: 'selection', target: HTMLElement}) => {
     if (mutation.type === 'selection') {
