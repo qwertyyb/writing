@@ -25,6 +25,7 @@ import KatexBlockView from '../nodeViews/KatexBlockView.vue'
 import TocView from '../nodeViews/TocView.vue'
 import ExcalidrawView from '../nodeViews/ExcalidrawView.vue'
 import { pastePlugin } from './paste'
+import { removeStoredMarks } from './commands'
 
 export const createPlugins = (schema: Schema, props: {
   [uploadSymbol]?: ((file: File, options?: { previous?: string }) => Promise<string>);
@@ -44,6 +45,7 @@ export const createPlugins = (schema: Schema, props: {
   codeViewPlugin(),
   ...(props.editable ? [
     keymap({
+      'Space': removeStoredMarks(),
       'Enter': chainCommands(
         addBlockAfterImage(schema.nodes.image),
         addNewTodoAfterTodo(schema.nodes.todo, schema.nodes.list_item),
