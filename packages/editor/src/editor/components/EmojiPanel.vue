@@ -113,7 +113,7 @@ onBeforeUnmount(() => {
   }
   .emoji-list {
     width: 300px;
-    height: 320px;
+    max-height: 320px;
     overflow: auto;
     display: grid;
     grid-template-columns: repeat(auto-fill, 32px);

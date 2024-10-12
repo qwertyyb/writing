@@ -3,6 +3,7 @@ import EmojiSelector from "./EmojiSelector.vue"
 import { createVuePluginView } from "../../utils/vuePluginView"
 
 const MAX_QUERY_LENGTH = 10
+const MIN_QUERY_LENGTH = 2
 const EMOJI_TRIGGER = ':'
 
 export const emojiPlugin = () => {
@@ -28,6 +29,13 @@ export const emojiPlugin = () => {
               position: { top: 0, left: 0 }
             }
             const query = prevText.substring(lastIndex + 1)
+            if (query.length < MIN_QUERY_LENGTH || !/^\w+$/.test(query)) {
+              return {
+                visible: false,
+                query: '',
+                position: { top: 0, left: 0 }
+              }
+            }
             const rect = view.coordsAtPos(selection.to)
             const editorRect = view.dom.offsetParent!.getBoundingClientRect()
             return {

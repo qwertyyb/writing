@@ -41,7 +41,7 @@ const insertEmoji = (emoji: string) => {
   const tr = props.view.state.tr
   props.view.dispatch(
     tr
-      .replaceRangeWith(selection.to - props.query.length - 1, selection.to, props.view.state.schema.text(emoji))
+      .replaceRangeWith(selection.to - props.query.length - 1, selection.to, props.view.state.schema.text(emoji, selection.$to.marks()))
       .setSelection(TextSelection.create(tr.doc, selection.to - props.query.length))
   )
 }
