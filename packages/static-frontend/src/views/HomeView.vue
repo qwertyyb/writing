@@ -1,35 +1,40 @@
 <template>
-  <main class="home-view">
-    <header class="action-btns" v-if="hasConfig">
-      <router-link :to="{ name: 'add' }" class="add-article-btn">添加新文章</router-link>
+  <section class="home-view">
+    <header>
+      <img src="https://api.vvhan.com/api/bing?size=1920" alt="" class="cover">
     </header>
-    <ul class="post-list">
-      <li class="post-item" v-for="(post, index) in list" :key="index">
-        <div class="article-info">
-          <router-link :to="{name: 'post', params: {id: post.id}}" :title="post.title">
-            <h3 class="post-title">{{ post.title }}</h3>
-          </router-link>
-          <div class="post-created-time">{{ post.createdAt }}</div>
-        </div>
-        <router-link :to="{name: 'edit', params: { id: post.id } }"
-          v-if="hasConfig"
-          class="edit-btn"
-        >编辑</router-link>
-        <a href="javascript:void(0)"
-          v-if="hasConfig"
-          class="del-btn"
-          @click="deleteAction(post, index)"
-          v-loading="deleting === post.id"
-        >删除</a>
-      </li>
-      <li class="post-item placeholder-item" v-if="loading">
-        <p class="empty-message">加载中...</p>
-      </li>
-      <li class="post-item placeholder-item" v-else-if="!list.length">
-        <p class="empty-message">你来到了没有知识的荒野</p>
-      </li>
-    </ul>
-  </main>
+    <main>
+      <div class="action-btns" v-if="hasConfig">
+        <router-link :to="{ name: 'add' }" class="add-article-btn">添加新文章</router-link>
+      </div>
+      <ul class="post-list">
+        <li class="post-item" v-for="(post, index) in list" :key="index">
+          <div class="article-info">
+            <router-link :to="{name: 'post', params: {id: post.id}}" :title="post.title">
+              <h3 class="post-title">{{ post.title }}</h3>
+            </router-link>
+            <div class="post-created-time">{{ post.createdAt }}</div>
+          </div>
+          <router-link :to="{name: 'edit', params: { id: post.id } }"
+            v-if="hasConfig"
+            class="edit-btn"
+          >编辑</router-link>
+          <a href="javascript:void(0)"
+            v-if="hasConfig"
+            class="del-btn"
+            @click="deleteAction(post, index)"
+            v-loading="deleting === post.id"
+          >删除</a>
+        </li>
+        <li class="post-item placeholder-item" v-if="loading">
+          <p class="empty-message">加载中...</p>
+        </li>
+        <li class="post-item placeholder-item" v-else-if="!list.length">
+          <p class="empty-message">你来到了没有知识的荒野</p>
+        </li>
+      </ul>
+    </main>
+  </section>
 </template>
 
 <script setup lang="ts">
@@ -77,9 +82,17 @@ const deleteAction = async (article: { id: string | number, title: string, creat
 </script>
 
 <style scoped>
-.home-view {
+.home-view header {
+  .cover {
+    width: 100%;
+    height: 50vh;
+    object-fit: cover;
+  }
+}
+.home-view main {
   max-width: 800px;
   margin: 0 auto;
+  padding: 0 16px;
 }
 .add-article-btn:visited {
   color: blue;

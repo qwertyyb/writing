@@ -12,6 +12,8 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn'
 <style>
 body {
   font-family: "LXGW WenKai";
+  margin: 0;
+  padding: 0;
 }
 a, a:visited {
   color: blue;
