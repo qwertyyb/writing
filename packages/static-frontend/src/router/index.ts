@@ -16,7 +16,7 @@ const router = createRouter({
     },
     {
       path: '/crypto',
-      name: 'admin',
+      name: 'crypto',
       component: () => import('../views/CryptoView.vue')
     },
     {

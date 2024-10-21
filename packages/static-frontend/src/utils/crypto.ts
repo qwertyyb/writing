@@ -88,7 +88,7 @@ export const getPublicKey = async () => {
   throw new Error(`获取公钥失败: ${r.status}`)
 }
 
-export const getPrivateKey = () => {
+export const getPrivateKey = async () => {
   const str = localStorage.getItem(PRIVATE_KEY)
   if (!str) throw new Error('未发现私钥')
   return importPrivateKey(str)

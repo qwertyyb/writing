@@ -97,7 +97,7 @@ export const useEdit = (articleId?: number | string) => {
   // 发布或更新一篇文章
   const publishArticle = async (options: { newArticleId: string, crypto: boolean }) => {
     if (!state.value.local) throw new Error('没有待发布的内容')
-    if (state.value.local.updatedAt === state.value.git?.article.updatedAt) {
+    if (state.value.local.updatedAt === state.value.git?.article.updatedAt && options.crypto === state.value.local.encrypted) {
       throw new Error('没有更新，无须发布')
     }
     if (state.value.git && new Date(state.value.local.updatedAt).getTime() < new Date(state.value.git.article.updatedAt).getTime()) {

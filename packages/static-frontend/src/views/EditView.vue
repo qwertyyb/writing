@@ -23,9 +23,7 @@ import DocumentEditor, { type NodeValue } from '@writing/editor';
 import { markRaw, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { tryRunForTuple } from 'try-run-js';
-import {
-  ElLoading, ElMessage
-} from 'element-plus';
+import { ElLoading, ElMessage } from 'element-plus';
 import router from '@/router';
 import SubmitDialog from '@/components/SubmitDialog.vue';
 import { useEdit } from '@/hooks/edit';
@@ -61,6 +59,7 @@ const submitDialogRef = ref<InstanceType<typeof SubmitDialog>>()
 const refresh = async () => {
   const loading = ElLoading.service({ fullscreen: true, text: '正在加载中...'})
   const data = await startEditArticle()
+  console.log(data)
   document.value = {
     title: data.title,
     encrypted: data.encrypted ?? false,

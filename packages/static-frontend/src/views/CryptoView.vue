@@ -21,7 +21,9 @@
 
 <script setup lang="ts">
 import { PRIVATE_KEY } from '@/const';
+import { hasConfig } from '@/hooks/admin';
 import { fetchPublicKey, updatePublicKey } from '@/hooks/github';
+import router from '@/router';
 import { decrypt, encrypt, generateKeys } from '@/utils/crypto';
 import { ElMessage, ElMessageBox, ElLoading } from 'element-plus';
 import { tryRunForTuple } from 'try-run-js';
@@ -97,7 +99,11 @@ const submit = async () => {
   loading.close()
 }
 
-refresh()
+if (hasConfig()) {
+  refresh()
+} else {
+  router.replace({ name: 'admin' })
+}
 
 </script>
 
