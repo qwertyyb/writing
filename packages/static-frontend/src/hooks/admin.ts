@@ -20,7 +20,7 @@ loadConfig()
 
 export const useAdminConfig = () => {
 
-  const saveConfig = async (config: { token: string, owner: string, repo: string }) => {
+  const saveConfig = async (config: { token: string, owner: string, repo: string, cryptoKey: string }) => {
     await localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(config))
     loadConfig()
   }
@@ -35,6 +35,7 @@ export const useAdminConfig = () => {
     loadConfig,
     saveConfig,
     clearConfig,
-    hasConfig: computed(hasConfig)
+    hasConfig: computed(hasConfig),
+    hasCryptoKey: computed(() => adminConfig.value.cryptoKey)
   }
 }

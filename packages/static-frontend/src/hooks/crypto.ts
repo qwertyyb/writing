@@ -12,9 +12,7 @@ export const generateKey = async () => {
   return Buffer.from(exportedKey).toString('base64')
 }
 
-export const getCryptoKey = () => {
-  const keystr = adminConfig.value.cryptoKey || ''
-  if (!keystr) throw new Error('未找到密钥')
+export const importKey = (keystr: string) => {
   return window.crypto.subtle.importKey(
     'raw',
     Buffer.from(keystr, 'base64').buffer,
@@ -25,6 +23,12 @@ export const getCryptoKey = () => {
       "decrypt",
     ]
   );
+}
+
+export const getCryptoKey = () => {
+  const keystr = adminConfig.value.cryptoKey || ''
+  if (!keystr) throw new Error('未找到密钥')
+  return importKey(keystr)
 }
 
 export const encrypt = async (content: string, key: CryptoKey) => {
@@ -38,26 +42,18 @@ export const encrypt = async (content: string, key: CryptoKey) => {
 }
 
 export const checkKey = async (keystr: string) => {
-  const key = await window.crypto.subtle.importKey(
-    'raw',
-    Buffer.from(keystr, 'base64').buffer,
-    "AES-GCM",
-    true,
-    [
-      "encrypt",
-      "decrypt",
-    ]
-  )
+  const key = await importKey(keystr)
   const original = window.crypto.randomUUID()
   const { iv, encryptedData } = await encrypt(original, key)
   console.log(iv, encryptedData)
   return original === await decrypt(encryptedData, iv, key)
 }
 
-export const decrypt = async (encryptedData: string, iv: string, key: CryptoKey) => {
+export const decrypt = async (encryptedData: string, iv: string, key: CryptoKey | string) => {
+  const cryptoKey = typeof key === 'string' ? await importKey(key) : key
   const result = await window.crypto.subtle.decrypt(
     { name: "AES-GCM", iv: Buffer.from(iv, 'base64').buffer },
-    key,
+    cryptoKey,
     Buffer.from(encryptedData, 'base64').buffer
   );
   return new TextDecoder().decode(result)

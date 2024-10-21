@@ -38,16 +38,15 @@ import { getPost } from '../services';
 import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAdminConfig } from '@/hooks/admin';
-import { PRIVATE_KEY, type IArticle } from '@/const';
-import { decryptArticle } from '@/hooks/crypto';
+import { type IArticle } from '@/const';
+import { decrypt, decryptArticle } from '@/hooks/crypto';
 import { tryRunForTuple } from 'try-run-js';
-import { decrypt, importPrivateKey } from '@/utils/crypto';
 
 const status = ref<'loading' | 'decryptError' | 'error' | 'completed'>('loading')
 const errorMsg = ref('')
 const decryptDialog = ref<HTMLDialogElement>()
-const document = ref<{ title: string, content: NodeValue | null, originalContent: string }>({ title: '', content: null, originalContent: '' })
-const { hasConfig } = useAdminConfig()
+const document = ref<{ title: string, content: NodeValue | null, originalContent: string, iv: string }>({ title: '', content: null, originalContent: '', iv: '' })
+const { hasConfig, hasCryptoKey, saveConfig, config } = useAdminConfig()
 
 const route = useRoute()
 
@@ -56,15 +55,14 @@ const openDecryptDialog = () => {
 }
 
 const confirmDecrypt = async () => {
-  const privateKey = decryptDialog.value!.querySelector('textarea')!.value.trim()
-  if (!privateKey) {
+  const key = decryptDialog.value!.querySelector('textarea')!.value.trim()
+  if (!key) {
     window.alert('请输入密钥')
     return
   }
   let content: string
   try {
-    const key = await importPrivateKey(privateKey)
-    content = await decrypt(document.value.originalContent, key)
+    content = await decrypt(document.value.originalContent, document.value.iv, key)
   } catch (err)  {
     alert('密钥不正确')
     throw err;
@@ -75,7 +73,7 @@ const confirmDecrypt = async () => {
   errorMsg.value = ''
   decryptDialog.value!.close()
   if(window.confirm('解密成功，是否保存密钥？')){
-    localStorage.setItem(PRIVATE_KEY, privateKey)
+    saveConfig({ ...config.value, cryptoKey: key })
   }
 }
 
@@ -98,7 +96,7 @@ const refresh = async () => {
   }
   if (!data) return
   if (data.encrypted) {
-    if (localStorage.getItem(PRIVATE_KEY)) {
+    if (hasCryptoKey.value) {
       let [err, decrypted] = await tryRunForTuple(decryptArticle(data))
       if (err) {
         status.value = 'decryptError'
@@ -116,6 +114,7 @@ const refresh = async () => {
   }
   document.value.title = data.title
   document.value.originalContent = data.content
+  document.value.iv = data.iv || ''
   document.value.content = JSON.parse(data.content)
   document.value.originalContent = ''
 }
