@@ -410,6 +410,9 @@ importers:
       element-plus:
         specifier: ^2.5.3
         version: 2.7.8(vue@3.4.35(typescript@5.4.5))
+      file-saver:
+        specifier: ^2.0.5
+        version: 2.0.5
       localforage:
         specifier: ^1.10.0
         version: 1.10.0
@@ -429,6 +432,9 @@ importers:
       '@tsconfig/node20':
         specifier: ^20.1.4
         version: 20.1.4
+      '@types/file-saver':
+        specifier: ^2.0.7
+        version: 2.0.7
       '@types/node':
         specifier: ^20.14.5
         version: 20.14.14

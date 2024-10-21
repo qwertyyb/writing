@@ -15,6 +15,11 @@ const router = createRouter({
       component: () => import('../views/AdminView.vue')
     },
     {
+      path: '/crypto',
+      name: 'admin',
+      component: () => import('../views/CryptoView.vue')
+    },
+    {
       path: '/edit/:id',
       name: 'edit',
       component: () => import('../views/EditView.vue')

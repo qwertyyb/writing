@@ -41,11 +41,12 @@
 import { RouterLink } from 'vue-router';
 import { getList } from '@/services';
 import { ref } from 'vue';
-import { deleteArticle, useAdminConfig } from '@/hooks/admin';
+import { useAdminConfig } from '@/hooks/admin';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import 'element-plus/es/components/message/style/css'
 import 'element-plus/es/components/message-box/style/css'
 import { tryRunForTuple } from 'try-run-js';
+import { deleteArticle } from '@/hooks/github';
 
 const list = ref<{ id: string | number, title: string, createdAt: string, updatedAt: string }[]>([])
 const loading = ref(false)

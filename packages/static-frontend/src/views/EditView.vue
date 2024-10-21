@@ -14,6 +14,7 @@
         @update:model-value="updateEditingArticle({ content: JSON.stringify($event) })"
       ></document-editor>
     </template>
+    <submit-dialog ref="submitDialogRef"></submit-dialog>
   </section>
 </template>
 
@@ -21,21 +22,22 @@
 import DocumentEditor, { type NodeValue } from '@writing/editor';
 import { markRaw, ref } from 'vue';
 import { useRoute } from 'vue-router';
-import { useEdit } from '@/hooks/admin';
 import { tryRunForTuple } from 'try-run-js';
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
-import 'element-plus/es/components/message/style/css'
-import 'element-plus/es/components/loading/style/css'
-import 'element-plus/es/components/message-box/style/css'
+import {
+  ElLoading, ElMessage
+} from 'element-plus';
 import router from '@/router';
+import SubmitDialog from '@/components/SubmitDialog.vue';
+import { useEdit } from '@/hooks/edit';
 
 const route = useRoute()
 
 const { updateEditingArticle, uploadFile, startEditArticle, publishArticle } = useEdit(route.params.id as string)
 
 const status = ref<'loading' | 'error' | 'completed'>('loading')
-const document = ref<{ title: string, content: NodeValue }>({
+const document = ref<{ title: string, content: NodeValue, encrypted: boolean }>({
   title: '标题',
+  encrypted: false,
   content: markRaw({
     type: 'doc',
     "content": [
@@ -54,12 +56,14 @@ const document = ref<{ title: string, content: NodeValue }>({
       ]
   })
 })
+const submitDialogRef = ref<InstanceType<typeof SubmitDialog>>()
 
 const refresh = async () => {
   const loading = ElLoading.service({ fullscreen: true, text: '正在加载中...'})
   const data = await startEditArticle()
   document.value = {
     title: data.title,
+    encrypted: data.encrypted ?? false,
     content: markRaw(JSON.parse(data.content))
   }
   status.value = 'completed'
@@ -70,16 +74,18 @@ refresh()
 
 const publish = async () => {
   let id = route.params.id as string
-  if (!route.params.id) {
-    // 没有id，是新建的文章，则 prompt 要用户输入一个文件名
-    const { value } = await ElMessageBox.prompt('请输入文件名', '提示', {
-      inputPattern: /^[a-zA-Z0-9_-]+$/,
-      inputErrorMessage: '文件名应只包含字母、数字或-、_'
-    })
-    id = value
-  }
+  // 没有id，是新建的文章，则 prompt 要用户输入一个文件名
+  // const { value } = await ElMessageBox.prompt('请输入文件名', '提示', {
+  //   inputPattern: /^[a-zA-Z0-9_-]+$/,
+  //   inputErrorMessage: '文件名应只包含字母、数字或-、_'
+  // })
+  const options = await submitDialogRef.value!.confirm({
+    name: id,
+    crypto: document.value.encrypted
+  })
+  console.log(options)
   const loading = ElLoading.service({ fullscreen: true, text: '发布中...' })
-  const [err] = await tryRunForTuple(publishArticle(id))
+  const [err] = await tryRunForTuple(publishArticle({ newArticleId: options.name, crypto: options.crypto }))
   loading.close()
   if (err) {
     ElMessage.error(err.message || err)
@@ -113,5 +119,8 @@ const publish = async () => {
   box-sizing: border-box;
   width: 100%;
   font-family: inherit;
+}
+.form-submit-btn {
+  margin-left: auto;
 }
 </style>
