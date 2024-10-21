@@ -3,7 +3,7 @@ import localforage from 'localforage'
 import { ADMIN_STORAGE_KEY } from "@/const";
 
 export const adminConfig = ref({
-  token: '', owner: '', repo: ''
+  token: '', owner: '', repo: '', cryptoKey: '',
 })
 
 export const hasConfig = () => {
@@ -27,7 +27,7 @@ export const useAdminConfig = () => {
 
   const clearConfig = async () => {
     await localforage.removeItem(ADMIN_STORAGE_KEY)
-    adminConfig.value = { token: '', owner: '', repo: '' }
+    adminConfig.value = { token: '', owner: '', repo: '', cryptoKey: '' }
   }
 
   return {

@@ -73,11 +73,6 @@ refresh()
 
 const publish = async () => {
   let id = route.params.id as string
-  // 没有id，是新建的文章，则 prompt 要用户输入一个文件名
-  // const { value } = await ElMessageBox.prompt('请输入文件名', '提示', {
-  //   inputPattern: /^[a-zA-Z0-9_-]+$/,
-  //   inputErrorMessage: '文件名应只包含字母、数字或-、_'
-  // })
   const options = await submitDialogRef.value!.confirm({
     name: id,
     crypto: document.value.encrypted
@@ -88,6 +83,7 @@ const publish = async () => {
   loading.close()
   if (err) {
     ElMessage.error(err.message || err)
+    throw err
   } else {
     ElMessage.success('已发布，该文章将在几分钟内部署到现网')
   }

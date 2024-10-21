@@ -1,5 +1,3 @@
-export const PUBLIC_KEY_PATH = 'data/articles/publicKey.pem'
-export const PRIVATE_KEY = 'POST_PRIVATE_KEY'
 
 export const ARTICLE_DIR = 'data/articles'
 export const ADMIN_STORAGE_KEY = 'adminConfig'
@@ -21,4 +19,5 @@ export interface IArticle {
   title: string
   content: string,
   encrypted?: boolean,
+  iv?: string
 }

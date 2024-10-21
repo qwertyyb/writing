@@ -20,6 +20,12 @@
             <div class="setting-message">Github Repo</div>
           </div>
         </el-form-item>
+        <el-form-item label="密钥">
+          <el-button size="small" @click="generateNewKey">生成密钥</el-button>
+          <br>
+          <el-input v-model="form.cryptoKey"></el-input>
+          <div class="setting-message">加密文章的加解密密钥</div>
+        </el-form-item>
         <div class="setting-item mt-8">
           <el-button @click="clear">清除</el-button>
           <el-button type="primary" @click="submit" v-loading="loading">保存</el-button>
@@ -37,6 +43,7 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { tryRunForTuple } from 'try-run-js'
 import { Octokit } from "@octokit/rest";
 import { useAdminConfig } from '@/hooks/admin';
+import { checkKey, generateKey } from '@/hooks/crypto';
 
 const { config, saveConfig, clearConfig } = useAdminConfig()
 
@@ -44,6 +51,7 @@ const form = ref({
   token: '',
   owner: '',
   repo: '',
+  cryptoKey: '',
 })
 
 const loading = ref(false)
@@ -55,6 +63,10 @@ const initForm = () => {
 }
 
 initForm()
+
+const generateNewKey = async () => {
+  form.value.cryptoKey = await generateKey()
+}
 
 const submit = async () => {
   const { token, owner, repo } = form.value
@@ -75,6 +87,12 @@ const submit = async () => {
     throw (treeError || new Error(`Get Repo Tree: ${treeResp?.status}`))
   }
 
+  const [cryptoErr, success] = await tryRunForTuple(checkKey(form.value.cryptoKey))
+  if (cryptoErr || !success) {
+    ElMessage.error('密钥不正确')
+    throw cryptoErr
+  }
+
   saveConfig(form.value)
   ElMessage.success('保存成功')
   loading.value = false
@@ -83,7 +101,7 @@ const submit = async () => {
 const clear = async () => {
   await ElMessageBox.confirm('清空后，将无法再进行编辑或发布，确认清空配置？', '提示')
   clearConfig()
-  form.value = { token: '', owner: '', repo: '' }
+  form.value = { token: '', owner: '', repo: '', cryptoKey: '' }
 }
 
 </script>
