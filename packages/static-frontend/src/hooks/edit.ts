@@ -223,7 +223,7 @@ export const useEdit = (articleId?: number | string) => {
       return state.value.local
     }
     const [git, server, local] = await Promise.all([
-      getGitArticle(id),
+      getDecryptedGitArticle(id),
       getServerArticle(id),
       getLocalArticle()
     ])
